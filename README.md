@@ -326,8 +326,8 @@ Platform-specific options passed to `DirPicker.pick()`.
 
 **Minimum versions:**
 
-- Flutter ≥ 3.3.0
-- Dart SDK ≥ 3.6.0
+- Flutter ≥ 3.44.0
+- Dart SDK ≥ 3.12.0
 - Kotlin 2.1.0
 - Swift 5.9
 - Android API 21+

@@ -1,3 +1,8 @@
+## 0.5.0
+
+* **Breaking:** Raise minimum supported SDK to Flutter 3.44 / Dart 3.12
+* Migrate Android to built-in Kotlin (no longer applies the Kotlin Gradle Plugin)
+
 ## 0.4.1
 
 * Update document
