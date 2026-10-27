@@ -1,6 +1,7 @@
 ## 0.5.1
 
 * Fix `flutter build web --wasm`. The FFI/JNI implementations are now excluded with `dart.library.js_interop` instead of `dart.library.html`, which is false under dart2wasm (#4, authored by coco-de-dev)
+* Linux: `pick()` now throws `UnsupportedError` when no XDG Desktop Portal, zenity or kdialog is available. Before, it returned `null`, which looked like a user cancel (#11)
 * Allow `dbus` 0.8.x (#8)
 * Format code with the current `dart format` and silence a lint in the generated JNI bindings (#7)
 * Correct the Android minimum (API 24+) and the `AndroidOptions.shouldPersist` default (`false`) in the README, and note Wasm support (#6)
