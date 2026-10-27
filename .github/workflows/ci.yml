@@ -151,6 +151,8 @@ jobs:
   integration-test:
     name: Integration test (${{ matrix.target }})
     runs-on: ${{ matrix.os }}
+    # A test that cannot reach the app otherwise waits until the 6 hour limit.
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -164,6 +166,13 @@ jobs:
         working-directory: example
     steps:
       - uses: actions/checkout@v7
+      # Boot first, so the simulator settles while Flutter is installed.
+      - if: matrix.target == 'iOS'
+        run: |
+          udid=$(xcrun simctl list devices available --json \
+            | jq -r '[.devices[][] | select(.name | startswith("iPhone"))][0].udid')
+          xcrun simctl bootstatus "$udid" -b
+          echo "SIMULATOR_UDID=$udid" >> "$GITHUB_ENV"
       - if: matrix.target == 'Linux'
         run: |
           sudo apt-get update
@@ -175,11 +184,7 @@ jobs:
       - if: matrix.target == 'macOS'
         run: flutter test integration_test -d macos
       - if: matrix.target == 'iOS'
-        run: |
-          udid=$(xcrun simctl list devices available --json \
-            | jq -r '[.devices[][] | select(.name | startswith("iPhone"))][0].udid')
-          xcrun simctl bootstatus "$udid" -b
-          flutter test integration_test -d "$udid"
+        run: flutter test integration_test -d "$SIMULATOR_UDID" --verbose
       - if: matrix.target == 'Linux'
         run: xvfb-run -a flutter test integration_test -d linux
       - if: matrix.target == 'Windows'
