@@ -148,6 +148,10 @@ jobs:
   # Runs example/integration_test in the example app, so listEntries goes
   # through the registered plugin and its native bridge. Android is left out:
   # its listEntries only takes SAF tree URIs, which need the system picker.
+  # iOS is left out too: on the hosted runners, flutter test launches the app
+  # on the simulator but never finds its VM service, and waits until timeout.
+  # macOS runs the same shared Swift listEntries, so run iOS locally with
+  # `flutter test integration_test -d <simulator id>` when the Swift changes.
   integration-test:
     name: Integration test (${{ matrix.target }})
     runs-on: ${{ matrix.os }}
@@ -158,7 +162,6 @@ jobs:
       matrix:
         include:
           - { target: macOS, os: macos-latest }
-          - { target: iOS, os: macos-latest }
           - { target: Linux, os: ubuntu-latest }
           - { target: Windows, os: windows-latest }
     defaults:
@@ -166,13 +169,6 @@ jobs:
         working-directory: example
     steps:
       - uses: actions/checkout@v7
-      # Boot first, so the simulator settles while Flutter is installed.
-      - if: matrix.target == 'iOS'
-        run: |
-          udid=$(xcrun simctl list devices available --json \
-            | jq -r '[.devices[][] | select(.name | startswith("iPhone"))][0].udid')
-          xcrun simctl bootstatus "$udid" -b
-          echo "SIMULATOR_UDID=$udid" >> "$GITHUB_ENV"
       - if: matrix.target == 'Linux'
         run: |
           sudo apt-get update
@@ -183,8 +179,6 @@ jobs:
           cache: true
       - if: matrix.target == 'macOS'
         run: flutter test integration_test -d macos
-      - if: matrix.target == 'iOS'
-        run: flutter test integration_test -d "$SIMULATOR_UDID" --verbose
       - if: matrix.target == 'Linux'
         run: xvfb-run -a flutter test integration_test -d linux
       - if: matrix.target == 'Windows'
