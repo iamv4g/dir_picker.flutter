@@ -1,0 +1,135 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Cancel superseded runs on PRs only. Every commit on main gets a full run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  analyze-test:
+    name: Analyze & test (Flutter ${{ matrix.flutter-version || 'stable' }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Minimum supported Flutter (pubspec environment) and latest stable.
+        flutter-version: ['3.44.0', '']
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ matrix.flutter-version }}
+          cache: true
+      - run: flutter pub get
+      # The formatter's output differs between SDK versions, so only check it
+      # on latest stable, which is what pub.dev scores against.
+      - name: Check formatting
+        if: matrix.flutter-version == ''
+        run: dart format --output=none --set-exit-if-changed .
+      - run: flutter analyze
+      - run: flutter test
+      - name: Publish dry run
+        if: matrix.flutter-version == ''
+        run: flutter pub publish --dry-run
+
+  pana:
+    name: pub.dev score
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: dart pub global activate pana
+      # Fails if any pub point is lost. A new major release of a dependency
+      # also costs points, so this job can fail without a code change.
+      - run: dart pub global run pana --no-warning --exit-code-threshold 0 .
+
+  build-web:
+    name: Build example (web)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: example
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter build web
+      - run: flutter build web --wasm
+
+  build-android:
+    name: Build example (Android)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: example
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter build apk --debug
+
+  build-linux:
+    name: Build example (Linux)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: example
+    steps:
+      - uses: actions/checkout@v7
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter build linux --debug
+
+  build-darwin:
+    name: Build example (iOS & macOS)
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: example
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter build ios --debug --no-codesign
+      - run: flutter build macos --debug
+
+  build-windows:
+    name: Build example (Windows)
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: example
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter build windows --debug
