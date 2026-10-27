@@ -18,6 +18,20 @@ void main() {
     },
   );
 
+  test('WebPickedLocation can be checked for on every platform', () {
+    // Compiling this file on native is the real check: the stub must declare
+    // the same members as the web class, or the README example breaks.
+    String describe(PickedLocation location) => switch (location) {
+      WebPickedLocation() => 'web:${location.name}:${location.handle}',
+      _ => 'native:${location.uri}',
+    };
+
+    expect(
+      describe(IOPickedLocation(Uri.directory('/tmp/example'))),
+      'native:file:///tmp/example/',
+    );
+  });
+
   test('FileSystemEntry.fromJson parses nullable fields', () {
     final entry = FileSystemEntry.fromJson({
       'name': 'nested',
