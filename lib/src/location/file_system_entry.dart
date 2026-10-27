@@ -35,13 +35,13 @@ class FileSystemEntry {
   final DateTime? lastModified;
 
   Map<String, Object?> toJson() => {
-        'name': name,
-        'relativePath': relativePath,
-        'isDirectory': isDirectory,
-        'uri': uri?.toString(),
-        'size': size,
-        'lastModified': lastModified?.millisecondsSinceEpoch,
-      };
+    'name': name,
+    'relativePath': relativePath,
+    'isDirectory': isDirectory,
+    'uri': uri?.toString(),
+    'size': size,
+    'lastModified': lastModified?.millisecondsSinceEpoch,
+  };
 
   @override
   String toString() =>

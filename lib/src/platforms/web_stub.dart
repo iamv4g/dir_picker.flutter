@@ -14,6 +14,5 @@ class DirPickerWeb extends DirPickerPlatform {
   Future<List<FileSystemEntry>> listEntries(
     PickedLocation location, {
     bool recursive = false,
-  }) =>
-      throw UnsupportedError('DirPicker is not supported on this platform.');
+  }) => throw UnsupportedError('DirPicker is not supported on this platform.');
 }

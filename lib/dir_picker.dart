@@ -60,9 +60,5 @@ class DirPicker {
   static Future<List<FileSystemEntry>> listEntries(
     PickedLocation location, {
     bool recursive = false,
-  }) =>
-      DirPickerPlatform.instance.listEntries(
-        location,
-        recursive: recursive,
-      );
+  }) => DirPickerPlatform.instance.listEntries(location, recursive: recursive);
 }

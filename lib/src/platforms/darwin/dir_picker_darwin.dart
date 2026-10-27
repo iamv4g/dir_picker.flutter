@@ -19,9 +19,7 @@ class DirPickerDarwin extends DirPickerPlatform {
     final dylib = DynamicLibrary.process();
     _bindings = native.DirPickerBindings(dylib);
 
-    final result = _bindings.initDartApiDl(
-      NativeApi.initializeApiDLData,
-    );
+    final result = _bindings.initDartApiDl(NativeApi.initializeApiDLData);
     if (result != 0) {
       throw StateError('Failed to initialize Dart API DL (code: $result)');
     }
@@ -61,9 +59,7 @@ class DirPickerDarwin extends DirPickerPlatform {
           completer.completeError(Exception('$code: $msg'));
           return;
         default:
-          completer.completeError(
-            StateError('Unknown message type: $type'),
-          );
+          completer.completeError(StateError('Unknown message type: $type'));
           return;
       }
     });
@@ -127,9 +123,7 @@ class DirPickerDarwin extends DirPickerPlatform {
           completer.completeError(Exception('$code: $error'));
           return;
         default:
-          completer.completeError(
-            StateError('Unknown message type: $type'),
-          );
+          completer.completeError(StateError('Unknown message type: $type'));
           return;
       }
     });
