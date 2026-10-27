@@ -8,36 +8,32 @@ import 'dart:ffi' as ffi;
 class DirPickerBindings {
   /// Holds the symbol lookup function.
   final ffi.Pointer<T> Function<T extends ffi.NativeType>(String symbolName)
-      _lookup;
+  _lookup;
 
   /// The symbols are looked up in [dynamicLibrary].
   DirPickerBindings(ffi.DynamicLibrary dynamicLibrary)
-      : _lookup = dynamicLibrary.lookup;
+    : _lookup = dynamicLibrary.lookup;
 
   /// The symbols are looked up with [lookup].
   DirPickerBindings.fromLookup(
-      ffi.Pointer<T> Function<T extends ffi.NativeType>(String symbolName)
-          lookup)
-      : _lookup = lookup;
+    ffi.Pointer<T> Function<T extends ffi.NativeType>(String symbolName) lookup,
+  ) : _lookup = lookup;
 
   /// Initialize Dart API for NativePort communication.
   /// Must be called before using dir_picker_pick.
   ///
   /// @param data Pointer from NativeApi.initializeApiDLData
   /// @return 0 on success, -1 on failure
-  int initDartApiDl(
-    ffi.Pointer<ffi.Void> data,
-  ) {
-    return _initDartApiDl(
-      data,
-    );
+  int initDartApiDl(ffi.Pointer<ffi.Void> data) {
+    return _initDartApiDl(data);
   }
 
   late final _initDartApiDlPtr =
       _lookup<ffi.NativeFunction<ffi.IntPtr Function(ffi.Pointer<ffi.Void>)>>(
-          'dir_picker_init_dart_api_dl');
-  late final _initDartApiDl =
-      _initDartApiDlPtr.asFunction<int Function(ffi.Pointer<ffi.Void>)>();
+        'dir_picker_init_dart_api_dl',
+      );
+  late final _initDartApiDl = _initDartApiDlPtr
+      .asFunction<int Function(ffi.Pointer<ffi.Void>)>();
 
   /// Show a directory picker dialog and report the result via NativePort.
   ///
@@ -54,19 +50,23 @@ class DirPickerBindings {
     ffi.Pointer<ffi.Char> accept_label,
     ffi.Pointer<ffi.Char> message,
   ) {
-    return _pick(
-      native_port,
-      accept_label,
-      message,
-    );
+    return _pick(native_port, accept_label, message);
   }
 
-  late final _pickPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Int64, ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Char>)>>('dir_picker_pick');
-  late final _pick = _pickPtr.asFunction<
-      void Function(int, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
+  late final _pickPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Int64,
+            ffi.Pointer<ffi.Char>,
+            ffi.Pointer<ffi.Char>,
+          )
+        >
+      >('dir_picker_pick');
+  late final _pick = _pickPtr
+      .asFunction<
+        void Function(int, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)
+      >();
 
   /// List directory entries and report the result via NativePort.
   ///
@@ -77,22 +77,16 @@ class DirPickerBindings {
   /// @param native_port   Dart NativePort for result reporting
   /// @param uri           Directory URI (nullable only for invalid input handling)
   /// @param recursive     Whether to walk nested descendants
-  void listEntries(
-    int native_port,
-    ffi.Pointer<ffi.Char> uri,
-    bool recursive,
-  ) {
-    return _listEntries(
-      native_port,
-      uri,
-      recursive,
-    );
+  void listEntries(int native_port, ffi.Pointer<ffi.Char> uri, bool recursive) {
+    return _listEntries(native_port, uri, recursive);
   }
 
-  late final _listEntriesPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Int64, ffi.Pointer<ffi.Char>,
-              ffi.Bool)>>('dir_picker_list_entries');
+  late final _listEntriesPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(ffi.Int64, ffi.Pointer<ffi.Char>, ffi.Bool)
+        >
+      >('dir_picker_list_entries');
   late final _listEntries = _listEntriesPtr
       .asFunction<void Function(int, ffi.Pointer<ffi.Char>, bool)>();
 }

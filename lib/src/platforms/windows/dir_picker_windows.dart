@@ -71,33 +71,38 @@ base class _GUID extends Struct {
 
 final _ole32 = DynamicLibrary.open('ole32.dll');
 
-final _coInitializeEx = _ole32.lookupFunction<HRESULT Function(LPVOID, DWORD),
-    int Function(Pointer<Void>, int)>('CoInitializeEx');
+final _coInitializeEx = _ole32
+    .lookupFunction<
+      HRESULT Function(LPVOID, DWORD),
+      int Function(Pointer<Void>, int)
+    >('CoInitializeEx');
 
 final _coUninitialize = _ole32.lookupFunction<Void Function(), void Function()>(
   'CoUninitialize',
 );
 
-final _coCreateInstance = _ole32.lookupFunction<
-    HRESULT Function(
-      Pointer<_GUID>,
-      LPVOID,
-      DWORD,
-      Pointer<_GUID>,
-      Pointer<Pointer<Void>>,
-    ),
-    int Function(
-      Pointer<_GUID>,
-      Pointer<Void>,
-      int,
-      Pointer<_GUID>,
-      Pointer<Pointer<Void>>,
-    )>('CoCreateInstance');
+final _coCreateInstance = _ole32
+    .lookupFunction<
+      HRESULT Function(
+        Pointer<_GUID>,
+        LPVOID,
+        DWORD,
+        Pointer<_GUID>,
+        Pointer<Pointer<Void>>,
+      ),
+      int Function(
+        Pointer<_GUID>,
+        Pointer<Void>,
+        int,
+        Pointer<_GUID>,
+        Pointer<Pointer<Void>>,
+      )
+    >('CoCreateInstance');
 
-final _coTaskMemFree =
-    _ole32.lookupFunction<Void Function(LPVOID), void Function(Pointer<Void>)>(
-  'CoTaskMemFree',
-);
+final _coTaskMemFree = _ole32
+    .lookupFunction<Void Function(LPVOID), void Function(Pointer<Void>)>(
+      'CoTaskMemFree',
+    );
 
 // ─────────────────────────────────────────────────────────────────────────────
 // COM vtable helper
@@ -130,23 +135,23 @@ typedef _ShowNative = HRESULT Function(Pointer<Void>, IntPtr);
 typedef _ShowDart = int Function(Pointer<Void>, int);
 
 // IFileDialog::GetResult (vtable index 20)
-typedef _GetResultNative = HRESULT Function(
-    Pointer<Void>, Pointer<Pointer<Void>>);
+typedef _GetResultNative =
+    HRESULT Function(Pointer<Void>, Pointer<Pointer<Void>>);
 typedef _GetResultDart = int Function(Pointer<Void>, Pointer<Pointer<Void>>);
 
 // IShellItem::GetDisplayName (vtable index 5)
-typedef _GetDisplayNameNative = HRESULT Function(
-    Pointer<Void>, Uint32, Pointer<Pointer<Utf16>>);
-typedef _GetDisplayNameDart = int Function(
-    Pointer<Void>, int, Pointer<Pointer<Utf16>>);
+typedef _GetDisplayNameNative =
+    HRESULT Function(Pointer<Void>, Uint32, Pointer<Pointer<Utf16>>);
+typedef _GetDisplayNameDart =
+    int Function(Pointer<Void>, int, Pointer<Pointer<Utf16>>);
 
 // IFileDialog::SetTitle (vtable index 17)
 typedef _SetTitleNative = HRESULT Function(Pointer<Void>, Pointer<Utf16>);
 typedef _SetTitleDart = int Function(Pointer<Void>, Pointer<Utf16>);
 
 // IFileDialog::SetOkButtonLabel (vtable index 18)
-typedef _SetOkButtonLabelNative = HRESULT Function(
-    Pointer<Void>, Pointer<Utf16>);
+typedef _SetOkButtonLabelNative =
+    HRESULT Function(Pointer<Void>, Pointer<Utf16>);
 typedef _SetOkButtonLabelDart = int Function(Pointer<Void>, Pointer<Utf16>);
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -216,8 +221,10 @@ class DirPickerWindows extends DirPickerPlatform {
       // Set dialog title
       final titlePtr = title.toNativeUtf16();
       try {
-        final setTitle = _vtableEntry<_SetTitleNative>(dialog, 17)
-            .asFunction<_SetTitleDart>();
+        final setTitle = _vtableEntry<_SetTitleNative>(
+          dialog,
+          17,
+        ).asFunction<_SetTitleDart>();
         setTitle(dialog, titlePtr);
       } finally {
         calloc.free(titlePtr);
@@ -226,9 +233,10 @@ class DirPickerWindows extends DirPickerPlatform {
       // Set OK button label
       final labelPtr = acceptLabel.toNativeUtf16();
       try {
-        final setOkButtonLabel =
-            _vtableEntry<_SetOkButtonLabelNative>(dialog, 18)
-                .asFunction<_SetOkButtonLabelDart>();
+        final setOkButtonLabel = _vtableEntry<_SetOkButtonLabelNative>(
+          dialog,
+          18,
+        ).asFunction<_SetOkButtonLabelDart>();
         setOkButtonLabel(dialog, labelPtr);
       } finally {
         calloc.free(labelPtr);
@@ -291,8 +299,10 @@ class DirPickerWindows extends DirPickerPlatform {
   }
 
   static void _release(Pointer<Void> comObj) {
-    final release =
-        _vtableEntry<_ReleaseNative>(comObj, 2).asFunction<_ReleaseDart>();
+    final release = _vtableEntry<_ReleaseNative>(
+      comObj,
+      2,
+    ).asFunction<_ReleaseDart>();
     release(comObj);
   }
 
@@ -319,10 +329,9 @@ class DirPickerWindows extends DirPickerPlatform {
     )) {
       final stat = await entity.stat();
       final relativePath = p.posix.normalize(
-        p.windows.relative(entity.path, from: directory.path).replaceAll(
-              r'\',
-              '/',
-            ),
+        p.windows
+            .relative(entity.path, from: directory.path)
+            .replaceAll(r'\', '/'),
       );
       entries.add(
         FileSystemEntry(

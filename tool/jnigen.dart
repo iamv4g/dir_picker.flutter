@@ -32,20 +32,19 @@ void main(List<String> args) async {
 
   // Step 2 — Generate JNI bindings
   print('Generating JNI bindings...');
+  final bindingsUri = packageRoot.resolve(
+    'lib/src/platforms/android/native_bindings.g.dart',
+  );
   await generateJniBindings(
     Config(
       outputConfig: OutputConfig(
         dartConfig: DartCodeOutputConfig(
-          path: packageRoot.resolve(
-            'lib/src/platforms/android/native_bindings.g.dart',
-          ),
+          path: bindingsUri,
           structure: OutputStructure.singleFile,
         ),
       ),
       sourcePath: [
-        packageRoot.resolve(
-          'android/src/main/kotlin/com/vanvixi/dir_picker/',
-        ),
+        packageRoot.resolve('android/src/main/kotlin/com/vanvixi/dir_picker/'),
       ],
       classPath: [
         packageRoot.resolve(
@@ -60,5 +59,24 @@ void main(List<String> args) async {
     ),
   );
 
+  // Step 3 — Silence lints that JNIgen's own ignore list misses, so the
+  // generated file doesn't cost pub.dev static analysis points.
+  _addIgnoreForFile(File.fromUri(bindingsUri), _extraIgnoredLints);
+
   print('JNI bindings generated successfully.');
+}
+
+const _extraIgnoredLints = ['prefer_initializing_formals'];
+
+/// Inserts `// ignore_for_file: <lint>` after the last existing ignore line.
+void _addIgnoreForFile(File file, List<String> lints) {
+  final lines = file.readAsLinesSync();
+  final lastIgnore = lines.lastIndexWhere(
+    (line) => line.startsWith('// ignore_for_file:'),
+  );
+  final missing = lints
+      .map((lint) => '// ignore_for_file: $lint')
+      .where((line) => !lines.contains(line));
+  lines.insertAll(lastIgnore + 1, missing);
+  file.writeAsStringSync('${lines.join('\n')}\n');
 }

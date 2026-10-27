@@ -2,19 +2,21 @@ import 'package:dir_picker/dir_picker.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('DirPicker.listEntries forwards to the platform implementation',
-      () async {
-    final platform = _FakePlatform();
-    DirPickerPlatform.instance = platform;
-    final location = IOPickedLocation(Uri.directory('/tmp/example'));
+  test(
+    'DirPicker.listEntries forwards to the platform implementation',
+    () async {
+      final platform = _FakePlatform();
+      DirPickerPlatform.instance = platform;
+      final location = IOPickedLocation(Uri.directory('/tmp/example'));
 
-    final entries = await DirPicker.listEntries(location, recursive: true);
+      final entries = await DirPicker.listEntries(location, recursive: true);
 
-    expect(platform.location, same(location));
-    expect(platform.recursive, isTrue);
-    expect(entries, hasLength(1));
-    expect(entries.single.relativePath, 'child.txt');
-  });
+      expect(platform.location, same(location));
+      expect(platform.recursive, isTrue);
+      expect(entries, hasLength(1));
+      expect(entries.single.relativePath, 'child.txt');
+    },
+  );
 
   test('FileSystemEntry.fromJson parses nullable fields', () {
     final entry = FileSystemEntry.fromJson({

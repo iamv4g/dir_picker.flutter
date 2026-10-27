@@ -13,8 +13,7 @@ class DirPickerWindows extends DirPickerPlatform {
   Future<List<FileSystemEntry>> listEntries(
     PickedLocation location, {
     bool recursive = false,
-  }) =>
-      throw UnsupportedError('DirPicker is not supported on this platform.');
+  }) => throw UnsupportedError('DirPicker is not supported on this platform.');
 }
 
 class DirPickerLinux extends DirPickerPlatform {
@@ -26,8 +25,7 @@ class DirPickerLinux extends DirPickerPlatform {
   Future<List<FileSystemEntry>> listEntries(
     PickedLocation location, {
     bool recursive = false,
-  }) =>
-      throw UnsupportedError('DirPicker is not supported on this platform.');
+  }) => throw UnsupportedError('DirPicker is not supported on this platform.');
 }
 
 class DirPickerAndroid extends DirPickerPlatform {
@@ -39,8 +37,7 @@ class DirPickerAndroid extends DirPickerPlatform {
   Future<List<FileSystemEntry>> listEntries(
     PickedLocation location, {
     bool recursive = false,
-  }) =>
-      throw UnsupportedError('DirPicker is not supported on this platform.');
+  }) => throw UnsupportedError('DirPicker is not supported on this platform.');
 }
 
 class DirPickerDarwin extends DirPickerPlatform {
@@ -52,6 +49,5 @@ class DirPickerDarwin extends DirPickerPlatform {
   Future<List<FileSystemEntry>> listEntries(
     PickedLocation location, {
     bool recursive = false,
-  }) =>
-      throw UnsupportedError('DirPicker is not supported on this platform.');
+  }) => throw UnsupportedError('DirPicker is not supported on this platform.');
 }

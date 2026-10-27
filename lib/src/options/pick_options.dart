@@ -2,20 +2,14 @@
 sealed class PickOptions {
   const factory PickOptions.android({bool shouldPersist}) = AndroidOptions;
 
-  const factory PickOptions.macos({
-    String acceptLabel,
-    String message,
-  }) = MacosOptions;
+  const factory PickOptions.macos({String acceptLabel, String message}) =
+      MacosOptions;
 
-  const factory PickOptions.linux({
-    String title,
-    String acceptLabel,
-  }) = LinuxOptions;
+  const factory PickOptions.linux({String title, String acceptLabel}) =
+      LinuxOptions;
 
-  const factory PickOptions.windows({
-    String title,
-    String acceptLabel,
-  }) = WindowsOptions;
+  const factory PickOptions.windows({String title, String acceptLabel}) =
+      WindowsOptions;
 }
 
 /// Options for directory picking on Android.

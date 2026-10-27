@@ -29,6 +29,7 @@
 // ignore_for_file: unused_local_variable
 // ignore_for_file: unused_shown_name
 // ignore_for_file: use_super_parameters
+// ignore_for_file: prefer_initializing_formals
 
 import 'dart:core' as core$_;
 import 'dart:core' show Object, String;
@@ -41,8 +42,9 @@ const _$jniVersionCheck = jni$_.JniVersionCheck(1, 0);
 /// from: `com.vanvixi.dir_picker.DirPicker$Companion`
 extension type DirPicker$Companion._(jni$_.JObject _$this)
     implements jni$_.JObject {
-  static final _class =
-      jni$_.JClass.forName(r'com/vanvixi/dir_picker/DirPicker$Companion');
+  static final _class = jni$_.JClass.forName(
+    r'com/vanvixi/dir_picker/DirPicker$Companion',
+  );
 
   /// The type which includes information such as the signature of this class.
   static const jni$_.JType<DirPicker$Companion> type =
@@ -51,130 +53,166 @@ extension type DirPicker$Companion._(jni$_.JObject _$this)
     r'(Lkotlin/jvm/internal/DefaultConstructorMarker;)V',
   );
 
-  static final _new$ = jni$_.ProtectedJniExtensions.lookup<
-              jni$_.NativeFunction<
-                  jni$_.JniResult Function(
-                      jni$_.Pointer<jni$_.Void>,
-                      jni$_.JMethodIDPtr,
-                      jni$_.VarArgs<(jni$_.Pointer<jni$_.Void>,)>)>>(
-          'globalEnv_NewObject')
-      .asFunction<
-          jni$_.JniResult Function(jni$_.Pointer<jni$_.Void>,
-              jni$_.JMethodIDPtr, jni$_.Pointer<jni$_.Void>)>();
+  static final _new$ =
+      jni$_.ProtectedJniExtensions.lookup<
+            jni$_.NativeFunction<
+              jni$_.JniResult Function(
+                jni$_.Pointer<jni$_.Void>,
+                jni$_.JMethodIDPtr,
+                jni$_.VarArgs<(jni$_.Pointer<jni$_.Void>,)>,
+              )
+            >
+          >('globalEnv_NewObject')
+          .asFunction<
+            jni$_.JniResult Function(
+              jni$_.Pointer<jni$_.Void>,
+              jni$_.JMethodIDPtr,
+              jni$_.Pointer<jni$_.Void>,
+            )
+          >();
 
   /// from: `synthetic public void <init>(kotlin.jvm.internal.DefaultConstructorMarker defaultConstructorMarker)`
   /// The returned object must be released after use, by calling the [release] method.
-  factory DirPicker$Companion(
-    jni$_.JObject? defaultConstructorMarker,
-  ) {
+  factory DirPicker$Companion(jni$_.JObject? defaultConstructorMarker) {
     final _$defaultConstructorMarker =
         defaultConstructorMarker?.reference ?? jni$_.jNullReference;
-    return _new$(_class.reference.pointer, _id_new$.pointer,
-            _$defaultConstructorMarker.pointer)
-        .object<DirPicker$Companion>();
+    return _new$(
+      _class.reference.pointer,
+      _id_new$.pointer,
+      _$defaultConstructorMarker.pointer,
+    ).object<DirPicker$Companion>();
   }
 }
 
 extension DirPicker$Companion$$Methods on DirPicker$Companion {
-  static final _id_get$applicationContext =
-      DirPicker$Companion._class.instanceMethodId(
-    r'getApplicationContext',
-    r'()Landroid/content/Context;',
-  );
+  static final _id_get$applicationContext = DirPicker$Companion._class
+      .instanceMethodId(
+        r'getApplicationContext',
+        r'()Landroid/content/Context;',
+      );
 
-  static final _get$applicationContext = jni$_.ProtectedJniExtensions.lookup<
-          jni$_.NativeFunction<
+  static final _get$applicationContext =
+      jni$_.ProtectedJniExtensions.lookup<
+            jni$_.NativeFunction<
               jni$_.JniResult Function(
                 jni$_.Pointer<jni$_.Void>,
                 jni$_.JMethodIDPtr,
-              )>>('globalEnv_CallObjectMethod')
-      .asFunction<
-          jni$_.JniResult Function(
-            jni$_.Pointer<jni$_.Void>,
-            jni$_.JMethodIDPtr,
-          )>();
+              )
+            >
+          >('globalEnv_CallObjectMethod')
+          .asFunction<
+            jni$_.JniResult Function(
+              jni$_.Pointer<jni$_.Void>,
+              jni$_.JMethodIDPtr,
+            )
+          >();
 
   /// from: `public final android.content.Context getApplicationContext()`
   /// The returned object must be released after use, by calling the [release] method.
   jni$_.JObject? get applicationContext {
     return _get$applicationContext(
-            reference.pointer, _id_get$applicationContext.pointer)
-        .object<jni$_.JObject?>();
+      reference.pointer,
+      _id_get$applicationContext.pointer,
+    ).object<jni$_.JObject?>();
   }
 
-  static final _id_set$applicationContext =
-      DirPicker$Companion._class.instanceMethodId(
-    r'setApplicationContext',
-    r'(Landroid/content/Context;)V',
-  );
+  static final _id_set$applicationContext = DirPicker$Companion._class
+      .instanceMethodId(
+        r'setApplicationContext',
+        r'(Landroid/content/Context;)V',
+      );
 
-  static final _set$applicationContext = jni$_.ProtectedJniExtensions.lookup<
-              jni$_.NativeFunction<
-                  jni$_.JThrowablePtr Function(
-                      jni$_.Pointer<jni$_.Void>,
-                      jni$_.JMethodIDPtr,
-                      jni$_.VarArgs<(jni$_.Pointer<jni$_.Void>,)>)>>(
-          'globalEnv_CallVoidMethod')
-      .asFunction<
-          jni$_.JThrowablePtr Function(jni$_.Pointer<jni$_.Void>,
-              jni$_.JMethodIDPtr, jni$_.Pointer<jni$_.Void>)>();
+  static final _set$applicationContext =
+      jni$_.ProtectedJniExtensions.lookup<
+            jni$_.NativeFunction<
+              jni$_.JThrowablePtr Function(
+                jni$_.Pointer<jni$_.Void>,
+                jni$_.JMethodIDPtr,
+                jni$_.VarArgs<(jni$_.Pointer<jni$_.Void>,)>,
+              )
+            >
+          >('globalEnv_CallVoidMethod')
+          .asFunction<
+            jni$_.JThrowablePtr Function(
+              jni$_.Pointer<jni$_.Void>,
+              jni$_.JMethodIDPtr,
+              jni$_.Pointer<jni$_.Void>,
+            )
+          >();
 
   /// from: `public final void setApplicationContext(android.content.Context context)`
   set applicationContext(jni$_.JObject? context) {
     final _$context = context?.reference ?? jni$_.jNullReference;
-    _set$applicationContext(reference.pointer,
-            _id_set$applicationContext.pointer, _$context.pointer)
-        .check();
+    _set$applicationContext(
+      reference.pointer,
+      _id_set$applicationContext.pointer,
+      _$context.pointer,
+    ).check();
   }
 
-  static final _id_get$pickerHandler =
-      DirPicker$Companion._class.instanceMethodId(
-    r'getPickerHandler',
-    r'()Lcom/vanvixi/dir_picker/PickerHandler;',
-  );
+  static final _id_get$pickerHandler = DirPicker$Companion._class
+      .instanceMethodId(
+        r'getPickerHandler',
+        r'()Lcom/vanvixi/dir_picker/PickerHandler;',
+      );
 
-  static final _get$pickerHandler = jni$_.ProtectedJniExtensions.lookup<
-          jni$_.NativeFunction<
+  static final _get$pickerHandler =
+      jni$_.ProtectedJniExtensions.lookup<
+            jni$_.NativeFunction<
               jni$_.JniResult Function(
                 jni$_.Pointer<jni$_.Void>,
                 jni$_.JMethodIDPtr,
-              )>>('globalEnv_CallObjectMethod')
-      .asFunction<
-          jni$_.JniResult Function(
-            jni$_.Pointer<jni$_.Void>,
-            jni$_.JMethodIDPtr,
-          )>();
+              )
+            >
+          >('globalEnv_CallObjectMethod')
+          .asFunction<
+            jni$_.JniResult Function(
+              jni$_.Pointer<jni$_.Void>,
+              jni$_.JMethodIDPtr,
+            )
+          >();
 
   /// from: `public final com.vanvixi.dir_picker.PickerHandler getPickerHandler()`
   /// The returned object must be released after use, by calling the [release] method.
   jni$_.JObject? get pickerHandler {
-    return _get$pickerHandler(reference.pointer, _id_get$pickerHandler.pointer)
-        .object<jni$_.JObject?>();
+    return _get$pickerHandler(
+      reference.pointer,
+      _id_get$pickerHandler.pointer,
+    ).object<jni$_.JObject?>();
   }
 
-  static final _id_set$pickerHandler =
-      DirPicker$Companion._class.instanceMethodId(
-    r'setPickerHandler',
-    r'(Lcom/vanvixi/dir_picker/PickerHandler;)V',
-  );
+  static final _id_set$pickerHandler = DirPicker$Companion._class
+      .instanceMethodId(
+        r'setPickerHandler',
+        r'(Lcom/vanvixi/dir_picker/PickerHandler;)V',
+      );
 
-  static final _set$pickerHandler = jni$_.ProtectedJniExtensions.lookup<
-              jni$_.NativeFunction<
-                  jni$_.JThrowablePtr Function(
-                      jni$_.Pointer<jni$_.Void>,
-                      jni$_.JMethodIDPtr,
-                      jni$_.VarArgs<(jni$_.Pointer<jni$_.Void>,)>)>>(
-          'globalEnv_CallVoidMethod')
-      .asFunction<
-          jni$_.JThrowablePtr Function(jni$_.Pointer<jni$_.Void>,
-              jni$_.JMethodIDPtr, jni$_.Pointer<jni$_.Void>)>();
+  static final _set$pickerHandler =
+      jni$_.ProtectedJniExtensions.lookup<
+            jni$_.NativeFunction<
+              jni$_.JThrowablePtr Function(
+                jni$_.Pointer<jni$_.Void>,
+                jni$_.JMethodIDPtr,
+                jni$_.VarArgs<(jni$_.Pointer<jni$_.Void>,)>,
+              )
+            >
+          >('globalEnv_CallVoidMethod')
+          .asFunction<
+            jni$_.JThrowablePtr Function(
+              jni$_.Pointer<jni$_.Void>,
+              jni$_.JMethodIDPtr,
+              jni$_.Pointer<jni$_.Void>,
+            )
+          >();
 
   /// from: `public final void setPickerHandler(com.vanvixi.dir_picker.PickerHandler pickerHandler)`
   set pickerHandler(jni$_.JObject? pickerHandler) {
     final _$pickerHandler = pickerHandler?.reference ?? jni$_.jNullReference;
-    _set$pickerHandler(reference.pointer, _id_set$pickerHandler.pointer,
-            _$pickerHandler.pointer)
-        .check();
+    _set$pickerHandler(
+      reference.pointer,
+      _id_set$pickerHandler.pointer,
+      _$pickerHandler.pointer,
+    ).check();
   }
 
   static final _id_pick = DirPicker$Companion._class.instanceMethodId(
@@ -182,27 +220,34 @@ extension DirPicker$Companion$$Methods on DirPicker$Companion {
     r'(ZLcom/vanvixi/dir_picker/PickerCallback;)V',
   );
 
-  static final _pick = jni$_.ProtectedJniExtensions.lookup<
-              jni$_.NativeFunction<
-                  jni$_.JThrowablePtr Function(
-                      jni$_.Pointer<jni$_.Void>,
-                      jni$_.JMethodIDPtr,
-                      jni$_
-                          .VarArgs<(jni$_.Int32, jni$_.Pointer<jni$_.Void>)>)>>(
-          'globalEnv_CallVoidMethod')
-      .asFunction<
-          jni$_.JThrowablePtr Function(jni$_.Pointer<jni$_.Void>,
-              jni$_.JMethodIDPtr, core$_.int, jni$_.Pointer<jni$_.Void>)>();
+  static final _pick =
+      jni$_.ProtectedJniExtensions.lookup<
+            jni$_.NativeFunction<
+              jni$_.JThrowablePtr Function(
+                jni$_.Pointer<jni$_.Void>,
+                jni$_.JMethodIDPtr,
+                jni$_.VarArgs<(jni$_.Int32, jni$_.Pointer<jni$_.Void>)>,
+              )
+            >
+          >('globalEnv_CallVoidMethod')
+          .asFunction<
+            jni$_.JThrowablePtr Function(
+              jni$_.Pointer<jni$_.Void>,
+              jni$_.JMethodIDPtr,
+              core$_.int,
+              jni$_.Pointer<jni$_.Void>,
+            )
+          >();
 
   /// from: `public fun pick(shouldPersist: kotlin.Boolean, callback: com.vanvixi.dir_picker.PickerCallback): kotlin.Unit`
-  void pick(
-    core$_.bool z,
-    PickerCallback pickerCallback,
-  ) {
+  void pick(core$_.bool z, PickerCallback pickerCallback) {
     final _$pickerCallback = pickerCallback.reference;
-    _pick(reference.pointer, _id_pick.pointer, z ? 1 : 0,
-            _$pickerCallback.pointer)
-        .check();
+    _pick(
+      reference.pointer,
+      _id_pick.pointer,
+      z ? 1 : 0,
+      _$pickerCallback.pointer,
+    ).check();
   }
 
   static final _id_listEntries = DirPicker$Companion._class.instanceMethodId(
@@ -210,24 +255,31 @@ extension DirPicker$Companion$$Methods on DirPicker$Companion {
     r'(Ljava/lang/String;ZLcom/vanvixi/dir_picker/ListEntriesCallback;)V',
   );
 
-  static final _listEntries = jni$_.ProtectedJniExtensions.lookup<
-          jni$_.NativeFunction<
+  static final _listEntries =
+      jni$_.ProtectedJniExtensions.lookup<
+            jni$_.NativeFunction<
               jni$_.JThrowablePtr Function(
-                  jni$_.Pointer<jni$_.Void>,
-                  jni$_.JMethodIDPtr,
-                  jni$_.VarArgs<
-                      (
-                        jni$_.Pointer<jni$_.Void>,
-                        jni$_.Int32,
-                        jni$_.Pointer<jni$_.Void>
-                      )>)>>('globalEnv_CallVoidMethod')
-      .asFunction<
-          jni$_.JThrowablePtr Function(
+                jni$_.Pointer<jni$_.Void>,
+                jni$_.JMethodIDPtr,
+                jni$_.VarArgs<
+                  (
+                    jni$_.Pointer<jni$_.Void>,
+                    jni$_.Int32,
+                    jni$_.Pointer<jni$_.Void>,
+                  )
+                >,
+              )
+            >
+          >('globalEnv_CallVoidMethod')
+          .asFunction<
+            jni$_.JThrowablePtr Function(
               jni$_.Pointer<jni$_.Void>,
               jni$_.JMethodIDPtr,
               jni$_.Pointer<jni$_.Void>,
               core$_.int,
-              jni$_.Pointer<jni$_.Void>)>();
+              jni$_.Pointer<jni$_.Void>,
+            )
+          >();
 
   /// from: `public fun listEntries(treeUri: kotlin.String, recursive: kotlin.Boolean, callback: com.vanvixi.dir_picker.ListEntriesCallback): kotlin.Unit`
   void listEntries(
@@ -237,9 +289,13 @@ extension DirPicker$Companion$$Methods on DirPicker$Companion {
   ) {
     final _$string = string.reference;
     final _$listEntriesCallback = listEntriesCallback.reference;
-    _listEntries(reference.pointer, _id_listEntries.pointer, _$string.pointer,
-            z ? 1 : 0, _$listEntriesCallback.pointer)
-        .check();
+    _listEntries(
+      reference.pointer,
+      _id_listEntries.pointer,
+      _$string.pointer,
+      z ? 1 : 0,
+      _$listEntriesCallback.pointer,
+    ).check();
   }
 }
 
@@ -255,8 +311,9 @@ final class $DirPicker$Companion$Type$
 
 /// from: `com.vanvixi.dir_picker.DirPicker`
 extension type DirPicker._(jni$_.JObject _$this) implements jni$_.JObject {
-  static final _class =
-      jni$_.JClass.forName(r'com/vanvixi/dir_picker/DirPicker');
+  static final _class = jni$_.JClass.forName(
+    r'com/vanvixi/dir_picker/DirPicker',
+  );
 
   /// The type which includes information such as the signature of this class.
   static const jni$_.JType<DirPicker> type = $DirPicker$Type$();
@@ -271,27 +328,31 @@ extension type DirPicker._(jni$_.JObject _$this) implements jni$_.JObject {
       _id_Companion.get(_class, DirPicker$Companion.type)
           as DirPicker$Companion;
 
-  static final _id_new$ = _class.constructorId(
-    r'()V',
-  );
+  static final _id_new$ = _class.constructorId(r'()V');
 
-  static final _new$ = jni$_.ProtectedJniExtensions.lookup<
-          jni$_.NativeFunction<
+  static final _new$ =
+      jni$_.ProtectedJniExtensions.lookup<
+            jni$_.NativeFunction<
               jni$_.JniResult Function(
                 jni$_.Pointer<jni$_.Void>,
                 jni$_.JMethodIDPtr,
-              )>>('globalEnv_NewObject')
-      .asFunction<
-          jni$_.JniResult Function(
-            jni$_.Pointer<jni$_.Void>,
-            jni$_.JMethodIDPtr,
-          )>();
+              )
+            >
+          >('globalEnv_NewObject')
+          .asFunction<
+            jni$_.JniResult Function(
+              jni$_.Pointer<jni$_.Void>,
+              jni$_.JMethodIDPtr,
+            )
+          >();
 
   /// from: `public void <init>()`
   /// The returned object must be released after use, by calling the [release] method.
   factory DirPicker() {
-    return _new$(_class.reference.pointer, _id_new$.pointer)
-        .object<DirPicker>();
+    return _new$(
+      _class.reference.pointer,
+      _id_new$.pointer,
+    ).object<DirPicker>();
   }
 
   static final _id_pick = _class.staticMethodId(
@@ -299,27 +360,34 @@ extension type DirPicker._(jni$_.JObject _$this) implements jni$_.JObject {
     r'(ZLcom/vanvixi/dir_picker/PickerCallback;)V',
   );
 
-  static final _pick = jni$_.ProtectedJniExtensions.lookup<
-              jni$_.NativeFunction<
-                  jni$_.JThrowablePtr Function(
-                      jni$_.Pointer<jni$_.Void>,
-                      jni$_.JMethodIDPtr,
-                      jni$_
-                          .VarArgs<(jni$_.Int32, jni$_.Pointer<jni$_.Void>)>)>>(
-          'globalEnv_CallStaticVoidMethod')
-      .asFunction<
-          jni$_.JThrowablePtr Function(jni$_.Pointer<jni$_.Void>,
-              jni$_.JMethodIDPtr, core$_.int, jni$_.Pointer<jni$_.Void>)>();
+  static final _pick =
+      jni$_.ProtectedJniExtensions.lookup<
+            jni$_.NativeFunction<
+              jni$_.JThrowablePtr Function(
+                jni$_.Pointer<jni$_.Void>,
+                jni$_.JMethodIDPtr,
+                jni$_.VarArgs<(jni$_.Int32, jni$_.Pointer<jni$_.Void>)>,
+              )
+            >
+          >('globalEnv_CallStaticVoidMethod')
+          .asFunction<
+            jni$_.JThrowablePtr Function(
+              jni$_.Pointer<jni$_.Void>,
+              jni$_.JMethodIDPtr,
+              core$_.int,
+              jni$_.Pointer<jni$_.Void>,
+            )
+          >();
 
   /// from: `static public final void pick(boolean z, com.vanvixi.dir_picker.PickerCallback pickerCallback)`
-  static void pick(
-    core$_.bool z,
-    PickerCallback pickerCallback,
-  ) {
+  static void pick(core$_.bool z, PickerCallback pickerCallback) {
     final _$pickerCallback = pickerCallback.reference;
-    _pick(_class.reference.pointer, _id_pick.pointer, z ? 1 : 0,
-            _$pickerCallback.pointer)
-        .check();
+    _pick(
+      _class.reference.pointer,
+      _id_pick.pointer,
+      z ? 1 : 0,
+      _$pickerCallback.pointer,
+    ).check();
   }
 
   static final _id_listEntries = _class.staticMethodId(
@@ -327,24 +395,31 @@ extension type DirPicker._(jni$_.JObject _$this) implements jni$_.JObject {
     r'(Ljava/lang/String;ZLcom/vanvixi/dir_picker/ListEntriesCallback;)V',
   );
 
-  static final _listEntries = jni$_.ProtectedJniExtensions.lookup<
-          jni$_.NativeFunction<
+  static final _listEntries =
+      jni$_.ProtectedJniExtensions.lookup<
+            jni$_.NativeFunction<
               jni$_.JThrowablePtr Function(
-                  jni$_.Pointer<jni$_.Void>,
-                  jni$_.JMethodIDPtr,
-                  jni$_.VarArgs<
-                      (
-                        jni$_.Pointer<jni$_.Void>,
-                        jni$_.Int32,
-                        jni$_.Pointer<jni$_.Void>
-                      )>)>>('globalEnv_CallStaticVoidMethod')
-      .asFunction<
-          jni$_.JThrowablePtr Function(
+                jni$_.Pointer<jni$_.Void>,
+                jni$_.JMethodIDPtr,
+                jni$_.VarArgs<
+                  (
+                    jni$_.Pointer<jni$_.Void>,
+                    jni$_.Int32,
+                    jni$_.Pointer<jni$_.Void>,
+                  )
+                >,
+              )
+            >
+          >('globalEnv_CallStaticVoidMethod')
+          .asFunction<
+            jni$_.JThrowablePtr Function(
               jni$_.Pointer<jni$_.Void>,
               jni$_.JMethodIDPtr,
               jni$_.Pointer<jni$_.Void>,
               core$_.int,
-              jni$_.Pointer<jni$_.Void>)>();
+              jni$_.Pointer<jni$_.Void>,
+            )
+          >();
 
   /// from: `static public final void listEntries(java.lang.String string, boolean z, com.vanvixi.dir_picker.ListEntriesCallback listEntriesCallback)`
   static void listEntries(
@@ -354,9 +429,13 @@ extension type DirPicker._(jni$_.JObject _$this) implements jni$_.JObject {
   ) {
     final _$string = string.reference;
     final _$listEntriesCallback = listEntriesCallback.reference;
-    _listEntries(_class.reference.pointer, _id_listEntries.pointer,
-            _$string.pointer, z ? 1 : 0, _$listEntriesCallback.pointer)
-        .check();
+    _listEntries(
+      _class.reference.pointer,
+      _id_listEntries.pointer,
+      _$string.pointer,
+      z ? 1 : 0,
+      _$listEntriesCallback.pointer,
+    ).check();
   }
 }
 
@@ -372,8 +451,9 @@ final class $DirPicker$Type$ extends jni$_.JType<DirPicker> {
 /// from: `com.vanvixi.dir_picker.ListEntriesCallback`
 extension type ListEntriesCallback._(jni$_.JObject _$this)
     implements jni$_.JObject {
-  static final _class =
-      jni$_.JClass.forName(r'com/vanvixi/dir_picker/ListEntriesCallback');
+  static final _class = jni$_.JClass.forName(
+    r'com/vanvixi/dir_picker/ListEntriesCallback',
+  );
 
   /// The type which includes information such as the signature of this class.
   static const jni$_.JType<ListEntriesCallback> type =
@@ -388,19 +468,16 @@ extension type ListEntriesCallback._(jni$_.JObject _$this)
   ) {
     return _$invokeMethod(
       port,
-      jni$_.MethodInvocation.fromAddresses(
-        0,
-        descriptor.address,
-        args.address,
-      ),
+      jni$_.MethodInvocation.fromAddresses(0, descriptor.address, args.address),
     );
   }
 
   static final jni$_.Pointer<
-          jni$_.NativeFunction<
-              jni$_.JObjectPtr Function(
-                  jni$_.Int64, jni$_.JObjectPtr, jni$_.JObjectPtr)>>
-      _$invokePointer = jni$_.Pointer.fromFunction(_$invoke);
+    jni$_.NativeFunction<
+      jni$_.JObjectPtr Function(jni$_.Int64, jni$_.JObjectPtr, jni$_.JObjectPtr)
+    >
+  >
+  _$invokePointer = jni$_.Pointer.fromFunction(_$invoke);
 
   static jni$_.Pointer<jni$_.Void> _$invokeMethod(
     core$_.int $p,
@@ -410,9 +487,7 @@ extension type ListEntriesCallback._(jni$_.JObject _$this)
       final $d = $i.methodDescriptor.toDartString(releaseOriginal: true);
       final $a = $i.args;
       if ($d == r'onSuccess(Ljava/lang/String;)V') {
-        _$impls[$p]!.onSuccess(
-          ($a![0] as jni$_.JString),
-        );
+        _$impls[$p]!.onSuccess(($a![0] as jni$_.JString));
         return jni$_.nullptr;
       }
       if ($d == r'onError(Ljava/lang/String;Ljava/lang/String;)V') {
@@ -457,9 +532,7 @@ extension type ListEntriesCallback._(jni$_.JObject _$this)
     _$impls[$a] = $impl;
   }
 
-  factory ListEntriesCallback.implement(
-    $ListEntriesCallback $impl,
-  ) {
+  factory ListEntriesCallback.implement($ListEntriesCallback $impl) {
     final $i = jni$_.JImplementer();
     implementIn($i, $impl);
     return $i.implement<ListEntriesCallback>();
@@ -472,24 +545,32 @@ extension ListEntriesCallback$$Methods on ListEntriesCallback {
     r'(Ljava/lang/String;)V',
   );
 
-  static final _onSuccess = jni$_.ProtectedJniExtensions.lookup<
-              jni$_.NativeFunction<
-                  jni$_.JThrowablePtr Function(
-                      jni$_.Pointer<jni$_.Void>,
-                      jni$_.JMethodIDPtr,
-                      jni$_.VarArgs<(jni$_.Pointer<jni$_.Void>,)>)>>(
-          'globalEnv_CallVoidMethod')
-      .asFunction<
-          jni$_.JThrowablePtr Function(jni$_.Pointer<jni$_.Void>,
-              jni$_.JMethodIDPtr, jni$_.Pointer<jni$_.Void>)>();
+  static final _onSuccess =
+      jni$_.ProtectedJniExtensions.lookup<
+            jni$_.NativeFunction<
+              jni$_.JThrowablePtr Function(
+                jni$_.Pointer<jni$_.Void>,
+                jni$_.JMethodIDPtr,
+                jni$_.VarArgs<(jni$_.Pointer<jni$_.Void>,)>,
+              )
+            >
+          >('globalEnv_CallVoidMethod')
+          .asFunction<
+            jni$_.JThrowablePtr Function(
+              jni$_.Pointer<jni$_.Void>,
+              jni$_.JMethodIDPtr,
+              jni$_.Pointer<jni$_.Void>,
+            )
+          >();
 
   /// from: `public fun onSuccess(json: kotlin.String): kotlin.Unit`
-  void onSuccess(
-    jni$_.JString string,
-  ) {
+  void onSuccess(jni$_.JString string) {
     final _$string = string.reference;
-    _onSuccess(reference.pointer, _id_onSuccess.pointer, _$string.pointer)
-        .check();
+    _onSuccess(
+      reference.pointer,
+      _id_onSuccess.pointer,
+      _$string.pointer,
+    ).check();
   }
 
   static final _id_onError = ListEntriesCallback._class.instanceMethodId(
@@ -497,33 +578,37 @@ extension ListEntriesCallback$$Methods on ListEntriesCallback {
     r'(Ljava/lang/String;Ljava/lang/String;)V',
   );
 
-  static final _onError = jni$_.ProtectedJniExtensions.lookup<
-          jni$_.NativeFunction<
+  static final _onError =
+      jni$_.ProtectedJniExtensions.lookup<
+            jni$_.NativeFunction<
               jni$_.JThrowablePtr Function(
-                  jni$_.Pointer<jni$_.Void>,
-                  jni$_.JMethodIDPtr,
-                  jni$_.VarArgs<
-                      (
-                        jni$_.Pointer<jni$_.Void>,
-                        jni$_.Pointer<jni$_.Void>
-                      )>)>>('globalEnv_CallVoidMethod')
-      .asFunction<
-          jni$_.JThrowablePtr Function(
+                jni$_.Pointer<jni$_.Void>,
+                jni$_.JMethodIDPtr,
+                jni$_.VarArgs<
+                  (jni$_.Pointer<jni$_.Void>, jni$_.Pointer<jni$_.Void>)
+                >,
+              )
+            >
+          >('globalEnv_CallVoidMethod')
+          .asFunction<
+            jni$_.JThrowablePtr Function(
               jni$_.Pointer<jni$_.Void>,
               jni$_.JMethodIDPtr,
               jni$_.Pointer<jni$_.Void>,
-              jni$_.Pointer<jni$_.Void>)>();
+              jni$_.Pointer<jni$_.Void>,
+            )
+          >();
 
   /// from: `public fun onError(code: kotlin.String, message: kotlin.String): kotlin.Unit`
-  void onError(
-    jni$_.JString string,
-    jni$_.JString string1,
-  ) {
+  void onError(jni$_.JString string, jni$_.JString string1) {
     final _$string = string.reference;
     final _$string1 = string1.reference;
-    _onError(reference.pointer, _id_onError.pointer, _$string.pointer,
-            _$string1.pointer)
-        .check();
+    _onError(
+      reference.pointer,
+      _id_onError.pointer,
+      _$string.pointer,
+      _$string1.pointer,
+    ).check();
   }
 }
 
@@ -547,8 +632,8 @@ final class _$ListEntriesCallback with $ListEntriesCallback {
     this.onSuccess$async = false,
     required void Function(jni$_.JString string, jni$_.JString string1) onError,
     this.onError$async = false,
-  })  : _onSuccess = onSuccess,
-        _onError = onError;
+  }) : _onSuccess = onSuccess,
+       _onError = onError;
 
   final void Function(jni$_.JString string) _onSuccess;
   final core$_.bool onSuccess$async;
@@ -576,8 +661,9 @@ final class $ListEntriesCallback$Type$
 
 /// from: `com.vanvixi.dir_picker.PickerCallback`
 extension type PickerCallback._(jni$_.JObject _$this) implements jni$_.JObject {
-  static final _class =
-      jni$_.JClass.forName(r'com/vanvixi/dir_picker/PickerCallback');
+  static final _class = jni$_.JClass.forName(
+    r'com/vanvixi/dir_picker/PickerCallback',
+  );
 
   /// The type which includes information such as the signature of this class.
   static const jni$_.JType<PickerCallback> type = $PickerCallback$Type$();
@@ -591,19 +677,16 @@ extension type PickerCallback._(jni$_.JObject _$this) implements jni$_.JObject {
   ) {
     return _$invokeMethod(
       port,
-      jni$_.MethodInvocation.fromAddresses(
-        0,
-        descriptor.address,
-        args.address,
-      ),
+      jni$_.MethodInvocation.fromAddresses(0, descriptor.address, args.address),
     );
   }
 
   static final jni$_.Pointer<
-          jni$_.NativeFunction<
-              jni$_.JObjectPtr Function(
-                  jni$_.Int64, jni$_.JObjectPtr, jni$_.JObjectPtr)>>
-      _$invokePointer = jni$_.Pointer.fromFunction(_$invoke);
+    jni$_.NativeFunction<
+      jni$_.JObjectPtr Function(jni$_.Int64, jni$_.JObjectPtr, jni$_.JObjectPtr)
+    >
+  >
+  _$invokePointer = jni$_.Pointer.fromFunction(_$invoke);
 
   static jni$_.Pointer<jni$_.Void> _$invokeMethod(
     core$_.int $p,
@@ -613,9 +696,7 @@ extension type PickerCallback._(jni$_.JObject _$this) implements jni$_.JObject {
       final $d = $i.methodDescriptor.toDartString(releaseOriginal: true);
       final $a = $i.args;
       if ($d == r'onSuccess(Ljava/lang/String;)V') {
-        _$impls[$p]!.onSuccess(
-          ($a![0] as jni$_.JString),
-        );
+        _$impls[$p]!.onSuccess(($a![0] as jni$_.JString));
         return jni$_.nullptr;
       }
       if ($d == r'onCancelled()V') {
@@ -650,24 +731,18 @@ extension type PickerCallback._(jni$_.JObject _$this) implements jni$_.JObject {
       final $r = _$invokeMethod($p.sendPort.nativePort, $i);
       jni$_.ProtectedJniExtensions.returnResult($i.result, $r);
     });
-    implementer.add(
-      r'com.vanvixi.dir_picker.PickerCallback',
-      $p,
-      _$invokePointer,
-      [
-        if ($impl.onSuccess$async) r'onSuccess(Ljava/lang/String;)V',
-        if ($impl.onCancelled$async) r'onCancelled()V',
-        if ($impl.onError$async)
-          r'onError(Ljava/lang/String;Ljava/lang/String;)V',
-      ],
-    );
+    implementer
+        .add(r'com.vanvixi.dir_picker.PickerCallback', $p, _$invokePointer, [
+          if ($impl.onSuccess$async) r'onSuccess(Ljava/lang/String;)V',
+          if ($impl.onCancelled$async) r'onCancelled()V',
+          if ($impl.onError$async)
+            r'onError(Ljava/lang/String;Ljava/lang/String;)V',
+        ]);
     final $a = $p.sendPort.nativePort;
     _$impls[$a] = $impl;
   }
 
-  factory PickerCallback.implement(
-    $PickerCallback $impl,
-  ) {
+  factory PickerCallback.implement($PickerCallback $impl) {
     final $i = jni$_.JImplementer();
     implementIn($i, $impl);
     return $i.implement<PickerCallback>();
@@ -680,24 +755,32 @@ extension PickerCallback$$Methods on PickerCallback {
     r'(Ljava/lang/String;)V',
   );
 
-  static final _onSuccess = jni$_.ProtectedJniExtensions.lookup<
-              jni$_.NativeFunction<
-                  jni$_.JThrowablePtr Function(
-                      jni$_.Pointer<jni$_.Void>,
-                      jni$_.JMethodIDPtr,
-                      jni$_.VarArgs<(jni$_.Pointer<jni$_.Void>,)>)>>(
-          'globalEnv_CallVoidMethod')
-      .asFunction<
-          jni$_.JThrowablePtr Function(jni$_.Pointer<jni$_.Void>,
-              jni$_.JMethodIDPtr, jni$_.Pointer<jni$_.Void>)>();
+  static final _onSuccess =
+      jni$_.ProtectedJniExtensions.lookup<
+            jni$_.NativeFunction<
+              jni$_.JThrowablePtr Function(
+                jni$_.Pointer<jni$_.Void>,
+                jni$_.JMethodIDPtr,
+                jni$_.VarArgs<(jni$_.Pointer<jni$_.Void>,)>,
+              )
+            >
+          >('globalEnv_CallVoidMethod')
+          .asFunction<
+            jni$_.JThrowablePtr Function(
+              jni$_.Pointer<jni$_.Void>,
+              jni$_.JMethodIDPtr,
+              jni$_.Pointer<jni$_.Void>,
+            )
+          >();
 
   /// from: `public fun onSuccess(uri: kotlin.String): kotlin.Unit`
-  void onSuccess(
-    jni$_.JString string,
-  ) {
+  void onSuccess(jni$_.JString string) {
     final _$string = string.reference;
-    _onSuccess(reference.pointer, _id_onSuccess.pointer, _$string.pointer)
-        .check();
+    _onSuccess(
+      reference.pointer,
+      _id_onSuccess.pointer,
+      _$string.pointer,
+    ).check();
   }
 
   static final _id_onCancelled = PickerCallback._class.instanceMethodId(
@@ -705,17 +788,21 @@ extension PickerCallback$$Methods on PickerCallback {
     r'()V',
   );
 
-  static final _onCancelled = jni$_.ProtectedJniExtensions.lookup<
-          jni$_.NativeFunction<
+  static final _onCancelled =
+      jni$_.ProtectedJniExtensions.lookup<
+            jni$_.NativeFunction<
               jni$_.JThrowablePtr Function(
                 jni$_.Pointer<jni$_.Void>,
                 jni$_.JMethodIDPtr,
-              )>>('globalEnv_CallVoidMethod')
-      .asFunction<
-          jni$_.JThrowablePtr Function(
-            jni$_.Pointer<jni$_.Void>,
-            jni$_.JMethodIDPtr,
-          )>();
+              )
+            >
+          >('globalEnv_CallVoidMethod')
+          .asFunction<
+            jni$_.JThrowablePtr Function(
+              jni$_.Pointer<jni$_.Void>,
+              jni$_.JMethodIDPtr,
+            )
+          >();
 
   /// from: `public fun onCancelled(): kotlin.Unit`
   void onCancelled() {
@@ -727,33 +814,37 @@ extension PickerCallback$$Methods on PickerCallback {
     r'(Ljava/lang/String;Ljava/lang/String;)V',
   );
 
-  static final _onError = jni$_.ProtectedJniExtensions.lookup<
-          jni$_.NativeFunction<
+  static final _onError =
+      jni$_.ProtectedJniExtensions.lookup<
+            jni$_.NativeFunction<
               jni$_.JThrowablePtr Function(
-                  jni$_.Pointer<jni$_.Void>,
-                  jni$_.JMethodIDPtr,
-                  jni$_.VarArgs<
-                      (
-                        jni$_.Pointer<jni$_.Void>,
-                        jni$_.Pointer<jni$_.Void>
-                      )>)>>('globalEnv_CallVoidMethod')
-      .asFunction<
-          jni$_.JThrowablePtr Function(
+                jni$_.Pointer<jni$_.Void>,
+                jni$_.JMethodIDPtr,
+                jni$_.VarArgs<
+                  (jni$_.Pointer<jni$_.Void>, jni$_.Pointer<jni$_.Void>)
+                >,
+              )
+            >
+          >('globalEnv_CallVoidMethod')
+          .asFunction<
+            jni$_.JThrowablePtr Function(
               jni$_.Pointer<jni$_.Void>,
               jni$_.JMethodIDPtr,
               jni$_.Pointer<jni$_.Void>,
-              jni$_.Pointer<jni$_.Void>)>();
+              jni$_.Pointer<jni$_.Void>,
+            )
+          >();
 
   /// from: `public fun onError(code: kotlin.String, message: kotlin.String): kotlin.Unit`
-  void onError(
-    jni$_.JString string,
-    jni$_.JString string1,
-  ) {
+  void onError(jni$_.JString string, jni$_.JString string1) {
     final _$string = string.reference;
     final _$string1 = string1.reference;
-    _onError(reference.pointer, _id_onError.pointer, _$string.pointer,
-            _$string1.pointer)
-        .check();
+    _onError(
+      reference.pointer,
+      _id_onError.pointer,
+      _$string.pointer,
+      _$string1.pointer,
+    ).check();
   }
 }
 
@@ -783,9 +874,9 @@ final class _$PickerCallback with $PickerCallback {
     this.onCancelled$async = false,
     required void Function(jni$_.JString string, jni$_.JString string1) onError,
     this.onError$async = false,
-  })  : _onSuccess = onSuccess,
-        _onCancelled = onCancelled,
-        _onError = onError;
+  }) : _onSuccess = onSuccess,
+       _onCancelled = onCancelled,
+       _onError = onError;
 
   final void Function(jni$_.JString string) _onSuccess;
   final core$_.bool onSuccess$async;
