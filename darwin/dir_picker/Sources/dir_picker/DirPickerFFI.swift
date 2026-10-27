@@ -124,6 +124,13 @@ public func dirPickerListEntries(
         ]
 
         do {
+            // The enumerator returns nil instead of throwing for a missing
+            // root, so check it up front to fail like contentsOfDirectory.
+            guard try rootUrl.resourceValues(forKeys: [.isDirectoryKey]).isDirectory == true else {
+                reporter.sendError(code: "LIST_ERROR", message: "Not a directory: \(rootUrl.path)")
+                return
+            }
+
             let urls: [URL]
             if recursive {
                 urls = fileManager.enumerator(
@@ -161,9 +168,12 @@ private func makeEntryDictionary(
     let resourceValues = try fileUrl.resourceValues(forKeys: Set(keys))
     let isDirectory = resourceValues.isDirectory ?? false
 
+    // Foundation hands back decomposed (NFD) names. Return them precomposed
+    // (NFC), as dart:io and the other platforms do, so they compare equal to
+    // Dart string literals.
     return [
-        "name": resourceValues.name ?? fileUrl.lastPathComponent,
-        "relativePath": relativePath(for: fileUrl, rootUrl: rootUrl),
+        "name": (resourceValues.name ?? fileUrl.lastPathComponent).precomposedStringWithCanonicalMapping,
+        "relativePath": relativePath(for: fileUrl, rootUrl: rootUrl).precomposedStringWithCanonicalMapping,
         "isDirectory": isDirectory,
         "uri": fileUrl.absoluteString,
         "size": isDirectory ? NSNull() : (resourceValues.fileSize as Any? ?? NSNull()),
