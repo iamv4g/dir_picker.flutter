@@ -15,7 +15,8 @@ flutter test                         # VM unit tests (test/io/windows_test.dart 
 flutter test test/common/dir_picker_test.dart --plain-name 'FileSystemEntry.fromJson'   # single test
 flutter test --platform chrome test/common test/web          # browser tests; add --wasm for dart2wasm
 
-cd example && flutter run -d <device>   # manual testing; the example app is the only integration harness
+cd example && flutter test integration_test -d <macos|linux|windows|simulator id>   # listEntries through the real plugin
+cd example && flutter run -d <device>   # manual testing of pick(), which needs a user
 
 dart run tool/ffigen.dart            # regenerate lib/src/platforms/darwin/native_bindings.g.dart
 dart run tool/jnigen.dart            # regenerate lib/src/platforms/android/native_bindings.g.dart
@@ -69,5 +70,5 @@ User-facing changes go in `CHANGELOG.md` (newest version on top; breaking change
 
 ## CI and publishing
 
-- `.github/workflows/ci.yml` runs on PRs and on pushes to `main`. It does format/analyze/test on the minimum Flutter (3.44.0) and on latest stable, runs a publish dry run and `pana` with zero lost points allowed, and builds the example for every platform. `flutter analyze` fails on infos, so any new lint costs pub.dev points and fails CI.
+- `.github/workflows/ci.yml` runs on PRs and on pushes to `main`. It does format/analyze/test on the minimum Flutter (3.44.0) and on latest stable, runs a publish dry run and `pana` with zero lost points allowed, builds the example for every platform, and runs `example/integration_test` on macOS, an iOS simulator, Linux (under `xvfb-run`) and Windows. The integration tests are the only coverage of the Swift `listEntries`. Android has none, because its `listEntries` only takes SAF tree URIs. `flutter analyze` fails on infos, so any new lint costs pub.dev points and fails CI.
 - `.github/workflows/publish.yml` publishes to pub.dev when a `vX.Y.Z` tag is pushed. The tag must equal `v` + the pubspec `version`. Publishing runs in the `pub.dev` GitHub environment, so it waits for approval. To release: merge the version bump and CHANGELOG, then `git tag vX.Y.Z && git push origin vX.Y.Z`.

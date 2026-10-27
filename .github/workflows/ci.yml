@@ -144,3 +144,43 @@ jobs:
         working-directory: .
         run: flutter test
       - run: flutter build windows --debug
+
+  # Runs example/integration_test in the example app, so listEntries goes
+  # through the registered plugin and its native bridge. Android is left out:
+  # its listEntries only takes SAF tree URIs, which need the system picker.
+  integration-test:
+    name: Integration test (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: macOS, os: macos-latest }
+          - { target: iOS, os: macos-latest }
+          - { target: Linux, os: ubuntu-latest }
+          - { target: Windows, os: windows-latest }
+    defaults:
+      run:
+        working-directory: example
+    steps:
+      - uses: actions/checkout@v7
+      - if: matrix.target == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev xvfb
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - if: matrix.target == 'macOS'
+        run: flutter test integration_test -d macos
+      - if: matrix.target == 'iOS'
+        run: |
+          udid=$(xcrun simctl list devices available --json \
+            | jq -r '[.devices[][] | select(.name | startswith("iPhone"))][0].udid')
+          xcrun simctl bootstatus "$udid" -b
+          flutter test integration_test -d "$udid"
+      - if: matrix.target == 'Linux'
+        run: xvfb-run -a flutter test integration_test -d linux
+      - if: matrix.target == 'Windows'
+        run: flutter test integration_test -d windows
