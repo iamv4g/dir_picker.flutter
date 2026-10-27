@@ -63,3 +63,8 @@ Cross-platform conventions to keep consistent when changing any bridge:
 ## Release notes
 
 User-facing changes go in `CHANGELOG.md` (newest version on top; breaking changes prefixed `**Breaking:**`). Bump `version` in `pubspec.yaml` and update `README.md` whenever an API or option changes.
+
+## CI and publishing
+
+- `.github/workflows/ci.yml` runs on PRs and on pushes to `main`. It does format/analyze/test on the minimum Flutter (3.44.0) and on latest stable, runs a publish dry run and `pana` with zero lost points allowed, and builds the example for every platform. `flutter analyze` fails on infos, so any new lint costs pub.dev points and fails CI.
+- `.github/workflows/publish.yml` publishes to pub.dev when a `vX.Y.Z` tag is pushed. The tag must equal `v` + the pubspec `version`. Publishing runs in the `pub.dev` GitHub environment, so it waits for approval. To release: merge the version bump and CHANGELOG, then `git tag vX.Y.Z && git push origin vX.Y.Z`.
