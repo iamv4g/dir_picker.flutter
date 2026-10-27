@@ -12,7 +12,7 @@ export 'src/options/pick_options.dart';
 export 'src/platform_interface/dir_picker_platform.dart' show DirPickerPlatform;
 // IO platforms (Windows, Linux, Android, Darwin) — or their stubs on web.
 export 'src/platforms/io_platforms.dart'
-    if (dart.library.html) 'src/platforms/io_stub.dart';
+    if (dart.library.js_interop) 'src/platforms/io_stub.dart';
 // Web platform — or its stub on non-web platforms.
 export 'src/platforms/web/dir_picker_web.dart'
     if (dart.library.io) 'src/platforms/web_stub.dart';
