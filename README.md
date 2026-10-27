@@ -29,7 +29,7 @@ First, follow the [package installation instructions](https://pub.dev/packages/d
 <details>
 <summary><b>Android Configuration</b></summary>
 
-**Supported:** API 21+ (Android 5.0+)
+**Supported:** API 24+ (Android 7.0+)
 
 No configuration needed. The plugin uses the Storage Access Framework (`Intent.ACTION_OPEN_DOCUMENT_TREE`), which grants URI access through the system picker UI — no manifest permissions required.
 
@@ -95,6 +95,8 @@ No configuration needed. The plugin uses the [File System Access API](https://de
 
 **Browser support:** Chrome 86+ and Edge 86+. Not supported in Firefox or Safari.
 
+Works with both the JavaScript (`flutter build web`) and WebAssembly (`flutter build web --wasm`) compilers.
+
 > **Note:** On web, `pick()` returns a `WebPickedLocation` wrapping a `FileSystemDirectoryHandle`. Use `.handle` to access directory contents via the File System Access API. `PickedLocation.uri` is always `null` on web — browsers do not expose full filesystem paths. Requires `package:web` in your app's dependencies to work with the handle directly.
 
 </details>
@@ -159,7 +161,7 @@ Options for other platforms are silently ignored — only the one matching the c
 
 | Parameter       | Type   | Default | Description                                                                                                    |
 |-----------------|--------|---------|----------------------------------------------------------------------------------------------------------------|
-| `shouldPersist` | `bool` | `true`  | Take persistable URI permission so the app retains access across reboots (SAF `takePersistableUriPermission`). |
+| `shouldPersist` | `bool` | `false` | Take persistable URI permission so the app retains access across reboots (SAF `takePersistableUriPermission`). |
 
 ### MacosOptions
 
@@ -328,9 +330,9 @@ Platform-specific options passed to `DirPicker.pick()`.
 
 - Flutter ≥ 3.44.0
 - Dart SDK ≥ 3.12.0
-- Kotlin 2.1.0
+- Kotlin Gradle Plugin 2.0.0+ (enforced by Flutter 3.44)
 - Swift 5.9
-- Android API 21+
+- Android API 24+
 - iOS 13.0+
 - macOS 10.15+
 - Windows 10+
