@@ -1,3 +1,8 @@
+## Unreleased
+
+* iOS/macOS: `listEntries` now returns `name` and `relativePath` in precomposed Unicode (NFC), like the other platforms. Before, names with accents such as `tài liệu` came back decomposed (NFD) and did not compare equal to Dart strings
+* iOS/macOS: `listEntries(recursive: true)` now throws for a missing directory or a path that is not a directory. Before, it returned an empty list
+
 ## 0.5.1
 
 * Fix `flutter build web --wasm`. The FFI/JNI implementations are now excluded with `dart.library.js_interop` instead of `dart.library.html`, which is false under dart2wasm (#4, authored by coco-de-dev)
