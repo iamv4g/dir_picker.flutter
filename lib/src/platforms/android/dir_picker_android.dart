@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:jni/jni.dart';
 
@@ -7,6 +6,7 @@ import '../../location/file_system_entry.dart';
 import '../../location/picked_location.dart';
 import '../../options/pick_options.dart';
 import '../../platform_interface/dir_picker_platform.dart';
+import '../entries_json.dart';
 import 'native_bindings.g.dart' as native;
 
 /// DirPicker implementation for Android.
@@ -69,14 +69,11 @@ class DirPickerAndroid extends DirPickerPlatform {
         onSuccess: (jJson) {
           final json = jJson.toDartString();
           jJson.release();
-          final decoded = jsonDecode(json) as List<Object?>;
-          final entries = decoded
-              .map(
-                (entry) =>
-                    FileSystemEntry.fromJson(entry! as Map<Object?, Object?>),
-              )
-              .toList(growable: false);
-          completer.complete(entries);
+          try {
+            completer.complete(decodeEntriesJson(json));
+          } catch (error, stackTrace) {
+            completer.completeError(error, stackTrace);
+          }
         },
         onError: (jCode, jMessage) {
           final code = jCode.toDartString();

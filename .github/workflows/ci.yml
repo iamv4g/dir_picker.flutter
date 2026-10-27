@@ -37,6 +37,13 @@ jobs:
         run: dart format --output=none --set-exit-if-changed .
       - run: flutter analyze
       - run: flutter test
+      # Web runs compile all given files into one bundle, so they only get
+      # the folders that build for the browser (test/io needs dart:io).
+      - name: Test on Chrome (JS and Wasm)
+        if: matrix.flutter-version == ''
+        run: |
+          flutter test --platform chrome test/common test/web
+          flutter test --platform chrome --wasm test/common test/web
       - name: Publish dry run
         if: matrix.flutter-version == ''
         run: flutter pub publish --dry-run
@@ -121,7 +128,7 @@ jobs:
       - run: flutter build macos --debug
 
   build-windows:
-    name: Build example (Windows)
+    name: Test & build example (Windows)
     runs-on: windows-latest
     defaults:
       run:
@@ -132,4 +139,8 @@ jobs:
         with:
           channel: stable
           cache: true
+      # Runs the Windows-only tests in test/io/windows_test.dart.
+      - name: Test
+        working-directory: .
+        run: flutter test
       - run: flutter build windows --debug
