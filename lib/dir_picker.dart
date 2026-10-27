@@ -39,6 +39,7 @@ class DirPicker {
   ///
   /// - **Linux**: Uses the XDG Desktop Portal (`org.freedesktop.portal.FileChooser`)
   ///   with automatic fallback to `zenity` (GNOME) then `kdialog` (KDE).
+  ///   Throws [UnsupportedError] if none of them is available.
   ///   Customize with [LinuxOptions].
   ///
   /// - **Web**: Uses the File System Access API (`window.showDirectoryPicker()`).

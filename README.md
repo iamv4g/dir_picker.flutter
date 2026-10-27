@@ -76,7 +76,7 @@ The plugin tries the following dialog backends in order:
 2. **zenity** – GNOME fallback
 3. **kdialog** – KDE fallback
 
-If none are available, the pick call throws. To install a fallback manually:
+If none are available, `pick()` throws an `UnsupportedError`. To install a fallback manually:
 
 ```bash
 # GNOME

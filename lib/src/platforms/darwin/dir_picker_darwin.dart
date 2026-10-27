@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:ffi';
 import 'dart:isolate';
 
@@ -10,6 +9,7 @@ import '../../location/picked_location.dart';
 import '../../options/pick_options.dart';
 import '../../platform_interface/dir_picker_platform.dart';
 import 'native_bindings.g.dart' as native;
+import 'port_message.dart';
 
 /// DirPicker implementation for Apple platforms (iOS and macOS).
 ///
@@ -38,29 +38,10 @@ class DirPickerDarwin extends DirPickerPlatform {
 
     port.listen((message) {
       port.close();
-
-      if (message is! List || message.isEmpty) {
-        completer.completeError(StateError('Invalid message format'));
-        return;
-      }
-
-      final type = message[0] as int;
-      switch (type) {
-        case 0: // Success
-          final uri = Uri.parse(message[1] as String);
-          completer.complete(IOPickedLocation(uri));
-          return;
-        case 1: // Cancelled
-          completer.complete(null);
-          return;
-        case 2: // Error
-          final code = message[1] as String;
-          final msg = message[2] as String;
-          completer.completeError(Exception('$code: $msg'));
-          return;
-        default:
-          completer.completeError(StateError('Unknown message type: $type'));
-          return;
+      try {
+        completer.complete(decodePickMessage(message));
+      } catch (error, stackTrace) {
+        completer.completeError(error, stackTrace);
       }
     });
 
@@ -99,32 +80,10 @@ class DirPickerDarwin extends DirPickerPlatform {
 
     port.listen((message) {
       port.close();
-
-      if (message is! List || message.isEmpty) {
-        completer.completeError(StateError('Invalid message format'));
-        return;
-      }
-
-      final type = message[0] as int;
-      switch (type) {
-        case 0:
-          final decoded = jsonDecode(message[1] as String) as List<Object?>;
-          final entries = decoded
-              .map(
-                (entry) =>
-                    FileSystemEntry.fromJson(entry! as Map<Object?, Object?>),
-              )
-              .toList(growable: false);
-          completer.complete(entries);
-          return;
-        case 2:
-          final code = message[1] as String;
-          final error = message[2] as String;
-          completer.completeError(Exception('$code: $error'));
-          return;
-        default:
-          completer.completeError(StateError('Unknown message type: $type'));
-          return;
+      try {
+        completer.complete(decodeListEntriesMessage(message));
+      } catch (error, stackTrace) {
+        completer.completeError(error, stackTrace);
       }
     });
 

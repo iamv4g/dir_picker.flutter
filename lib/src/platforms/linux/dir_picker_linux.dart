@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dbus/dbus.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:path/path.dart' as p;
 
 import '../../location/file_system_entry.dart';
@@ -23,11 +24,33 @@ class _PickerUnavailableException implements Exception {}
 ///
 /// Each method throws [_PickerUnavailableException] if the tool is not present,
 /// allowing the next fallback to be tried. A null return always means the user
-/// cancelled — the fallback chain stops immediately.
+/// cancelled — the fallback chain stops immediately. If no method is
+/// available, [pick] throws an [UnsupportedError].
 class DirPickerLinux extends DirPickerPlatform {
+  DirPickerLinux() : this.withBackends();
+
+  /// Creates an instance with replaceable picker backends.
+  ///
+  /// [portalPicker] replaces the XDG Desktop Portal call. Throwing from it
+  /// marks the portal as unavailable. [runProcess] replaces [Process.run] for
+  /// the zenity and kdialog fallbacks.
+  @visibleForTesting
+  DirPickerLinux.withBackends({
+    this._portalPicker,
+    Future<ProcessResult> Function(String executable, List<String> arguments)?
+    runProcess,
+  }) : _runProcess = runProcess ?? Process.run;
+
   static void registerWith() {
     DirPickerPlatform.instance = DirPickerLinux();
   }
+
+  final Future<Uri?> Function(LinuxOptions options)? _portalPicker;
+  final Future<ProcessResult> Function(
+    String executable,
+    List<String> arguments,
+  )
+  _runProcess;
 
   @override
   Future<PickedLocation?> pick({PickOptions? options}) async {
@@ -45,10 +68,21 @@ class DirPickerLinux extends DirPickerPlatform {
         continue;
       }
     }
-    return null;
+    throw UnsupportedError(
+      'No directory picker is available. Install xdg-desktop-portal, '
+      'zenity or kdialog.',
+    );
   }
 
   Future<Uri?> _pickWithPortal(LinuxOptions opts) async {
+    try {
+      return await (_portalPicker ?? _pickWithDbusPortal)(opts);
+    } catch (_) {
+      throw _PickerUnavailableException();
+    }
+  }
+
+  Future<Uri?> _pickWithDbusPortal(LinuxOptions opts) async {
     DBusClient? client;
     try {
       client = DBusClient.session();
@@ -104,8 +138,6 @@ class DirPickerLinux extends DirPickerPlatform {
       }
 
       return null;
-    } catch (_) {
-      throw _PickerUnavailableException();
     } finally {
       await client?.close();
     }
@@ -113,7 +145,7 @@ class DirPickerLinux extends DirPickerPlatform {
 
   Future<Uri?> _pickWithZenity(LinuxOptions opts) async {
     try {
-      final result = await Process.run('zenity', [
+      final result = await _runProcess('zenity', [
         '--file-selection',
         '--directory',
         '--title=${opts.title}',
@@ -129,7 +161,7 @@ class DirPickerLinux extends DirPickerPlatform {
 
   Future<Uri?> _pickWithKdialog(LinuxOptions opts) async {
     try {
-      final result = await Process.run('kdialog', [
+      final result = await _runProcess('kdialog', [
         '--title',
         opts.title,
         '--getexistingdirectory',

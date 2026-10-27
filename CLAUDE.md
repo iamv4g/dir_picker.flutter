@@ -11,8 +11,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 flutter pub get                      # root package
 flutter analyze                      # lints: package:flutter_lints/flutter.yaml
-flutter test                         # unit tests (test/dir_picker_test.dart)
-flutter test test/dir_picker_test.dart --plain-name 'FileSystemEntry.fromJson'   # single test
+flutter test                         # VM unit tests (test/io/windows_test.dart runs only on Windows)
+flutter test test/common/dir_picker_test.dart --plain-name 'FileSystemEntry.fromJson'   # single test
+flutter test --platform chrome test/common test/web          # browser tests; add --wasm for dart2wasm
 
 cd example && flutter run -d <device>   # manual testing; the example app is the only integration harness
 
@@ -21,6 +22,8 @@ dart run tool/jnigen.dart            # regenerate lib/src/platforms/android/nati
 ```
 
 `tool/jnigen.dart` first runs `./gradlew dir_picker:compileDebugKotlin` inside `example/android/`, then reads the compiled classes from `example/build/dir_picker/tmp/kotlin-classes/debug`. The example Android project has to build before you can regenerate the JNI bindings.
+
+Tests are split by where they compile. `test/common/` runs everywhere, `test/io/` needs `dart:io` (Linux tests are `@TestOn('posix')`, Windows tests `@TestOn('windows')`), and `test/web/` is `@TestOn('browser')`. Never pass `test/io` to a `--platform chrome` run: web runs compile every given file into one bundle and ignore `@TestOn` at compile time. `DirPickerLinux.withBackends` swaps out the portal and `Process.run` for tests. Darwin port messages and the native entries JSON are decoded by pure functions (`platforms/darwin/port_message.dart`, `platforms/entries_json.dart`) so they can be tested without FFI or JNI.
 
 Never edit `*.g.dart` by hand. Change the native source (the C header or the Kotlin classes), add any new symbol or class to the include list in the `tool/*.dart` script, then regenerate.
 
