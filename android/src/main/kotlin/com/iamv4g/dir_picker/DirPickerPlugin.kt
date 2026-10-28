@@ -12,8 +12,11 @@ import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.PluginRegistry.ActivityResultListener
 import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 /**
  * Flutter plugin for dir_picker on Android.
@@ -35,7 +38,7 @@ class DirPickerPlugin : FlutterPlugin, ActivityAware, ActivityResultListener {
     // For ComponentActivity (AndroidX)
     private var pickerLauncher: ActivityResultLauncher<Uri?>? = null
 
-    // Pending coroutine continuation
+    // Pending coroutine continuation. Only read and written on the main thread.
     private var pendingContinuation: CancellableContinuation<String?>? = null
     private var shouldPersistPermission: Boolean = true
 
@@ -57,11 +60,13 @@ class DirPickerPlugin : FlutterPlugin, ActivityAware, ActivityResultListener {
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) = attachActivity(binding)
 
-    override fun onDetachedFromActivityForConfigChanges() = detachActivity()
+    // The picker result is delivered to the recreated Activity, so a pending
+    // pick survives a configuration change.
+    override fun onDetachedFromActivityForConfigChanges() = detachActivity(cancelPick = false)
 
     override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) = attachActivity(binding)
 
-    override fun onDetachedFromActivity() = detachActivity()
+    override fun onDetachedFromActivity() = detachActivity(cancelPick = true)
 
     private fun attachActivity(binding: ActivityPluginBinding) {
         activity = binding.activity
@@ -71,7 +76,7 @@ class DirPickerPlugin : FlutterPlugin, ActivityAware, ActivityResultListener {
         setupPickerHandler()
     }
 
-    private fun detachActivity() {
+    private fun detachActivity(cancelPick: Boolean) {
         activityBinding?.removeActivityResultListener(this)
         activityBinding = null
         activity = null
@@ -81,9 +86,11 @@ class DirPickerPlugin : FlutterPlugin, ActivityAware, ActivityResultListener {
 
         DirPicker.pickerHandler = null
 
-        // Resume any waiting coroutine with null (cancelled)
-        pendingContinuation?.let { if (it.isActive) it.resume(null) }
-        pendingContinuation = null
+        if (cancelPick) {
+            // Resume any waiting coroutine with null (cancelled)
+            pendingContinuation?.let { if (it.isActive) it.resume(null) }
+            pendingContinuation = null
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -103,40 +110,52 @@ class DirPickerPlugin : FlutterPlugin, ActivityAware, ActivityResultListener {
 
     private fun setupPickerHandler() {
         DirPicker.pickerHandler = PickerHandler { shouldPersist ->
-            suspendCancellableCoroutine { continuation ->
-                pendingContinuation = continuation
-                shouldPersistPermission = shouldPersist
-
-                continuation.invokeOnCancellation {
-                    pendingContinuation = null
-                }
-
-                val launcher = pickerLauncher
-                if (launcher != null) {
-                    try {
-                        launcher.launch(null)
-                        return@suspendCancellableCoroutine
-                    } catch (_: Exception) {
-                        // Fall back to startActivityForResult
-                    }
-                }
-
-                // Fallback for non-ComponentActivity
-                try {
-                    val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
-                    activity?.startActivityForResult(intent, REQUEST_CODE_PICK_DIRECTORY)
-                        ?: run {
-                            pendingContinuation = null
-                            continuation.resume(null)
-                        }
-                } catch (e: Exception) {
-                    pendingContinuation = null
-                    continuation.resume(null)
-                    Log.e(TAG, "Failed to launch directory picker: ${e.message}")
-                }
-            }
+            // Activity APIs must be called on the main thread.
+            withContext(Dispatchers.Main) { launchPicker(shouldPersist) }
         }
     }
+
+    private suspend fun launchPicker(shouldPersist: Boolean): String? =
+        suspendCancellableCoroutine { continuation ->
+            if (pendingContinuation != null) {
+                continuation.resumeWithException(
+                    PickerException("ALREADY_ACTIVE", "A directory picker is already open")
+                )
+                return@suspendCancellableCoroutine
+            }
+
+            val currentActivity = activity
+            if (currentActivity == null) {
+                continuation.resumeWithException(
+                    PickerException("NO_ACTIVITY", "No Activity available to show directory picker")
+                )
+                return@suspendCancellableCoroutine
+            }
+
+            pendingContinuation = continuation
+            shouldPersistPermission = shouldPersist
+
+            continuation.invokeOnCancellation {
+                if (pendingContinuation === continuation) pendingContinuation = null
+            }
+
+            try {
+                val launcher = pickerLauncher
+                if (launcher != null) {
+                    launcher.launch(null)
+                } else {
+                    // Fallback for non-ComponentActivity
+                    val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+                    currentActivity.startActivityForResult(intent, REQUEST_CODE_PICK_DIRECTORY)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to launch directory picker: ${e.message}")
+                pendingContinuation = null
+                continuation.resumeWithException(
+                    PickerException("PICKER_ERROR", "Failed to launch directory picker: ${e.message}")
+                )
+            }
+        }
 
     private fun handlePickerResult(uri: Uri?) {
         val continuation = pendingContinuation ?: return

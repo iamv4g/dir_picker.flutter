@@ -2,6 +2,11 @@
 
 * iOS/macOS: `listEntries` now returns `name` and `relativePath` in precomposed Unicode (NFC), like the other platforms. Before, names with accents such as `tài liệu` came back decomposed (NFD) and did not compare equal to Dart strings
 * iOS/macOS: `listEntries(recursive: true)` now throws for a missing directory or a path that is not a directory. Before, it returned an empty list
+* `pick()` now throws `Exception('ALREADY_ACTIVE: …')` when called while another `pick()` is still open. Before, on Android and iOS, one of the two Futures never completed (#19)
+* iOS: the picker is now presented from the top-most view controller, so `pick()` works while another view controller (a sheet, an alert, another plugin's modal) is presented. Before, UIKit ignored the request and the Future never completed (#20)
+* Android: the picker is now launched on the main thread instead of a background thread (#21)
+* Android: a pick in progress now survives a configuration change of the host Activity when the Flutter engine outlives it (cached engine, add-to-app). Before, the Future completed with `null` and the picked folder was dropped (#22)
+* Android: a failure to launch the picker is reported as an error (`PICKER_ERROR`, `NO_ACTIVITY`) instead of `null`
 * Android: the consumer ProGuard/R8 rules now only keep `com.iamv4g.dir_picker`. Before, they also kept all of `kotlinx.coroutines`, `kotlin.coroutines` and `kotlin.jvm.internal`, and turned on `-keepparameternames` for the whole app (#26)
 * Android: the plugin's Kotlin package is now `com.iamv4g.dir_picker` (was `com.vanvixi.dir_picker`), matching the GitHub account rename. The Dart API is unchanged; update any R8/ProGuard rules or native code in your app that refer to the old package
 * Repository, issue tracker and podspec links now point to `github.com/iamv4g`
