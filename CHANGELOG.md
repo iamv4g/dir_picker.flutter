@@ -1,5 +1,7 @@
 ## Unreleased
 
+* `FileSystemEntry` and `IOPickedLocation` now have value equality (`==` and `hashCode`), so two listings of the same folder compare equal and locations work as `Set`/`Map` keys (#29)
+* `DirPicker` now throws a `StateError` that says what to do when no platform implementation is registered. Before, release builds failed with a bare null-check error (#30)
 * iOS/macOS: `listEntries` now returns `name` and `relativePath` in precomposed Unicode (NFC), like the other platforms. Before, names with accents such as `tài liệu` came back decomposed (NFD) and did not compare equal to Dart strings
 * iOS/macOS: `listEntries(recursive: true)` now throws for a missing directory or a path that is not a directory. Before, it returned an empty list
 * Linux: `pick()` now subscribes to the portal's `Response` signal before calling `OpenFile`, as the XDG portal docs recommend. Before, a `Response` that arrived before the method reply was lost and `pick()` never completed (#24)

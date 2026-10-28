@@ -16,6 +16,14 @@ class IOPickedLocation extends PickedLocation {
   @override
   Uri get uri => _uri;
 
+  /// Two locations are equal when their [uri]s are equal.
+  @override
+  bool operator ==(Object other) =>
+      other is IOPickedLocation && other.uri == uri;
+
+  @override
+  int get hashCode => uri.hashCode;
+
   @override
   String toString() => 'IOPickedLocation($uri)';
 }

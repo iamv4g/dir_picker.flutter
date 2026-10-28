@@ -5,14 +5,18 @@ import '../options/pick_options.dart';
 abstract class DirPickerPlatform {
   static DirPickerPlatform? _instance;
 
-  static DirPickerPlatform get instance {
-    assert(
-      _instance != null,
-      'DirPickerPlatform.instance has not been set. '
-      'Ensure the plugin is correctly registered.',
-    );
-    return _instance!;
-  }
+  /// The implementation for the current platform.
+  ///
+  /// Throws a [StateError] if no implementation has been registered, for
+  /// example when `DirPicker` is used before the Flutter bindings are
+  /// initialized, or from an isolate without plugin registration.
+  static DirPickerPlatform get instance =>
+      _instance ??
+      (throw StateError(
+        'DirPickerPlatform.instance has not been set. Make sure the plugin '
+        'is registered (run the app with Flutter, which calls '
+        'GeneratedPluginRegistrant) before calling DirPicker.',
+      ));
 
   static set instance(DirPickerPlatform platform) => _instance = platform;
 

@@ -43,6 +43,21 @@ class FileSystemEntry {
     'lastModified': lastModified?.millisecondsSinceEpoch,
   };
 
+  /// Two entries are equal when all their fields are equal.
+  @override
+  bool operator ==(Object other) =>
+      other is FileSystemEntry &&
+      other.name == name &&
+      other.relativePath == relativePath &&
+      other.isDirectory == isDirectory &&
+      other.uri == uri &&
+      other.size == size &&
+      other.lastModified == lastModified;
+
+  @override
+  int get hashCode =>
+      Object.hash(name, relativePath, isDirectory, uri, size, lastModified);
+
   @override
   String toString() =>
       'FileSystemEntry(relativePath: $relativePath, isDirectory: $isDirectory)';
