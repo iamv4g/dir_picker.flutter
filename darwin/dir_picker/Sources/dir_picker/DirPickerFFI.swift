@@ -38,13 +38,26 @@ public func dirPickerPick(
             return
         }
 
+        pickerLock.lock()
+        let isActive = activePickerHelper != nil
+        pickerLock.unlock()
+        // UIKit ignores a second present while the picker is still being
+        // presented, and nothing would ever report back.
+        guard !isActive else {
+            reporter.sendError(
+                code: "ALREADY_ACTIVE",
+                message: "A directory picker is already open"
+            )
+            return
+        }
+
         let helper = DocumentPickerHelper()
 
         pickerLock.lock()
         activePickerHelper = helper
         pickerLock.unlock()
 
-        helper.pick(from: rootVC) { url in
+        helper.pick(from: topViewController(from: rootVC)) { url in
             pickerLock.lock()
             activePickerHelper = nil
             pickerLock.unlock()
@@ -56,6 +69,16 @@ public func dirPickerPick(
             }
         }
     }
+}
+
+/// The view controller at the top of the presentation stack above `root`.
+/// UIKit ignores `present` on a controller that is already presenting.
+private func topViewController(from root: UIViewController) -> UIViewController {
+    var top = root
+    while let presented = top.presentedViewController {
+        top = presented
+    }
+    return top
 }
 
 private func getRootViewController() -> UIViewController? {

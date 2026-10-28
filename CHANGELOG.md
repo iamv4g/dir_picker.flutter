@@ -4,6 +4,15 @@
 * iOS/macOS: `listEntries(recursive: true)` now throws for a missing directory or a path that is not a directory. Before, it returned an empty list
 * Linux/Windows: `listEntries(recursive: true)` now skips the contents of a subdirectory it can't read, as iOS and macOS already did. Before, one unreadable folder made the whole call throw `PathAccessException` (#15)
 * iOS/macOS: `listEntries` now reports a symbolic link as what it points to, as Linux and Windows do: a link to a directory has `isDirectory: true`, with the target's size and date. Before, it was `isDirectory: false`. Links are still not followed in recursive listings (#16)
+* Windows: the folder dialog now only accepts file system folders, and keeps its default options (`FOS_PATHMUSTEXIST`, `FOS_NOCHANGEDIR`). Before, picking "This PC" or a Library returned `null`, as if the user had cancelled (#17)
+* Windows: `pick()` now throws `Exception('PLATFORM_ERROR: <step> failed with HRESULT 0x…')` when a COM call fails. Before, every failure returned `null`; only an actual cancel does now (#18)
+* Web: `listEntries` no longer requires `showDirectoryPicker`, so it works in Firefox and Safari for any `FileSystemDirectoryHandle`, such as one from the origin private file system. Only `pick()` throws `UnsupportedError` there (#23)
+* `pick()` now throws `Exception('ALREADY_ACTIVE: …')` when called while another `pick()` is still open. Before, on Android and iOS, one of the two Futures never completed (#19)
+* iOS: the picker is now presented from the top-most view controller, so `pick()` works while another view controller (a sheet, an alert, another plugin's modal) is presented. Before, UIKit ignored the request and the Future never completed (#20)
+* Android: the picker is now launched on the main thread instead of a background thread (#21)
+* Android: a pick in progress now survives a configuration change of the host Activity when the Flutter engine outlives it (cached engine, add-to-app). Before, the Future completed with `null` and the picked folder was dropped (#22)
+* Android: a failure to launch the picker is reported as an error (`PICKER_ERROR`, `NO_ACTIVITY`) instead of `null`
+* Android: the consumer ProGuard/R8 rules now only keep `com.iamv4g.dir_picker`. Before, they also kept all of `kotlinx.coroutines`, `kotlin.coroutines` and `kotlin.jvm.internal`, and turned on `-keepparameternames` for the whole app (#26)
 * Android: the plugin's Kotlin package is now `com.iamv4g.dir_picker` (was `com.vanvixi.dir_picker`), matching the GitHub account rename. The Dart API is unchanged; update any R8/ProGuard rules or native code in your app that refer to the old package
 * Repository, issue tracker and podspec links now point to `github.com/iamv4g`
 
