@@ -9,7 +9,7 @@
 -keepattributes *Annotation*, InnerClasses, EnclosingMethod, Signature, Exceptions, Metadata
 
 # Keep entire package containing your logic
--keep class com.vanvixi.dir_picker.** {
+-keep class com.iamv4g.dir_picker.** {
     <methods>;
     <fields>;
 }

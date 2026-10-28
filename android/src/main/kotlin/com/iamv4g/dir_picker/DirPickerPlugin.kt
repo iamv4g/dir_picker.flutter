@@ -1,4 +1,4 @@
-package com.vanvixi.dir_picker
+package com.iamv4g.dir_picker
 
 import android.app.Activity
 import android.content.Intent
@@ -26,7 +26,7 @@ class DirPickerPlugin : FlutterPlugin, ActivityAware, ActivityResultListener {
     companion object {
         private const val TAG = "DirPicker"
         private const val REQUEST_CODE_PICK_DIRECTORY = 47291
-        private const val PICKER_REGISTRY_KEY = "com.vanvixi.dir_picker.picker"
+        private const val PICKER_REGISTRY_KEY = "com.iamv4g.dir_picker.picker"
     }
 
     private var activity: Activity? = null

@@ -1,9 +1,9 @@
 name: dir_picker
 description: "A Flutter plugin for picking directories and listing file system entries, supporting Android, iOS, macOS, Windows, Linux, and Web via FFI and JNI."
 version: 0.5.1
-homepage: https://github.com/vanvixi/dir_picker.flutter
-repository: https://github.com/vanvixi/dir_picker.flutter
-issue_tracker: https://github.com/vanvixi/dir_picker.flutter/issues
+homepage: https://github.com/iamv4g/dir_picker.flutter
+repository: https://github.com/iamv4g/dir_picker.flutter
+issue_tracker: https://github.com/iamv4g/dir_picker.flutter/issues
 topics:
   - dir-picker
   - directory
@@ -40,7 +40,7 @@ flutter:
   plugin:
     platforms:
       android:
-        package: com.vanvixi.dir_picker
+        package: com.iamv4g.dir_picker
         pluginClass: DirPickerPlugin
         dartPluginClass: DirPickerAndroid
       ios:

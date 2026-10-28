@@ -44,17 +44,18 @@ void main(List<String> args) async {
         ),
       ),
       sourcePath: [
-        packageRoot.resolve('android/src/main/kotlin/com/vanvixi/dir_picker/'),
+        packageRoot.resolve('android/src/main/kotlin/com/iamv4g/dir_picker/'),
       ],
       classPath: [
         packageRoot.resolve(
-          'example/build/dir_picker/tmp/kotlin-classes/debug',
+          // AGP 9 compiles Kotlin with its built-in Kotlin support.
+          'example/build/dir_picker/intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes',
         ),
       ],
       classes: [
-        'com.vanvixi.dir_picker.DirPicker',
-        'com.vanvixi.dir_picker.ListEntriesCallback',
-        'com.vanvixi.dir_picker.PickerCallback',
+        'com.iamv4g.dir_picker.DirPicker',
+        'com.iamv4g.dir_picker.ListEntriesCallback',
+        'com.iamv4g.dir_picker.PickerCallback',
       ],
     ),
   );

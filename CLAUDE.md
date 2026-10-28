@@ -22,7 +22,7 @@ dart run tool/ffigen.dart            # regenerate lib/src/platforms/darwin/nativ
 dart run tool/jnigen.dart            # regenerate lib/src/platforms/android/native_bindings.g.dart
 ```
 
-`tool/jnigen.dart` first runs `./gradlew dir_picker:compileDebugKotlin` inside `example/android/`, then reads the compiled classes from `example/build/dir_picker/tmp/kotlin-classes/debug`. The example Android project has to build before you can regenerate the JNI bindings.
+`tool/jnigen.dart` first runs `./gradlew dir_picker:compileDebugKotlin` inside `example/android/`, then reads the compiled classes from `example/build/dir_picker/intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes`. The example Android project has to build before you can regenerate the JNI bindings.
 
 Tests are split by where they compile. `test/common/` runs everywhere, `test/io/` needs `dart:io` (Linux tests are `@TestOn('posix')`, Windows tests `@TestOn('windows')`), and `test/web/` is `@TestOn('browser')`. Never pass `test/io` to a `--platform chrome` run: web runs compile every given file into one bundle and ignore `@TestOn` at compile time. `DirPickerLinux.withBackends` swaps out the portal and `Process.run` for tests. Darwin port messages and the native entries JSON are decoded by pure functions (`platforms/darwin/port_message.dart`, `platforms/entries_json.dart`) so they can be tested without FFI or JNI.
 
@@ -46,7 +46,7 @@ Registration: `pubspec.yaml` declares a `dartPluginClass` for every platform exc
 | Platform | Dart side | Native side | Transport |
 |---|---|---|---|
 | iOS / macOS | `platforms/darwin/dir_picker_darwin.dart` | `darwin/dir_picker/Sources/dir_picker/*.swift` (shared source, `sharedDarwinSource: true`) | FFI `@_cdecl` functions from `include/dir_picker_ffi.h`, results posted back via `Dart_PostCObject_DL` to a `ReceivePort` |
-| Android | `platforms/android/dir_picker_android.dart` | `android/src/main/kotlin/com/vanvixi/dir_picker/` | JNI via `package:jni`; Dart implements the `PickerCallback` / `ListEntriesCallback` Kotlin interfaces |
+| Android | `platforms/android/dir_picker_android.dart` | `android/src/main/kotlin/com/iamv4g/dir_picker/` | JNI via `package:jni`; Dart implements the `PickerCallback` / `ListEntriesCallback` Kotlin interfaces |
 | Windows | `platforms/windows/dir_picker_windows.dart` | none, pure Dart FFI against `ole32.dll` COM `IFileOpenDialog` | FFI |
 | Linux | `platforms/linux/dir_picker_linux.dart` | none | `package:dbus` XDG Portal → `zenity` → `kdialog` (falls through on `_PickerUnavailableException`) |
 | Web | `platforms/web/dir_picker_web.dart` | none | `package:web` `showDirectoryPicker()`; returns `WebPickedLocation` (handle, `uri == null`) |
