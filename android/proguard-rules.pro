@@ -1,22 +1,10 @@
-# Keep core components of Kotlin Coroutines
--keep class kotlin.coroutines.** { *; }
--keep class kotlinx.coroutines.** { *; }
+# Consumer rules, merged into every app that depends on dir_picker. Keep them
+# scoped to this package.
+#
+# The JNI bindings (lib/src/platforms/android/native_bindings.g.dart) look up
+# these classes and their members by name from Dart, which R8 can't see.
+-keep class com.iamv4g.dir_picker.** { *; }
 
-# Keep intrinsic support classes (Resolves CoroutineSingletons errors)
--keep class kotlin.coroutines.intrinsics.** { *; }
-
-# Keep Metadata and Annotations so JNI/jnigen can read function structure
--keepattributes *Annotation*, InnerClasses, EnclosingMethod, Signature, Exceptions, Metadata
-
-# Keep entire package containing your logic
--keep class com.iamv4g.dir_picker.** {
-    <methods>;
-    <fields>;
-}
-
-# Prevent parameter name obfuscation (Critical for JNI signature matching)
--keepparameternames
-
-# Keep base Java/Kotlin classes commonly used in return values
--keep class kotlin.Result { *; }
--keep class kotlin.jvm.internal.** { *; }
+# Kept members whose signatures use this Kotlin type, such as the synthetic
+# DirPicker$Companion constructor, can only be found if its name is kept too.
+-keepnames class kotlin.jvm.internal.DefaultConstructorMarker
