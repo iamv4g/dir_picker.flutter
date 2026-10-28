@@ -30,7 +30,7 @@ extension type _IteratorResult._(JSObject _) implements JSObject {
   external JSAny? get value;
 }
 
-/// DirPicker implementation for Web.
+/// DirPicker implementation for Web. (temporary CI scope test)
 ///
 /// Uses the File System Access API (`window.showDirectoryPicker()`).
 /// Supported in Chrome/Edge 86+. Throws [UnsupportedError] in Firefox/Safari.
