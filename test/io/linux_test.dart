@@ -72,13 +72,7 @@ void main() {
 
       expect(location?.uri, Uri.directory('/home/user/Projects'));
       expect(runs, [
-        [
-          'zenity',
-          '--file-selection',
-          '--directory',
-          '--title=Import',
-          '--ok-label=Use',
-        ],
+        ['zenity', '--file-selection', '--directory', '--title=Import'],
       ]);
     });
 
@@ -215,18 +209,10 @@ void main() {
         expect(runs, isEmpty);
       });
 
-      test('throws when the portal reports an error', () async {
+      test('returns null when the dialog is closed (response 2)', () async {
+        // The GTK backend sends 2 for Esc or the window's close button.
         portal.response = 2;
-        await expectLater(
-          pick(),
-          throwsA(
-            isA<Exception>().having(
-              (e) => '$e',
-              'message',
-              contains('PICKER_ERROR'),
-            ),
-          ),
-        );
+        expect(await pick(), isNull);
         expect(runs, isEmpty);
       });
     },

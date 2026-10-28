@@ -55,8 +55,8 @@ class LinuxOptions implements PickOptions {
 
   /// Label for the confirmation button.
   ///
-  /// Applied to XDG Desktop Portal (via `accept_label`) and zenity (via `--ok-label`).
-  /// Not supported by kdialog.
+  /// Applied to XDG Desktop Portal (via `accept_label`). Not supported by the
+  /// zenity and kdialog fallbacks.
   final String acceptLabel;
 }
 

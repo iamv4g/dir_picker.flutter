@@ -175,7 +175,7 @@ Options for other platforms are silently ignored — only the one matching the c
 | Parameter     | Type     | Default              | Description                                                     |
 |---------------|----------|----------------------|-----------------------------------------------------------------|
 | `title`       | `String` | `'Select Directory'` | Window title of the dialog.                                     |
-| `acceptLabel` | `String` | `'Select'`           | Label for the confirmation button (XDG Portal and zenity only). |
+| `acceptLabel` | `String` | `'Select'`           | Label for the confirmation button (XDG Portal only).            |
 
 ### WindowsOptions
 
