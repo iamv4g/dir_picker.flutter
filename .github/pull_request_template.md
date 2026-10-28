@@ -37,9 +37,9 @@ Fixes #
 
 ## Checklist
 
-<!-- CI already runs `dart format`, `flutter analyze`, `flutter test` (VM and Chrome), pana, builds the
-     example on every platform, and runs `example/integration_test` on macOS, Linux and Windows.
-     The items below are what it can't check. -->
+<!-- CI already runs `dart format`, `flutter analyze`, `flutter test` (VM and Chrome) and pana, and, for
+     the platforms your change touches, builds the example and runs `example/integration_test` on macOS,
+     Linux and Windows. The items below are what it can't check. -->
 
 - [ ] Added or updated tests in `test/` or `example/integration_test/` (or explained above why it can't be tested)
 - [ ] Ran `example/integration_test` on an iOS simulator if the Swift `listEntries` changed (CI doesn't run iOS)
