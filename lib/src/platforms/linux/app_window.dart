@@ -23,11 +23,11 @@ int? appWindowXid() {
           Int32 Function(Pointer<Void>),
           int Function(Pointer<Void>)
         >('gtk_window_is_active');
-    final isVisible = gtk
+    final windowType = gtk
         .lookupFunction<
           Int32 Function(Pointer<Void>),
           int Function(Pointer<Void>)
-        >('gtk_widget_get_visible');
+        >('gtk_window_get_window_type');
     final widgetWindow = gtk
         .lookupFunction<
           Pointer<Void> Function(Pointer<Void>),
@@ -54,24 +54,26 @@ int? appWindowXid() {
           void Function(Pointer<_GList>)
         >('g_list_free');
 
-    // Prefer the active window, then the first visible one.
+    // Prefer the active window, then the first realized top-level window
+    // (not a popup). The Flutter runner only shows its window after the
+    // first frame, so visibility isn't required.
     final list = listToplevels();
-    Pointer<Void>? window;
+    Pointer<Void> gdkWindow = nullptr;
     try {
       for (var node = list; node != nullptr; node = node.ref.next) {
         final widget = node.ref.data;
-        if (isVisible(widget) == 0) continue;
+        if (windowType(widget) != _gtkWindowToplevel) continue;
+        final candidate = widgetWindow(widget);
+        if (candidate == nullptr) continue;
         if (isActive(widget) != 0) {
-          window = widget;
+          gdkWindow = candidate;
           break;
         }
-        window ??= widget;
+        if (gdkWindow == nullptr) gdkWindow = candidate;
       }
     } finally {
       listFree(list);
     }
-
-    final gdkWindow = window == null ? nullptr : widgetWindow(window);
     if (gdkWindow == nullptr) return null;
 
     // G_OBJECT_TYPE_NAME(display): GTypeInstance starts with its GTypeClass
@@ -87,6 +89,8 @@ int? appWindowXid() {
     return null;
   }
 }
+
+const _gtkWindowToplevel = 0; // GTK_WINDOW_TOPLEVEL
 
 final class _GList extends Struct {
   external Pointer<Void> data;
