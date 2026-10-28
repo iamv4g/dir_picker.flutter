@@ -40,11 +40,14 @@ class DirPicker {
   ///   `com.apple.security.files.user-selected.read-write` entitlement in your
   ///   app's `.entitlements` files. Customize with [MacosOptions].
   ///
-  /// - **Windows**: Uses the COM `IFileOpenDialog` interface (Win32).
+  /// - **Windows**: Uses the COM `IFileOpenDialog` interface (Win32), owned
+  ///   by the app's window so it stays on top of it and is modal.
   ///   Customize the dialog title and button label with [WindowsOptions].
   ///
   /// - **Linux**: Uses the XDG Desktop Portal (`org.freedesktop.portal.FileChooser`)
   ///   with automatic fallback to `zenity` (GNOME) then `kdialog` (KDE).
+  ///   On X11, the portal dialog is modal to the app's window. On Wayland,
+  ///   and with zenity or kdialog, it opens as a separate window.
   ///   Throws [UnsupportedError] if none of them is available.
   ///   Customize with [LinuxOptions].
   ///
