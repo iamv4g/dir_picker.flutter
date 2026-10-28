@@ -4,6 +4,7 @@ import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:path/path.dart' as p;
 
 import '../../location/file_system_entry.dart';
@@ -24,10 +25,12 @@ typedef ULONG = Uint32;
 // Win32 constants
 // ─────────────────────────────────────────────────────────────────────────────
 
-const int _sOk = 0;
 const int _coinitApartmentThreaded = 0x2;
 const int _clsctxAll = 23; // CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | ...
 const int _fosPickFolders = 0x20;
+const int _fosForceFileSystem = 0x40;
+// HRESULT_FROM_WIN32(ERROR_CANCELLED), returned by Show when the user cancels.
+const int _hresultCancelled = 0x800704C7;
 const int _sigdnFileSysPath = 0x80058000; // SIGDN_FILESYSPATH
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -130,6 +133,10 @@ typedef _ReleaseDart = int Function(Pointer<Void>);
 typedef _SetOptionsNative = HRESULT Function(Pointer<Void>, DWORD);
 typedef _SetOptionsDart = int Function(Pointer<Void>, int);
 
+// IFileDialog::GetOptions (vtable index 10)
+typedef _GetOptionsNative = HRESULT Function(Pointer<Void>, Pointer<DWORD>);
+typedef _GetOptionsDart = int Function(Pointer<Void>, Pointer<Uint32>);
+
 // IModalWindow::Show (vtable index 3)
 typedef _ShowNative = HRESULT Function(Pointer<Void>, IntPtr);
 typedef _ShowDart = int Function(Pointer<Void>, int);
@@ -145,14 +152,9 @@ typedef _GetDisplayNameNative =
 typedef _GetDisplayNameDart =
     int Function(Pointer<Void>, int, Pointer<Pointer<Utf16>>);
 
-// IFileDialog::SetTitle (vtable index 17)
-typedef _SetTitleNative = HRESULT Function(Pointer<Void>, Pointer<Utf16>);
-typedef _SetTitleDart = int Function(Pointer<Void>, Pointer<Utf16>);
-
-// IFileDialog::SetOkButtonLabel (vtable index 18)
-typedef _SetOkButtonLabelNative =
-    HRESULT Function(Pointer<Void>, Pointer<Utf16>);
-typedef _SetOkButtonLabelDart = int Function(Pointer<Void>, Pointer<Utf16>);
+// IFileDialog::SetTitle (vtable index 17), SetOkButtonLabel (vtable index 18)
+typedef _SetStringNative = HRESULT Function(Pointer<Void>, Pointer<Utf16>);
+typedef _SetStringDart = int Function(Pointer<Void>, Pointer<Utf16>);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DirPickerWindows — platform implementation
@@ -164,7 +166,7 @@ class DirPickerWindows extends DirPickerPlatform {
   }
 
   /// Shows a Windows folder picker dialog and returns the selected directory
-  /// as a [Uri], or `null` if the user cancelled.
+  /// as a [Uri], or `null` if the user cancelled. Any other failure throws.
   ///
   /// Runs on a separate isolate because the COM dialog blocks the calling
   /// thread until the user closes it.
@@ -178,18 +180,41 @@ class DirPickerWindows extends DirPickerPlatform {
     return IOPickedLocation(Uri.directory(path, windows: true));
   }
 
-  static String? _pickSync(String title, String acceptLabel) {
-    final hr = _coInitializeEx(nullptr, _coinitApartmentThreaded);
-    if (hr < 0 && hr != 1) return null; // 1 = S_FALSE (already initialized)
-
+  static String? _pickSync(String title, String acceptLabel) => _withCom(() {
+    final dialog = _createDialog(title, acceptLabel);
     try {
-      return _showDialog(title, acceptLabel);
+      return _showDialog(dialog);
+    } finally {
+      _release(dialog);
+    }
+  });
+
+  /// The `FILEOPENDIALOGOPTIONS` that [pick] shows the dialog with.
+  @visibleForTesting
+  static int debugDialogOptions() => _withCom(() {
+    const defaults = WindowsOptions();
+    final dialog = _createDialog(defaults.title, defaults.acceptLabel);
+    try {
+      return _getOptions(dialog);
+    } finally {
+      _release(dialog);
+    }
+  });
+
+  /// Runs [body] with COM initialized as a single-threaded apartment, which
+  /// the shell dialogs need.
+  static T _withCom<T>(T Function() body) {
+    final hr = _coInitializeEx(nullptr, _coinitApartmentThreaded);
+    _check(hr, 'CoInitializeEx');
+    try {
+      return body();
     } finally {
       _coUninitialize();
     }
   }
 
-  static String? _showDialog(String title, String acceptLabel) {
+  /// Creates an `IFileOpenDialog` that only accepts file system folders.
+  static Pointer<Void> _createDialog(String title, String acceptLabel) {
     // CLSID_FileOpenDialog: {DC1C5A9C-E88A-4DDE-A5A1-60F82A20AEF7}
     final clsid = calloc<_GUID>()
       ..ref.parse('{DC1C5A9C-E88A-4DDE-A5A1-60F82A20AEF7}');
@@ -201,101 +226,120 @@ class DirPickerWindows extends DirPickerPlatform {
     final ppDialog = calloc<Pointer<Void>>();
 
     try {
-      // Create IFileOpenDialog instance
-      var hr = _coCreateInstance(clsid, nullptr, _clsctxAll, iid, ppDialog);
-      if (hr < 0) return null;
-
+      _check(
+        _coCreateInstance(clsid, nullptr, _clsctxAll, iid, ppDialog),
+        'CoCreateInstance',
+      );
       final dialog = ppDialog.value;
 
-      // Set FOS_PICKFOLDERS option
-      final setOptions = _vtableEntry<_SetOptionsNative>(
-        dialog,
-        9,
-      ).asFunction<_SetOptionsDart>();
-      hr = setOptions(dialog, _fosPickFolders);
-      if (hr < 0) {
+      try {
+        // Add to the default options rather than replacing them, so
+        // FOS_PATHMUSTEXIST and FOS_NOCHANGEDIR stay set. FOS_FORCEFILESYSTEM
+        // stops the user from picking virtual folders such as "This PC",
+        // which have no file system path.
+        final setOptions = _vtableEntry<_SetOptionsNative>(
+          dialog,
+          9,
+        ).asFunction<_SetOptionsDart>();
+        _check(
+          setOptions(
+            dialog,
+            _getOptions(dialog) | _fosPickFolders | _fosForceFileSystem,
+          ),
+          'SetOptions',
+        );
+
+        _setString(dialog, 17, title); // IFileDialog::SetTitle
+        _setString(dialog, 18, acceptLabel); // IFileDialog::SetOkButtonLabel
+
+        return dialog;
+      } catch (_) {
         _release(dialog);
-        return null;
-      }
-
-      // Set dialog title
-      final titlePtr = title.toNativeUtf16();
-      try {
-        final setTitle = _vtableEntry<_SetTitleNative>(
-          dialog,
-          17,
-        ).asFunction<_SetTitleDart>();
-        setTitle(dialog, titlePtr);
-      } finally {
-        calloc.free(titlePtr);
-      }
-
-      // Set OK button label
-      final labelPtr = acceptLabel.toNativeUtf16();
-      try {
-        final setOkButtonLabel = _vtableEntry<_SetOkButtonLabelNative>(
-          dialog,
-          18,
-        ).asFunction<_SetOkButtonLabelDart>();
-        setOkButtonLabel(dialog, labelPtr);
-      } finally {
-        calloc.free(labelPtr);
-      }
-
-      // Show the dialog (blocks until user closes)
-      final show = _vtableEntry<_ShowNative>(dialog, 3).asFunction<_ShowDart>();
-      hr = show(dialog, 0);
-      if (hr != _sOk) {
-        // User cancelled or error
-        _release(dialog);
-        return null;
-      }
-
-      // Get the selected folder as IShellItem
-      final ppItem = calloc<Pointer<Void>>();
-      try {
-        final getResult = _vtableEntry<_GetResultNative>(
-          dialog,
-          20,
-        ).asFunction<_GetResultDart>();
-        hr = getResult(dialog, ppItem);
-        if (hr < 0) {
-          _release(dialog);
-          return null;
-        }
-
-        final item = ppItem.value;
-
-        // Get the file system path from IShellItem
-        final ppszName = calloc<Pointer<Utf16>>();
-        try {
-          final getDisplayName = _vtableEntry<_GetDisplayNameNative>(
-            item,
-            5,
-          ).asFunction<_GetDisplayNameDart>();
-          hr = getDisplayName(item, _sigdnFileSysPath, ppszName);
-          if (hr < 0) {
-            _release(item);
-            _release(dialog);
-            return null;
-          }
-
-          final path = ppszName.value.toDartString();
-          _coTaskMemFree(ppszName.value.cast());
-          _release(item);
-          _release(dialog);
-          return path;
-        } finally {
-          calloc.free(ppszName);
-        }
-      } finally {
-        calloc.free(ppItem);
+        rethrow;
       }
     } finally {
       calloc.free(clsid);
       calloc.free(iid);
       calloc.free(ppDialog);
     }
+  }
+
+  /// Calls the `IFileDialog` string setter at vtable [index].
+  static void _setString(Pointer<Void> dialog, int index, String value) {
+    final valuePtr = value.toNativeUtf16();
+    try {
+      final setString = _vtableEntry<_SetStringNative>(
+        dialog,
+        index,
+      ).asFunction<_SetStringDart>();
+      setString(dialog, valuePtr);
+    } finally {
+      calloc.free(valuePtr);
+    }
+  }
+
+  static int _getOptions(Pointer<Void> dialog) {
+    final pOptions = calloc<Uint32>();
+    try {
+      final getOptions = _vtableEntry<_GetOptionsNative>(
+        dialog,
+        10,
+      ).asFunction<_GetOptionsDart>();
+      _check(getOptions(dialog, pOptions), 'GetOptions');
+      return pOptions.value;
+    } finally {
+      calloc.free(pOptions);
+    }
+  }
+
+  /// Shows [dialog] and returns the picked folder's path, or `null` if the
+  /// user cancelled.
+  static String? _showDialog(Pointer<Void> dialog) {
+    // Show the dialog (blocks until user closes)
+    final show = _vtableEntry<_ShowNative>(dialog, 3).asFunction<_ShowDart>();
+    final hr = show(dialog, 0);
+    if (hr.toUnsigned(32) == _hresultCancelled) return null;
+    _check(hr, 'Show');
+
+    // Get the selected folder as IShellItem
+    final ppItem = calloc<Pointer<Void>>();
+    final ppszName = calloc<Pointer<Utf16>>();
+    try {
+      final getResult = _vtableEntry<_GetResultNative>(
+        dialog,
+        20,
+      ).asFunction<_GetResultDart>();
+      _check(getResult(dialog, ppItem), 'GetResult');
+      final item = ppItem.value;
+
+      try {
+        // Get the file system path from IShellItem
+        final getDisplayName = _vtableEntry<_GetDisplayNameNative>(
+          item,
+          5,
+        ).asFunction<_GetDisplayNameDart>();
+        _check(
+          getDisplayName(item, _sigdnFileSysPath, ppszName),
+          'GetDisplayName',
+        );
+
+        final path = ppszName.value.toDartString();
+        _coTaskMemFree(ppszName.value.cast());
+        return path;
+      } finally {
+        _release(item);
+      }
+    } finally {
+      calloc.free(ppItem);
+      calloc.free(ppszName);
+    }
+  }
+
+  /// Throws if [hr] is a failure `HRESULT`.
+  static void _check(int hr, String step) {
+    if (hr >= 0) return;
+    final code = hr.toUnsigned(32).toRadixString(16).toUpperCase();
+    throw Exception('PLATFORM_ERROR: $step failed with HRESULT 0x$code');
   }
 
   static void _release(Pointer<Void> comObj) {
