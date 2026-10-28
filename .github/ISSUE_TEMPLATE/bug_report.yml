@@ -1,0 +1,132 @@
+name: 🐛 Bug report
+description: The picker doesn't open, returns the wrong result, hangs, crashes, or listEntries reports the wrong entries.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug!
+        Before filing, please check the [README](https://github.com/iamv4g/dir_picker.flutter#readme)
+        (platform setup and options) and [existing issues](https://github.com/iamv4g/dir_picker.flutter/issues?q=is%3Aissue).
+
+  - type: input
+    id: version
+    attributes:
+      label: Plugin version
+      description: The `dir_picker` version from your `pubspec.lock`.
+      placeholder: "0.5.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platforms
+    attributes:
+      label: Affected platforms
+      multiple: true
+      options:
+        - Android
+        - iOS
+        - macOS
+        - Windows
+        - Linux
+        - Web
+    validations:
+      required: true
+
+  - type: input
+    id: os-version
+    attributes:
+      label: OS / device / browser
+      description: |
+        OS version and device model, or browser name and version for Web.
+        On Linux, also the desktop environment and which picker ran (XDG portal, zenity or kdialog).
+      placeholder: "Android 14 (Pixel 7), iOS 18.1 (iPhone 15), Chrome 130, Ubuntu 24.04 GNOME (portal)…"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: api
+    attributes:
+      label: API used
+      multiple: true
+      options:
+        - DirPicker.pick
+        - DirPicker.listEntries (recursive false)
+        - DirPicker.listEntries (recursive true)
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: options
+    attributes:
+      label: Pick options
+      description: The `PickOptions` you passed to `pick`, if any.
+      placeholder: "PickOptions.android(shouldPersist: true)"
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear description of the bug. For `listEntries`, describe the directory (symlinks, unreadable folders, non-ASCII names, cloud storage…).
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproducible code
+      description: |
+        The smallest snippet that reproduces the problem. Please strip unrelated code.
+        If it reproduces in the `example/` app, mention which button/flow.
+      render: dart
+      placeholder: |
+        final location = await DirPicker.pick();
+        if (location != null) {
+          final entries = await DirPicker.listEntries(location, recursive: true);
+        }
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / error output
+      description: |
+        The exception you received (errors arrive as `Exception('CODE: message')`), or whether the Future never completed,
+        plus relevant `logcat` / Xcode console / browser console output. Stack traces are very helpful.
+      render: shell
+
+  - type: textarea
+    id: flutter-doctor
+    attributes:
+      label: Output of `flutter doctor -v`
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: setup
+    attributes:
+      label: Platform setup & additional context
+      description: |
+        Anything else that might matter: macOS entitlements / sandbox, SwiftPM vs CocoaPods, R8/ProGuard on Android release builds,
+        the folder you picked (e.g. "This PC", iCloud Drive, a USB drive, an SD card), whether it worked in a previous version…
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and this hasn't been reported yet.
+          required: true
+        - label: I followed the platform setup in the README (e.g. macOS entitlements).
+          required: true
+        - label: I can reproduce this with the latest published version.
