@@ -38,13 +38,26 @@ public func dirPickerPick(
             return
         }
 
+        pickerLock.lock()
+        let isActive = activePickerHelper != nil
+        pickerLock.unlock()
+        // UIKit ignores a second present while the picker is still being
+        // presented, and nothing would ever report back.
+        guard !isActive else {
+            reporter.sendError(
+                code: "ALREADY_ACTIVE",
+                message: "A directory picker is already open"
+            )
+            return
+        }
+
         let helper = DocumentPickerHelper()
 
         pickerLock.lock()
         activePickerHelper = helper
         pickerLock.unlock()
 
-        helper.pick(from: rootVC) { url in
+        helper.pick(from: topViewController(from: rootVC)) { url in
             pickerLock.lock()
             activePickerHelper = nil
             pickerLock.unlock()
@@ -56,6 +69,16 @@ public func dirPickerPick(
             }
         }
     }
+}
+
+/// The view controller at the top of the presentation stack above `root`.
+/// UIKit ignores `present` on a controller that is already presenting.
+private func topViewController(from root: UIViewController) -> UIViewController {
+    var top = root
+    while let presented = top.presentedViewController {
+        top = presented
+    }
+    return top
 }
 
 private func getRootViewController() -> UIViewController? {
@@ -119,6 +142,7 @@ public func dirPickerListEntries(
         let keys: [URLResourceKey] = [
             .nameKey,
             .isDirectoryKey,
+            .isSymbolicLinkKey,
             .fileSizeKey,
             .contentModificationDateKey,
         ]
@@ -165,14 +189,19 @@ private func makeEntryDictionary(
     rootUrl: URL,
     keys: [URLResourceKey]
 ) throws -> [String: Any] {
-    let resourceValues = try fileUrl.resourceValues(forKeys: Set(keys))
+    let linkValues = try fileUrl.resourceValues(forKeys: Set(keys))
+    // Report a symbolic link as what it points to, as dart:io does on Linux
+    // and Windows. The enumerator still doesn't descend into it.
+    let resourceValues =
+        linkValues.isSymbolicLink == true
+        ? targetValues(ofLink: fileUrl, keys: Set(keys)) : linkValues
     let isDirectory = resourceValues.isDirectory ?? false
 
     // Foundation hands back decomposed (NFD) names. Return them precomposed
     // (NFC), as dart:io and the other platforms do, so they compare equal to
     // Dart string literals.
     return [
-        "name": (resourceValues.name ?? fileUrl.lastPathComponent).precomposedStringWithCanonicalMapping,
+        "name": (linkValues.name ?? fileUrl.lastPathComponent).precomposedStringWithCanonicalMapping,
         "relativePath": relativePath(for: fileUrl, rootUrl: rootUrl).precomposedStringWithCanonicalMapping,
         "isDirectory": isDirectory,
         "uri": fileUrl.absoluteString,
@@ -181,6 +210,15 @@ private func makeEntryDictionary(
             Int64($0.timeIntervalSince1970 * 1000)
         } ?? NSNull(),
     ]
+}
+
+/// The values of the file a symbolic link points to, or no values for a
+/// broken link.
+private func targetValues(ofLink link: URL, keys: Set<URLResourceKey>) -> URLResourceValues {
+    guard let values = try? link.resolvingSymlinksInPath().resourceValues(forKeys: keys),
+        values.isSymbolicLink != true
+    else { return URLResourceValues() }
+    return values
 }
 
 private func relativePath(for fileUrl: URL, rootUrl: URL) -> String {

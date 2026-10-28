@@ -20,7 +20,13 @@ export 'src/platforms/web/dir_picker_web.dart'
 class DirPicker {
   DirPicker._();
 
+  static bool _isPicking = false;
+
   /// Picks a directory and returns a [PickedLocation], or `null` if cancelled.
+  ///
+  /// Only one picker can be open at a time. Calling [pick] again before the
+  /// previous call completes throws an [Exception] starting with
+  /// `ALREADY_ACTIVE`, and the open picker is left as it is.
   ///
   /// ## Platform behavior
   ///
@@ -48,8 +54,17 @@ class DirPicker {
   ///   is always `null` (browsers restrict path access); use
   ///   [WebPickedLocation.handle] (`FileSystemDirectoryHandle`) to access
   ///   directory contents. Requires `package:web` in your app's dependencies.
-  static Future<PickedLocation?> pick({PickOptions? options}) =>
-      DirPickerPlatform.instance.pick(options: options);
+  static Future<PickedLocation?> pick({PickOptions? options}) async {
+    if (_isPicking) {
+      throw Exception('ALREADY_ACTIVE: A directory picker is already open');
+    }
+    _isPicking = true;
+    try {
+      return await DirPickerPlatform.instance.pick(options: options);
+    } finally {
+      _isPicking = false;
+    }
+  }
 
   /// Lists entries inside a previously picked directory.
   ///
@@ -58,6 +73,12 @@ class DirPicker {
   ///
   /// When [recursive] is `false`, only immediate children are returned.
   /// When `true`, all nested descendants are returned.
+  ///
+  /// A symbolic link is reported as what it points to: a link to a directory
+  /// has [FileSystemEntry.isDirectory] set, and a broken link is a
+  /// non-directory without a size. Links are never followed, so a recursive
+  /// listing doesn't include what is inside a linked directory. A
+  /// subdirectory that can't be read is listed, but its contents are skipped.
   static Future<List<FileSystemEntry>> listEntries(
     PickedLocation location, {
     bool recursive = false,

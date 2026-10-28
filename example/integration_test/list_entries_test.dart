@@ -1,6 +1,8 @@
+import 'dart:ffi';
 import 'dart:io';
 
 import 'package:dir_picker/dir_picker.dart';
+import 'package:ffi/ffi.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:path/path.dart' as p;
@@ -123,6 +125,66 @@ void main() {
     );
   });
 
+  test(
+    'reports a link as what it points to, without listing its contents',
+    () async {
+      try {
+        await Link(
+          p.join(root.path, 'dir_link'),
+        ).create(p.join(root.path, 'sub'));
+        await Link(
+          p.join(root.path, 'file_link'),
+        ).create(p.join(root.path, 'a.txt'));
+        await Link(
+          p.join(root.path, 'broken_link'),
+        ).create(p.join(root.path, 'gone'));
+      } on FileSystemException catch (e) {
+        markTestSkipped('Cannot create links here: $e');
+        return;
+      }
+
+      final entries = await DirPicker.listEntries(location(), recursive: true);
+      final byPath = {for (final entry in entries) entry.relativePath: entry};
+
+      expect(byPath['dir_link']!.isDirectory, isTrue);
+      expect(byPath['dir_link']!.size, isNull);
+      expect(byPath['file_link']!.isDirectory, isFalse);
+      expect(byPath['file_link']!.size, 2);
+      expect(byPath['broken_link']!.isDirectory, isFalse);
+      expect(byPath['broken_link']!.size, isNull);
+      expect(
+        byPath.keys.where((path) => path.startsWith('dir_link/')),
+        isEmpty,
+      );
+    },
+  );
+
+  test('skips the contents of a subdirectory it cannot read', () async {
+    final locked = await Directory(p.join(root.path, 'locked')).create();
+    await File(p.join(locked.path, 'secret.txt')).writeAsString('');
+    await _setReadable(locked, false);
+    addTearDown(() => _setReadable(locked, true));
+    if (await _isReadable(locked)) {
+      markTestSkipped('Could not make a directory unreadable');
+      return;
+    }
+
+    final entries = await DirPicker.listEntries(location(), recursive: true);
+
+    expect(
+      entries.map((e) => e.relativePath),
+      unorderedEquals([
+        'a.txt',
+        'locked',
+        'sub',
+        'sub/b.txt',
+        'sub/nested',
+        'tài liệu',
+        'tài liệu/ghi chú 1.txt',
+      ]),
+    );
+  });
+
   test('throws for a directory that does not exist', () async {
     for (final recursive in [false, true]) {
       await expectLater(
@@ -133,3 +195,44 @@ void main() {
     }
   });
 }
+
+Future<bool> _isReadable(Directory directory) async {
+  try {
+    await directory.list().drain<void>();
+    return true;
+  } on FileSystemException {
+    return false;
+  }
+}
+
+/// Denies or restores read access to [directory] for the current user.
+/// Uses icacls on Windows and chmod(2) elsewhere, since iOS apps can't run
+/// processes.
+Future<void> _setReadable(Directory directory, bool readable) async {
+  if (Platform.isWindows) {
+    final user = Platform.environment['USERNAME']!;
+    final result = await Process.run('icacls', [
+      directory.path,
+      ...readable ? ['/remove:d', user] : ['/deny', '$user:(RX)'],
+    ]);
+    if (result.exitCode != 0) throw Exception('icacls: ${result.stderr}');
+    return;
+  }
+
+  final path = directory.path.toNativeUtf8();
+  try {
+    if (_chmod(path, readable ? 493 /* 0755 */ : 0) != 0) {
+      throw Exception('chmod ${directory.path} failed');
+    }
+  } finally {
+    calloc.free(path);
+  }
+}
+
+// mode_t is 16 bits on Darwin and 32 bits on Linux; both are passed in a
+// full register.
+final _chmod = DynamicLibrary.process()
+    .lookupFunction<
+      Int32 Function(Pointer<Utf8>, Uint32),
+      int Function(Pointer<Utf8>, int)
+    >('chmod');

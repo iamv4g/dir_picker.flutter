@@ -2,12 +2,12 @@ import 'dart:io';
 
 import 'package:dbus/dbus.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
-import 'package:path/path.dart' as p;
 
 import '../../location/file_system_entry.dart';
 import '../../location/picked_location.dart';
 import '../../options/pick_options.dart';
 import '../../platform_interface/dir_picker_platform.dart';
+import '../io_entries.dart';
 
 /// Thrown when a picker method is not available on the current system
 /// (e.g. portal daemon not running, CLI tool not installed).
@@ -231,29 +231,6 @@ class DirPickerLinux extends DirPickerPlatform {
       );
     }
 
-    final directory = Directory.fromUri(uri);
-    final entries = <FileSystemEntry>[];
-
-    await for (final entity in directory.list(
-      recursive: recursive,
-      followLinks: false,
-    )) {
-      final stat = await entity.stat();
-      final relativePath = p.posix.normalize(
-        p.posix.relative(entity.path, from: directory.path),
-      );
-      entries.add(
-        FileSystemEntry(
-          name: p.posix.basename(relativePath),
-          relativePath: relativePath,
-          isDirectory: stat.type == FileSystemEntityType.directory,
-          uri: entity.uri,
-          size: stat.type == FileSystemEntityType.file ? stat.size : null,
-          lastModified: stat.modified,
-        ),
-      );
-    }
-
-    return entries;
+    return listIoEntries(Directory.fromUri(uri), recursive: recursive);
   }
 }
