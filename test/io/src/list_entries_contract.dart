@@ -67,7 +67,48 @@ void listEntriesContract(
     expect(directory.size, isNull);
   });
 
+  test('skips the contents of a subdirectory it cannot read', () async {
+    final locked = await Directory(p.join(root.path, 'locked')).create();
+    await File(p.join(locked.path, 'secret.txt')).writeAsString('');
+    if (!await lockDirectory(locked)) {
+      markTestSkipped(
+        'Could not make a directory unreadable (running as root?)',
+      );
+      return;
+    }
+    addTearDown(() => unlockDirectory(locked));
+
+    final entries = await platform.listEntries(location(), recursive: true);
+
+    expect(
+      entries.map((e) => e.relativePath),
+      unorderedEquals(['a.txt', 'locked', 'sub', 'sub/b.txt', 'sub/nested']),
+    );
+  });
+
   if (testSymlinks) {
+    test('reports a link as what it points to', () async {
+      await Link(
+        p.join(root.path, 'dir_link'),
+      ).create(p.join(root.path, 'sub'));
+      await Link(
+        p.join(root.path, 'file_link'),
+      ).create(p.join(root.path, 'a.txt'));
+      await Link(
+        p.join(root.path, 'broken_link'),
+      ).create(p.join(root.path, 'gone'));
+
+      final entries = await platform.listEntries(location());
+      final byPath = {for (final entry in entries) entry.relativePath: entry};
+
+      expect(byPath['dir_link']!.isDirectory, isTrue);
+      expect(byPath['dir_link']!.size, isNull);
+      expect(byPath['file_link']!.isDirectory, isFalse);
+      expect(byPath['file_link']!.size, 2);
+      expect(byPath['broken_link']!.isDirectory, isFalse);
+      expect(byPath['broken_link']!.size, isNull);
+    });
+
     test('does not descend into symlinked directories', () async {
       final outside = await Directory.systemTemp.createTemp('dir_picker_out');
       addTearDown(() => outside.delete(recursive: true));
@@ -93,4 +134,43 @@ void listEntriesContract(
 class _NoUriLocation extends PickedLocation {
   @override
   Uri? get uri => null;
+}
+
+/// Makes [directory] unreadable for the current user. Returns `false` if it
+/// is still readable afterwards, e.g. when running as root.
+Future<bool> lockDirectory(Directory directory) async {
+  if (Platform.isWindows) {
+    await _run('icacls', [
+      directory.path,
+      '/deny',
+      '${Platform.environment['USERNAME']}:(RX)',
+    ]);
+  } else {
+    await _run('chmod', ['000', directory.path]);
+  }
+  try {
+    await directory.list().drain<void>();
+    return false;
+  } on FileSystemException {
+    return true;
+  }
+}
+
+Future<void> unlockDirectory(Directory directory) async {
+  if (Platform.isWindows) {
+    await _run('icacls', [
+      directory.path,
+      '/remove:d',
+      '${Platform.environment['USERNAME']}',
+    ]);
+  } else {
+    await _run('chmod', ['755', directory.path]);
+  }
+}
+
+Future<void> _run(String executable, List<String> arguments) async {
+  final result = await Process.run(executable, arguments);
+  if (result.exitCode != 0) {
+    throw ProcessException(executable, arguments, '${result.stderr}');
+  }
 }
