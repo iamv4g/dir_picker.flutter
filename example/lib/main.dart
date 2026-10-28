@@ -29,6 +29,8 @@ class _DirPickerHomePageState extends State<DirPickerHomePage> {
 
   Future<PickedLocation?> _pickLocation() {
     return DirPicker.pick(
+      // Reopen where the user picked last time, where the platform allows.
+      initialDirectory: _pickedLocation,
       options: switch (defaultTargetPlatform) {
         TargetPlatform.android => const PickOptions.android(
           shouldPersist: false,
