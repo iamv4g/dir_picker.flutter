@@ -95,7 +95,9 @@ void main() {
   });
 
   group('DirPickerWeb.listEntries', () {
-    setUp(() => stubPicker('Promise.reject()'));
+    // Listing only needs the handle, so it must work in browsers without
+    // showDirectoryPicker, such as Firefox and Safari (#23).
+    setUp(() => globalContext.delete('showDirectoryPicker'.toJS));
 
     test('lists only immediate children by default', () async {
       final entries = await DirPickerWeb().listEntries(WebPickedLocation(root));

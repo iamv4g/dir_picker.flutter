@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dir_picker/dir_picker.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -17,6 +19,46 @@ void main() {
       expect(entries.single.relativePath, 'child.txt');
     },
   );
+
+  group('DirPicker.pick', () {
+    test('rejects a second call while a picker is open', () async {
+      final platform = _FakePlatform();
+      DirPickerPlatform.instance = platform;
+
+      final first = DirPicker.pick();
+      await expectLater(
+        DirPicker.pick(),
+        throwsA(
+          isA<Exception>().having(
+            (e) => e.toString(),
+            'message',
+            contains('ALREADY_ACTIVE'),
+          ),
+        ),
+      );
+      expect(platform.pickCalls, 1);
+
+      final picked = IOPickedLocation(Uri.directory('/tmp/picked'));
+      platform.pickResult.complete(picked);
+      expect(await first, same(picked));
+    });
+
+    test('allows a new call after the previous one completes', () async {
+      final platform = _FakePlatform();
+      DirPickerPlatform.instance = platform;
+
+      final first = DirPicker.pick();
+      platform.pickResult.complete(null);
+      expect(await first, isNull);
+
+      platform.pickResult = Completer()..completeError(Exception('boom'));
+      await expectLater(DirPicker.pick(), throwsException);
+
+      platform.pickResult = Completer()..complete(null);
+      expect(await DirPicker.pick(), isNull);
+      expect(platform.pickCalls, 3);
+    });
+  });
 
   test('WebPickedLocation can be checked for on every platform', () {
     // Compiling this file on native is the real check: the stub must declare
@@ -71,6 +113,12 @@ class _FakePlatform extends DirPickerPlatform {
     ];
   }
 
+  Completer<PickedLocation?> pickResult = Completer();
+  int pickCalls = 0;
+
   @override
-  Future<PickedLocation?> pick({PickOptions? options}) async => null;
+  Future<PickedLocation?> pick({PickOptions? options}) {
+    pickCalls++;
+    return pickResult.future;
+  }
 }

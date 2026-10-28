@@ -93,7 +93,7 @@ sudo apt install kdialog
 
 No configuration needed. The plugin uses the [File System Access API](https://developer.mozilla.org/en-US/docs/Web/API/Window/showDirectoryPicker).
 
-**Browser support:** Chrome 86+ and Edge 86+. Not supported in Firefox or Safari.
+**Browser support:** `pick()` needs Chrome 86+ or Edge 86+; it throws `UnsupportedError` in Firefox and Safari. `listEntries()` works in any browser for a `WebPickedLocation` you create from a `FileSystemDirectoryHandle`, for example one from the origin private file system (`navigator.storage.getDirectory()`).
 
 Works with both the JavaScript (`flutter build web`) and WebAssembly (`flutter build web --wasm`) compilers.
 
@@ -193,6 +193,8 @@ Options for other platforms are silently ignored — only the one matching the c
 | `IOPickedLocation`     | Native platforms — use `.uri` to get the selected directory URI.                                  |
 | `WebPickedLocation`    | Web — use `.handle` (`FileSystemDirectoryHandle`) to access directory contents. `.uri` is `null`. |
 | `null`                 | The user cancelled.                                                                               |
+
+Only one picker can be open at a time. Calling `pick()` again before the previous call completes throws an `Exception` whose message starts with `ALREADY_ACTIVE`.
 
 ### Native Mechanisms
 
