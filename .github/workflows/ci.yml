@@ -232,13 +232,14 @@ jobs:
 
   # The only check the main branch ruleset requires. Skipped jobs don't fail
   # it, so a pull request isn't blocked waiting for jobs it didn't need.
+  # pana is left out on purpose: it can fail without a code change (a new
+  # major release of a dependency), so it shows red without blocking merges.
   result:
     name: CI result
     if: always()
     needs:
       - changes
       - analyze-test
-      - pana
       - build-web
       - build-android
       - build-linux
