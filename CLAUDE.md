@@ -20,6 +20,7 @@ cd example && flutter run -d <device>   # manual testing of pick(), which needs 
 
 dart run tool/ffigen.dart            # regenerate lib/src/platforms/darwin/native_bindings.g.dart
 dart run tool/jnigen.dart            # regenerate lib/src/platforms/android/native_bindings.g.dart
+dart run tool/check_jni_keeps.dart <app-release.apk>   # check R8 kept every class/member the JNI bindings look up (needs ANDROID_HOME)
 ```
 
 `tool/jnigen.dart` first runs `./gradlew dir_picker:compileDebugKotlin` inside `example/android/`, then reads the compiled classes from `example/build/dir_picker/intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes`. The example Android project has to build before you can regenerate the JNI bindings.
@@ -70,5 +71,5 @@ User-facing changes go in `CHANGELOG.md` (newest version on top; breaking change
 
 ## CI and publishing
 
-- `.github/workflows/ci.yml` runs on PRs and on pushes to `main`. It does format/analyze/test on the minimum Flutter (3.44.0) and on latest stable, runs a publish dry run and `pana` with zero lost points allowed, builds the example for every platform, and runs `example/integration_test` on macOS, Linux (under `xvfb-run`) and Windows. The integration tests are the only coverage of the Swift `listEntries`. iOS is not in CI, because on hosted runners `flutter test` never finds the app's VM service on the simulator. Run it locally when the Swift changes. Android has none, because its `listEntries` only takes SAF tree URIs. `flutter analyze` fails on infos, so any new lint costs pub.dev points and fails CI.
+- `.github/workflows/ci.yml` runs on PRs and on pushes to `main`. It does format/analyze/test on the minimum Flutter (3.44.0) and on latest stable, runs a publish dry run and `pana` with zero lost points allowed, builds the example for every platform (Android as a release build, followed by `tool/check_jni_keeps.dart`, because R8 only runs in release), and runs `example/integration_test` on macOS, Linux (under `xvfb-run`) and Windows. The integration tests are the only coverage of the Swift `listEntries`. iOS is not in CI, because on hosted runners `flutter test` never finds the app's VM service on the simulator. Run it locally when the Swift changes. Android has none, because its `listEntries` only takes SAF tree URIs. `flutter analyze` fails on infos, so any new lint costs pub.dev points and fails CI.
 - `.github/workflows/publish.yml` publishes to pub.dev when a `vX.Y.Z` tag is pushed. The tag must equal `v` + the pubspec `version`. Publishing runs in the `pub.dev` GitHub environment, so it waits for approval. To release: merge the version bump and CHANGELOG, then `git tag vX.Y.Z && git push origin vX.Y.Z`.

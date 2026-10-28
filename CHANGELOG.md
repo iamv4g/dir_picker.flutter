@@ -7,6 +7,7 @@
 * Android: the picker is now launched on the main thread instead of a background thread (#21)
 * Android: a pick in progress now survives a configuration change of the host Activity when the Flutter engine outlives it (cached engine, add-to-app). Before, the Future completed with `null` and the picked folder was dropped (#22)
 * Android: a failure to launch the picker is reported as an error (`PICKER_ERROR`, `NO_ACTIVITY`) instead of `null`
+* Android: the consumer ProGuard/R8 rules now only keep `com.iamv4g.dir_picker`. Before, they also kept all of `kotlinx.coroutines`, `kotlin.coroutines` and `kotlin.jvm.internal`, and turned on `-keepparameternames` for the whole app (#26)
 * Android: the plugin's Kotlin package is now `com.iamv4g.dir_picker` (was `com.vanvixi.dir_picker`), matching the GitHub account rename. The Dart API is unchanged; update any R8/ProGuard rules or native code in your app that refer to the old package
 * Repository, issue tracker and podspec links now point to `github.com/iamv4g`
 
