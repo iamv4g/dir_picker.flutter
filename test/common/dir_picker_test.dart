@@ -74,6 +74,36 @@ void main() {
     );
   });
 
+  group('value equality', () {
+    test('FileSystemEntry compares all fields', () {
+      FileSystemEntry entry({int? size = 5}) => FileSystemEntry(
+        name: 'b.txt',
+        relativePath: 'sub/b.txt',
+        isDirectory: false,
+        uri: Uri.file('/tmp/sub/b.txt'),
+        size: size,
+        lastModified: DateTime.fromMillisecondsSinceEpoch(1000),
+      );
+
+      expect(entry(), entry());
+      expect(entry().hashCode, entry().hashCode);
+      expect(entry(), isNot(entry(size: 6)));
+      expect({entry(), entry()}, hasLength(1));
+    });
+
+    test('IOPickedLocation compares URIs', () {
+      final a = IOPickedLocation(Uri.directory('/tmp/a'));
+
+      expect(a, IOPickedLocation(Uri.directory('/tmp/a')));
+      expect(a.hashCode, IOPickedLocation(Uri.directory('/tmp/a')).hashCode);
+      expect(a, isNot(IOPickedLocation(Uri.directory('/tmp/b'))));
+      expect(<PickedLocation>{
+        a,
+        IOPickedLocation(Uri.directory('/tmp/a')),
+      }, hasLength(1));
+    });
+  });
+
   test('FileSystemEntry.fromJson parses nullable fields', () {
     final entry = FileSystemEntry.fromJson({
       'name': 'nested',
