@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Add `initialDirectory` to `DirPicker.pick()`, so the picker opens in a folder from an earlier pick: `EXTRA_INITIAL_URI` on Android 8+, `directoryURL` on iOS 13+ and macOS, `IFileDialog::SetFolder` on Windows, `current_folder`/`--filename`/the start folder on Linux, and `startIn` on the web. Platforms that can't use the given location ignore it. The example app reopens the last picked folder (#27)
+* **Breaking** for custom `DirPickerPlatform` implementations only: `pick()` takes a new `initialDirectory` parameter. Apps that call `DirPicker` are not affected
 * Web: add `PickOptions.web(mode:, id:, startIn:)`, passed to `showDirectoryPicker()`. `mode: WebPermissionMode.readwrite` returns a handle that can write without asking again, `id` lets the browser remember the last folder per purpose, and `startIn` opens in a well-known folder (#34)
 * Web: `listEntries` now reads files and subdirectories in parallel instead of awaiting each `getFile()` in turn (#34)
 * Windows: the folder dialog is now owned by the app's window, so it stays on top of it and the window can't be used until it closes. Before, it opened as a separate top-level window (#33)

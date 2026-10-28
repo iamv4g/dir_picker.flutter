@@ -133,6 +133,23 @@ for (final entry in entries) {
 }
 ```
 
+### Open the picker where the user was last time
+
+```dart
+final next = await DirPicker.pick(initialDirectory: previousLocation);
+```
+
+`initialDirectory` is a hint: where a platform can't use it, the picker opens in its default place.
+
+| Platform | Supported `initialDirectory` |
+|----------|------------------------------|
+| Android  | API 26+. A `content://` location from an earlier pick, or an entry's `uri` (`EXTRA_INITIAL_URI`). |
+| iOS      | iOS 13+. A `file://` location (`UIDocumentPickerViewController.directoryURL`). |
+| macOS    | A `file://` location (`NSOpenPanel.directoryURL`). |
+| Windows  | A `file://` location (`IFileDialog::SetFolder`). |
+| Linux    | A `file://` location: XDG portal `current_folder`, zenity `--filename`, kdialog's start folder. |
+| Web      | A `WebPickedLocation` (`startIn`). It takes precedence over `WebOptions.startIn`. |
+
 ## Platform Options
 
 Pass a `PickOptions` to `DirPicker.pick()` to customize the dialog for the current platform:
@@ -281,10 +298,12 @@ final location = await DirPicker.pick(
 ### `DirPicker.pick`
 
 ```dart
-static Future<PickedLocation?> pick({PickOptions? options})
+static Future<PickedLocation?> pick({PickOptions? options, PickedLocation? initialDirectory})
 ```
 
 Returns a `PickedLocation` (either `IOPickedLocation` or `WebPickedLocation`), or `null` if the user cancelled.
+
+`initialDirectory` opens the picker in that folder where the platform supports it (see [Open the picker where the user was last time](#open-the-picker-where-the-user-was-last-time)).
 
 `options` is a `PickOptions` sealed class — pass the platform-specific subclass using its factory constructor (e.g. `PickOptions.android(...)`, `PickOptions.macos(...)`). Options for other platforms are ignored.
 
