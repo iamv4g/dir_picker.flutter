@@ -95,7 +95,7 @@ void main() {
       await expectLater(
         picker(
           tools: {
-            'zenity': ProcessResult(0, 255, '', 'cannot open display\n'),
+            'zenity': ProcessResult(0, 5, '', 'Timed out\n'),
             'kdialog': selected('/ignored'),
           },
         ).pick(),

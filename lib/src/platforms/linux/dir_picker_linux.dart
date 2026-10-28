@@ -202,7 +202,8 @@ class DirPickerLinux extends DirPickerPlatform {
 
   /// Reads the picked path from a zenity or kdialog run. Exit code 1 means the
   /// user cancelled; any other non-zero code is an error, such as zenity's 5
-  /// (timeout) or 255 (no display).
+  /// (timeout) or 255 (unexpected error). zenity also exits with 1 when it
+  /// can't open a display, so that case still reads as a cancel.
   static String? _dialogResult(String tool, ProcessResult result) {
     if (result.exitCode == 1) return null;
     if (result.exitCode != 0) {
