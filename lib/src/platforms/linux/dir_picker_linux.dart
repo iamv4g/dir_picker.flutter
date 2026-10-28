@@ -14,14 +14,6 @@ import '../io_entries.dart';
 /// Distinct from user cancellation, which returns null.
 class _PickerUnavailableException implements Exception {}
 
-/// The portal's `Response` signal reported an error rather than a result or
-/// a cancel.
-class _PortalResponseError implements Exception {
-  _PortalResponseError(this.response);
-
-  final int response;
-}
-
 /// DirPicker implementation for Linux.
 ///
 /// Uses the following methods in order of priority:
@@ -32,8 +24,8 @@ class _PortalResponseError implements Exception {
 ///
 /// Each method throws [_PickerUnavailableException] if the tool is not present,
 /// allowing the next fallback to be tried. A null return always means the user
-/// cancelled — the fallback chain stops immediately. A picker that is present
-/// but fails throws `Exception('PICKER_ERROR: …')`. If no method is available,
+/// cancelled — the fallback chain stops immediately. zenity or kdialog
+/// failing with an exit code other than 1 throws `Exception('PICKER_ERROR: …')`. If no method is available,
 /// [pick] throws an [UnsupportedError].
 class DirPickerLinux extends DirPickerPlatform {
   DirPickerLinux() : this.withBackends();
@@ -90,11 +82,6 @@ class DirPickerLinux extends DirPickerPlatform {
   Future<Uri?> _pickWithPortal(LinuxOptions opts) async {
     try {
       return await (_portalPicker ?? _pickWithDbusPortal)(opts);
-    } on _PortalResponseError catch (e) {
-      throw Exception(
-        'PICKER_ERROR: The XDG Desktop Portal ended the request with '
-        'response ${e.response}',
-      );
     } catch (_) {
       throw _PickerUnavailableException();
     }
@@ -154,10 +141,11 @@ class DirPickerLinux extends DirPickerPlatform {
         signal = await responseOn(handlePath);
       }
 
-      // 0 = success, 1 = cancelled, 2 = ended some other way (an error).
+      // 0 = success, 1 = cancelled, 2 = ended some other way. The GTK backend
+      // sends 2 when the user closes the dialog (Esc or the close button), so
+      // both 1 and 2 are a cancel.
       final response = signal.values[0].asUint32();
-      if (response == 1) return null;
-      if (response != 0) throw _PortalResponseError(response);
+      if (response != 0) return null;
 
       final results = signal.values[1].asStringVariantDict();
       final uris = results['uris']?.asStringArray().toList();
@@ -176,7 +164,7 @@ class DirPickerLinux extends DirPickerPlatform {
         '--file-selection',
         '--directory',
         '--title=${opts.title}',
-        '--ok-label=${opts.acceptLabel}',
+        // No --ok-label: zenity 4 rejects it for file selection (exit 255).
       ]);
       final path = _dialogResult('zenity', result);
       return path == null ? null : Uri.directory(path);
