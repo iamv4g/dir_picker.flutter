@@ -1,5 +1,6 @@
 ## Unreleased
 
+* Android: `listEntries` now reads each directory with one `DocumentsContract` query instead of going through `DocumentFile`, which queried every field of every child separately. Listing 2,040 entries in the Downloads provider went from about 136 s to 1.5 s on a Galaxy Note 9, with identical results. The `androidx.documentfile` dependency is gone (#35)
 * iOS/macOS: `listEntries` now returns `name` and `relativePath` in precomposed Unicode (NFC), like the other platforms. Before, names with accents such as `tài liệu` came back decomposed (NFD) and did not compare equal to Dart strings
 * iOS/macOS: `listEntries(recursive: true)` now throws for a missing directory or a path that is not a directory. Before, it returned an empty list
 * Linux: `pick()` now subscribes to the portal's `Response` signal before calling `OpenFile`, as the XDG portal docs recommend. Before, a `Response` that arrived before the method reply was lost and `pick()` never completed (#24)
