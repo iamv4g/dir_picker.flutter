@@ -29,6 +29,7 @@ const int _coinitApartmentThreaded = 0x2;
 const int _clsctxAll = 23; // CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | ...
 const int _fosPickFolders = 0x20;
 const int _fosForceFileSystem = 0x40;
+const int _gaRootOwner = 3; // GetAncestor: GA_ROOTOWNER
 // HRESULT_FROM_WIN32(ERROR_CANCELLED), returned by Show when the user cancels.
 const int _hresultCancelled = 0x800704C7;
 const int _sigdnFileSysPath = 0x80058000; // SIGDN_FILESYSPATH
@@ -102,6 +103,37 @@ final _coCreateInstance = _ole32
       )
     >('CoCreateInstance');
 
+final _user32 = DynamicLibrary.open('user32.dll');
+final _kernel32 = DynamicLibrary.open('kernel32.dll');
+
+final _getForegroundWindow = _user32
+    .lookupFunction<IntPtr Function(), int Function()>('GetForegroundWindow');
+
+final _getAncestor = _user32
+    .lookupFunction<IntPtr Function(IntPtr, Uint32), int Function(int, int)>(
+      'GetAncestor',
+    );
+
+final _getWindowThreadProcessId = _user32
+    .lookupFunction<
+      Uint32 Function(IntPtr, Pointer<Uint32>),
+      int Function(int, Pointer<Uint32>)
+    >('GetWindowThreadProcessId');
+
+final _findWindowEx = _user32
+    .lookupFunction<
+      IntPtr Function(IntPtr, IntPtr, Pointer<Utf16>, Pointer<Utf16>),
+      int Function(int, int, Pointer<Utf16>, Pointer<Utf16>)
+    >('FindWindowExW');
+
+final _isWindowVisible = _user32
+    .lookupFunction<Int32 Function(IntPtr), int Function(int)>(
+      'IsWindowVisible',
+    );
+
+final _getCurrentProcessId = _kernel32
+    .lookupFunction<Uint32 Function(), int Function()>('GetCurrentProcessId');
+
 final _coTaskMemFree = _ole32
     .lookupFunction<Void Function(LPVOID), void Function(Pointer<Void>)>(
       'CoTaskMemFree',
@@ -170,24 +202,64 @@ class DirPickerWindows extends DirPickerPlatform {
   ///
   /// Runs on a separate isolate because the COM dialog blocks the calling
   /// thread until the user closes it.
+  /// The dialog is owned by the app's window, so it stays on top of it and
+  /// the window can't be used until the dialog closes.
   @override
   Future<PickedLocation?> pick({PickOptions? options}) async {
     final opts = options is WindowsOptions ? options : const WindowsOptions();
+    final owner = _ownerWindow();
     final path = await Isolate.run(
-      () => _pickSync(opts.title, opts.acceptLabel),
+      () => _pickSync(opts.title, opts.acceptLabel, owner),
     );
     if (path == null) return null;
     return IOPickedLocation(Uri.directory(path, windows: true));
   }
 
-  static String? _pickSync(String title, String acceptLabel) => _withCom(() {
-    final dialog = _createDialog(title, acceptLabel);
-    try {
-      return _showDialog(dialog);
-    } finally {
-      _release(dialog);
+  static String? _pickSync(String title, String acceptLabel, int owner) =>
+      _withCom(() {
+        final dialog = _createDialog(title, acceptLabel);
+        try {
+          return _showDialog(dialog, owner);
+        } finally {
+          _release(dialog);
+        }
+      });
+
+  /// The window to own the dialog, or 0 for none: the foreground window if
+  /// it belongs to this app, otherwise the app's visible Flutter runner
+  /// window.
+  @visibleForTesting
+  static int debugOwnerWindow() => _ownerWindow();
+
+  static int _ownerWindow() {
+    final processId = _getCurrentProcessId();
+    final pid = calloc<Uint32>();
+    bool isOurs(int hwnd) {
+      _getWindowThreadProcessId(hwnd, pid);
+      return pid.value == processId;
     }
-  });
+
+    try {
+      final foreground = _getForegroundWindow();
+      if (foreground != 0 && isOurs(foreground)) {
+        return _getAncestor(foreground, _gaRootOwner);
+      }
+
+      // The class the Flutter app template registers for its window.
+      final className = 'FLUTTER_RUNNER_WIN32_WINDOW'.toNativeUtf16();
+      try {
+        var hwnd = 0;
+        while ((hwnd = _findWindowEx(0, hwnd, className, nullptr)) != 0) {
+          if (isOurs(hwnd) && _isWindowVisible(hwnd) != 0) return hwnd;
+        }
+        return 0;
+      } finally {
+        calloc.free(className);
+      }
+    } finally {
+      calloc.free(pid);
+    }
+  }
 
   /// The `FILEOPENDIALOGOPTIONS` that [pick] shows the dialog with.
   @visibleForTesting
@@ -294,10 +366,10 @@ class DirPickerWindows extends DirPickerPlatform {
 
   /// Shows [dialog] and returns the picked folder's path, or `null` if the
   /// user cancelled.
-  static String? _showDialog(Pointer<Void> dialog) {
+  static String? _showDialog(Pointer<Void> dialog, int owner) {
     // Show the dialog (blocks until user closes)
     final show = _vtableEntry<_ShowNative>(dialog, 3).asFunction<_ShowDart>();
-    final hr = show(dialog, 0);
+    final hr = show(dialog, owner);
     if (hr.toUnsigned(32) == _hresultCancelled) return null;
     _check(hr, 'Show');
 
