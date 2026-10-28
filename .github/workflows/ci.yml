@@ -14,6 +14,34 @@ permissions:
   contents: read
 
 jobs:
+  # Pull requests only run the platform jobs their changes need (see
+  # tool/ci_changes.sh). Pushes to main run everything. Analyze & test and
+  # the pub.dev score always run.
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      android: ${{ steps.scope.outputs.android }}
+      darwin: ${{ steps.scope.outputs.darwin }}
+      windows: ${{ steps.scope.outputs.windows }}
+      linux: ${{ steps.scope.outputs.linux }}
+      web: ${{ steps.scope.outputs.web }}
+      integration: ${{ steps.scope.outputs.integration }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: scope
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ -n "$BASE" ]; then
+            git diff --name-only "$BASE...$HEAD" | tee /dev/stderr | bash tool/ci_changes.sh
+          else
+            bash tool/ci_changes.sh --all
+          fi | tee -a "$GITHUB_OUTPUT"
+
   analyze-test:
     name: Analyze & test (Flutter ${{ matrix.flutter-version || 'stable' }})
     runs-on: ubuntu-latest
@@ -64,6 +92,8 @@ jobs:
 
   build-web:
     name: Build example (web)
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -79,6 +109,8 @@ jobs:
 
   build-android:
     name: Build example (Android)
+    needs: changes
+    if: needs.changes.outputs.android == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -104,6 +136,8 @@ jobs:
 
   build-linux:
     name: Build example (Linux)
+    needs: changes
+    if: needs.changes.outputs.linux == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -121,6 +155,8 @@ jobs:
 
   build-darwin:
     name: Build example (iOS & macOS)
+    needs: changes
+    if: needs.changes.outputs.darwin == 'true'
     runs-on: macos-latest
     defaults:
       run:
@@ -136,6 +172,8 @@ jobs:
 
   build-windows:
     name: Test & build example (Windows)
+    needs: changes
+    if: needs.changes.outputs.windows == 'true'
     runs-on: windows-latest
     defaults:
       run:
@@ -164,13 +202,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     # A test that cannot reach the app otherwise waits until the 6 hour limit.
     timeout-minutes: 30
+    needs: changes
+    if: needs.changes.outputs.integration != '[]'
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - { target: macOS, os: macos-latest }
-          - { target: Linux, os: ubuntu-latest }
-          - { target: Windows, os: windows-latest }
+        # The targets whose native code the change touches, e.g.
+        # [{"target": "macOS", "os": "macos-latest"}].
+        include: ${{ fromJSON(needs.changes.outputs.integration) }}
     defaults:
       run:
         working-directory: example
@@ -190,3 +229,25 @@ jobs:
         run: xvfb-run -a flutter test integration_test -d linux
       - if: matrix.target == 'Windows'
         run: flutter test integration_test -d windows
+
+  # The only check the main branch ruleset requires. Skipped jobs don't fail
+  # it, so a pull request isn't blocked waiting for jobs it didn't need.
+  # pana is left out on purpose: it can fail without a code change (a new
+  # major release of a dependency), so it shows red without blocking merges.
+  result:
+    name: CI result
+    if: always()
+    needs:
+      - changes
+      - analyze-test
+      - build-web
+      - build-android
+      - build-linux
+      - build-darwin
+      - build-windows
+      - integration-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if a job failed or was cancelled
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
