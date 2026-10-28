@@ -93,7 +93,14 @@ jobs:
         with:
           channel: stable
           cache: true
-      - run: flutter build apk --debug
+      # A release build, so R8 shrinks and renames the plugin with its consumer
+      # rules, as it does in apps that use it.
+      - run: flutter build apk --release
+      - name: Check R8 kept every JNI lookup
+        working-directory: .
+        run: |
+          flutter pub get
+          dart run tool/check_jni_keeps.dart example/build/app/outputs/flutter-apk/app-release.apk
 
   build-linux:
     name: Build example (Linux)
