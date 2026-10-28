@@ -171,18 +171,32 @@ void main() {
         await server.close();
       });
 
-      Future<PickedLocation?> pick() => DirPickerLinux.withBackends(
-        sessionBus: () => DBusClient(address),
-        runProcess: (executable, arguments) async {
-          runs.add(executable);
-          throw ProcessException(executable, arguments, 'not found', 2);
-        },
-      ).pick().timeout(const Duration(seconds: 5));
+      Future<PickedLocation?> pick({int? appWindow}) =>
+          DirPickerLinux.withBackends(
+            sessionBus: () => DBusClient(address),
+            appWindow: () => appWindow,
+            runProcess: (executable, arguments) async {
+              runs.add(executable);
+              throw ProcessException(executable, arguments, 'not found', 2);
+            },
+          ).pick().timeout(const Duration(seconds: 5));
 
       test('returns the picked folder', () async {
         portal.response = 0;
         expect((await pick())?.uri, Uri.directory('/tmp/picked'));
         expect(runs, isEmpty);
+      });
+
+      test('passes the app window as the X11 parent window', () async {
+        portal.response = 0;
+        await pick(appWindow: 0x3a00007);
+        expect(portal.parentWindow, 'x11:3a00007');
+      });
+
+      test('passes no parent window when the app window is unknown', () async {
+        portal.response = 0;
+        await pick();
+        expect(portal.parentWindow, '');
       });
 
       test('receives a Response sent before the OpenFile reply', () async {
@@ -232,6 +246,7 @@ class _FakePortal extends DBusObject {
 
   int response = 0;
   bool respondBeforeReply = false;
+  String? parentWindow;
   bool legacyHandle = false;
 
   @override
@@ -240,6 +255,7 @@ class _FakePortal extends DBusObject {
         call.name != 'OpenFile') {
       return DBusMethodErrorResponse.unknownMethod();
     }
+    parentWindow = call.values[0].asString();
     final token = call.values[2]
         .asStringVariantDict()['handle_token']!
         .asString();
