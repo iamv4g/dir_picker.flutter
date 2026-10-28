@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Web: add `PickOptions.web(mode:, id:, startIn:)`, passed to `showDirectoryPicker()`. `mode: WebPermissionMode.readwrite` returns a handle that can write without asking again, `id` lets the browser remember the last folder per purpose, and `startIn` opens in a well-known folder (#34)
+* Web: `listEntries` now reads files and subdirectories in parallel instead of awaiting each `getFile()` in turn (#34)
 * `FileSystemEntry` and `IOPickedLocation` now have value equality (`==` and `hashCode`), so two listings of the same folder compare equal and locations work as `Set`/`Map` keys (#29)
 * `DirPicker` now throws a `StateError` that says what to do when no platform implementation is registered. Before, release builds failed with a bare null-check error (#30)
 * iOS/macOS: `listEntries` now returns `name` and `relativePath` in precomposed Unicode (NFC), like the other platforms. Before, names with accents such as `tài liệu` came back decomposed (NFD) and did not compare equal to Dart strings
