@@ -2,6 +2,8 @@
 
 * iOS/macOS: `listEntries` now returns `name` and `relativePath` in precomposed Unicode (NFC), like the other platforms. Before, names with accents such as `tài liệu` came back decomposed (NFD) and did not compare equal to Dart strings
 * iOS/macOS: `listEntries(recursive: true)` now throws for a missing directory or a path that is not a directory. Before, it returned an empty list
+* Windows: the folder dialog now only accepts file system folders, and keeps its default options (`FOS_PATHMUSTEXIST`, `FOS_NOCHANGEDIR`). Before, picking "This PC" or a Library returned `null`, as if the user had cancelled (#17)
+* Windows: `pick()` now throws `Exception('PLATFORM_ERROR: <step> failed with HRESULT 0x…')` when a COM call fails. Before, every failure returned `null`; only an actual cancel does now (#18)
 * Android: the plugin's Kotlin package is now `com.iamv4g.dir_picker` (was `com.vanvixi.dir_picker`), matching the GitHub account rename. The Dart API is unchanged; update any R8/ProGuard rules or native code in your app that refer to the old package
 * Repository, issue tracker and podspec links now point to `github.com/iamv4g`
 
