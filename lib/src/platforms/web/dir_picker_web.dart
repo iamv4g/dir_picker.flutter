@@ -33,7 +33,8 @@ extension type _IteratorResult._(JSObject _) implements JSObject {
 /// DirPicker implementation for Web.
 ///
 /// Uses the File System Access API (`window.showDirectoryPicker()`).
-/// Supported in Chrome/Edge 86+. Throws [UnsupportedError] in Firefox/Safari.
+/// Supported in Chrome/Edge 86+. [pick] throws [UnsupportedError] in
+/// Firefox/Safari; [listEntries] works there for any directory handle.
 /// Returns a [WebPickedLocation] wrapping the [FileSystemDirectoryHandle].
 ///
 /// Note: [PickedLocation.uri] is always `null` on web — browsers do not
@@ -67,12 +68,9 @@ class DirPickerWeb extends DirPickerPlatform {
     PickedLocation location, {
     bool recursive = false,
   }) async {
-    if (!_supportsShowDirectoryPicker) {
-      throw UnsupportedError(
-        'File System Access API is not supported in this browser. '
-        'Use Chrome or Edge 86+.',
-      );
-    }
+    // Only pick() needs showDirectoryPicker. Any directory handle can be
+    // listed, such as one from the origin private file system, which Firefox
+    // and Safari support.
     if (location is! WebPickedLocation) {
       throw ArgumentError.value(
         location,
