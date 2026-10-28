@@ -2,6 +2,8 @@
 
 * iOS/macOS: `listEntries` now returns `name` and `relativePath` in precomposed Unicode (NFC), like the other platforms. Before, names with accents such as `tài liệu` came back decomposed (NFD) and did not compare equal to Dart strings
 * iOS/macOS: `listEntries(recursive: true)` now throws for a missing directory or a path that is not a directory. Before, it returned an empty list
+* Linux: `pick()` now subscribes to the portal's `Response` signal before calling `OpenFile`, as the XDG portal docs recommend. Before, a `Response` that arrived before the method reply was lost and `pick()` never completed (#24)
+* Linux: `pick()` now throws `Exception('PICKER_ERROR: …')` when the portal ends the request with an error (response 2), or when zenity or kdialog exit with a code other than 0 or 1. Before, these returned `null`, as if the user had cancelled (#25)
 * Android: the plugin's Kotlin package is now `com.iamv4g.dir_picker` (was `com.vanvixi.dir_picker`), matching the GitHub account rename. The Dart API is unchanged; update any R8/ProGuard rules or native code in your app that refer to the old package
 * Repository, issue tracker and podspec links now point to `github.com/iamv4g`
 

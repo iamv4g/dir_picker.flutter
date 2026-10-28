@@ -1,7 +1,10 @@
 @TestOn('posix')
 library;
 
+import 'dart:async';
 import 'dart:io';
+
+import 'package:dbus/dbus.dart';
 
 import 'package:dir_picker/dir_picker.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -88,6 +91,40 @@ void main() {
       expect(runs.map((run) => run.first), ['zenity']);
     });
 
+    test('throws when zenity fails instead of reading it as cancel', () async {
+      await expectLater(
+        picker(
+          tools: {
+            'zenity': ProcessResult(0, 255, '', 'cannot open display\n'),
+            'kdialog': selected('/ignored'),
+          },
+        ).pick(),
+        throwsA(
+          isA<Exception>().having(
+            (e) => '$e',
+            'message',
+            contains(
+              'PICKER_ERROR: zenity exited with code 255: cannot open display',
+            ),
+          ),
+        ),
+      );
+      expect(runs.map((run) => run.first), ['zenity']);
+    });
+
+    test('throws when kdialog fails instead of reading it as cancel', () async {
+      await expectLater(
+        picker(tools: {'kdialog': ProcessResult(0, 254, '', '')}).pick(),
+        throwsA(
+          isA<Exception>().having(
+            (e) => '$e',
+            'message',
+            contains('PICKER_ERROR: kdialog exited with code 254'),
+          ),
+        ),
+      );
+    });
+
     test('falls back to kdialog when zenity is missing', () async {
       final location = await picker(
         tools: {'kdialog': selected('/home/user/Projects')},
@@ -116,7 +153,136 @@ void main() {
     });
   });
 
+  group(
+    'DirPickerLinux.pick through the portal',
+    () {
+      late DBusServer server;
+      late DBusAddress address;
+      late DBusClient portalClient;
+      late _FakePortal portal;
+      late List<String> runs;
+
+      setUp(() async {
+        server = DBusServer();
+        address = await server.listenAddress(
+          DBusAddress.unix(dir: Directory.systemTemp),
+        );
+        portalClient = DBusClient(address);
+        await portalClient.requestName('org.freedesktop.portal.Desktop');
+        portal = _FakePortal();
+        await portalClient.registerObject(portal);
+        runs = [];
+      });
+
+      tearDown(() async {
+        await portalClient.close();
+        await server.close();
+      });
+
+      Future<PickedLocation?> pick() => DirPickerLinux.withBackends(
+        sessionBus: () => DBusClient(address),
+        runProcess: (executable, arguments) async {
+          runs.add(executable);
+          throw ProcessException(executable, arguments, 'not found', 2);
+        },
+      ).pick().timeout(const Duration(seconds: 5));
+
+      test('returns the picked folder', () async {
+        portal.response = 0;
+        expect((await pick())?.uri, Uri.directory('/tmp/picked'));
+        expect(runs, isEmpty);
+      });
+
+      test('receives a Response sent before the OpenFile reply', () async {
+        portal
+          ..response = 0
+          ..respondBeforeReply = true;
+        expect((await pick())?.uri, Uri.directory('/tmp/picked'));
+      });
+
+      test(
+        'receives a Response on a handle other than the predicted one',
+        () async {
+          // Portals older than 0.9 ignore handle_token.
+          portal
+            ..response = 0
+            ..legacyHandle = true;
+          expect((await pick())?.uri, Uri.directory('/tmp/picked'));
+        },
+      );
+
+      test('returns null when the user cancels', () async {
+        portal.response = 1;
+        expect(await pick(), isNull);
+        expect(runs, isEmpty);
+      });
+
+      test('throws when the portal reports an error', () async {
+        portal.response = 2;
+        await expectLater(
+          pick(),
+          throwsA(
+            isA<Exception>().having(
+              (e) => '$e',
+              'message',
+              contains('PICKER_ERROR'),
+            ),
+          ),
+        );
+        expect(runs, isEmpty);
+      });
+    },
+    skip: Platform.isLinux ? false : 'package:dbus only authenticates on Linux',
+  );
+
   group('DirPickerLinux.listEntries', () {
     listEntriesContract(DirPickerLinux.new, testSymlinks: true);
   });
+}
+
+/// A fake `org.freedesktop.portal.FileChooser`. It replies to `OpenFile` with
+/// the request handle and sends `Response` on it, by default shortly after the
+/// reply.
+class _FakePortal extends DBusObject {
+  _FakePortal() : super(DBusObjectPath('/org/freedesktop/portal/desktop'));
+
+  int response = 0;
+  bool respondBeforeReply = false;
+  bool legacyHandle = false;
+
+  @override
+  Future<DBusMethodResponse> handleMethodCall(DBusMethodCall call) async {
+    if (call.interface != 'org.freedesktop.portal.FileChooser' ||
+        call.name != 'OpenFile') {
+      return DBusMethodErrorResponse.unknownMethod();
+    }
+    final token = call.values[2]
+        .asStringVariantDict()['handle_token']!
+        .asString();
+    final sender = call.sender!.substring(1).replaceAll('.', '_');
+    final handle = DBusObjectPath(
+      legacyHandle
+          ? '/org/freedesktop/portal/desktop/request/legacy/1'
+          : '/org/freedesktop/portal/desktop/request/$sender/$token',
+    );
+
+    Future<void> respond() => client!.emitSignal(
+      path: handle,
+      interface: 'org.freedesktop.portal.Request',
+      name: 'Response',
+      values: [
+        DBusUint32(response),
+        DBusDict.stringVariant({
+          if (response == 0) 'uris': DBusArray.string(['file:///tmp/picked']),
+        }),
+      ],
+    );
+
+    if (respondBeforeReply) {
+      await respond();
+    } else {
+      Timer(const Duration(milliseconds: 100), respond);
+    }
+    return DBusMethodSuccessResponse([handle]);
+  }
 }
