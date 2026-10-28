@@ -103,9 +103,7 @@ void main() {
           isA<Exception>().having(
             (e) => '$e',
             'message',
-            contains(
-              'PICKER_ERROR: zenity exited with code 255: cannot open display',
-            ),
+            contains('PICKER_ERROR: zenity exited with code 5: Timed out'),
           ),
         ),
       );
