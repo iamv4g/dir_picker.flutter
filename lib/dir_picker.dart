@@ -58,6 +58,12 @@ class DirPicker {
   ///
   /// When [recursive] is `false`, only immediate children are returned.
   /// When `true`, all nested descendants are returned.
+  ///
+  /// A symbolic link is reported as what it points to: a link to a directory
+  /// has [FileSystemEntry.isDirectory] set, and a broken link is a
+  /// non-directory without a size. Links are never followed, so a recursive
+  /// listing doesn't include what is inside a linked directory. A
+  /// subdirectory that can't be read is listed, but its contents are skipped.
   static Future<List<FileSystemEntry>> listEntries(
     PickedLocation location, {
     bool recursive = false,

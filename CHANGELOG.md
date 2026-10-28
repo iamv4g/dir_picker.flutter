@@ -2,6 +2,8 @@
 
 * iOS/macOS: `listEntries` now returns `name` and `relativePath` in precomposed Unicode (NFC), like the other platforms. Before, names with accents such as `tài liệu` came back decomposed (NFD) and did not compare equal to Dart strings
 * iOS/macOS: `listEntries(recursive: true)` now throws for a missing directory or a path that is not a directory. Before, it returned an empty list
+* Linux/Windows: `listEntries(recursive: true)` now skips the contents of a subdirectory it can't read, as iOS and macOS already did. Before, one unreadable folder made the whole call throw `PathAccessException` (#15)
+* iOS/macOS: `listEntries` now reports a symbolic link as what it points to, as Linux and Windows do: a link to a directory has `isDirectory: true`, with the target's size and date. Before, it was `isDirectory: false`. Links are still not followed in recursive listings (#16)
 * Android: the plugin's Kotlin package is now `com.iamv4g.dir_picker` (was `com.vanvixi.dir_picker`), matching the GitHub account rename. The Dart API is unchanged; update any R8/ProGuard rules or native code in your app that refer to the old package
 * Repository, issue tracker and podspec links now point to `github.com/iamv4g`
 
