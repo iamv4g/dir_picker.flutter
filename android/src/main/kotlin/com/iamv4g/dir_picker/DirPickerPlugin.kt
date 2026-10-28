@@ -3,6 +3,8 @@ package com.iamv4g.dir_picker
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
+import android.provider.DocumentsContract
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
@@ -109,13 +111,13 @@ class DirPickerPlugin : FlutterPlugin, ActivityAware, ActivityResultListener {
     }
 
     private fun setupPickerHandler() {
-        DirPicker.pickerHandler = PickerHandler { shouldPersist ->
+        DirPicker.pickerHandler = PickerHandler { shouldPersist, initialUri ->
             // Activity APIs must be called on the main thread.
-            withContext(Dispatchers.Main) { launchPicker(shouldPersist) }
+            withContext(Dispatchers.Main) { launchPicker(shouldPersist, initialUri) }
         }
     }
 
-    private suspend fun launchPicker(shouldPersist: Boolean): String? =
+    private suspend fun launchPicker(shouldPersist: Boolean, initialUri: Uri?): String? =
         suspendCancellableCoroutine { continuation ->
             if (pendingContinuation != null) {
                 continuation.resumeWithException(
@@ -140,12 +142,17 @@ class DirPickerPlugin : FlutterPlugin, ActivityAware, ActivityResultListener {
             }
 
             try {
+                val initialDocument = initialUri?.let(::documentUri)
                 val launcher = pickerLauncher
                 if (launcher != null) {
-                    launcher.launch(null)
+                    // OpenDocumentTree sets EXTRA_INITIAL_URI on API 26+.
+                    launcher.launch(initialDocument)
                 } else {
                     // Fallback for non-ComponentActivity
                     val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+                    if (initialDocument != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, initialDocument)
+                    }
                     currentActivity.startActivityForResult(intent, REQUEST_CODE_PICK_DIRECTORY)
                 }
             } catch (e: Exception) {
@@ -156,6 +163,20 @@ class DirPickerPlugin : FlutterPlugin, ActivityAware, ActivityResultListener {
                 )
             }
         }
+
+    /**
+     * EXTRA_INITIAL_URI expects a document URI. A tree URI from an earlier
+     * pick points at its root document; other URIs are passed as they are.
+     */
+    private fun documentUri(uri: Uri): Uri =
+        if (DocumentsContract.isTreeUri(uri) && !isDocumentUri(uri)) {
+            DocumentsContract.buildDocumentUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri))
+        } else {
+            uri
+        }
+
+    private fun isDocumentUri(uri: Uri): Boolean =
+        activity?.let { DocumentsContract.isDocumentUri(it, uri) } ?: false
 
     private fun handlePickerResult(uri: Uri?) {
         val continuation = pendingContinuation ?: return

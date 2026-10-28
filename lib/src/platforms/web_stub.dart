@@ -8,8 +8,10 @@ class DirPickerWeb extends DirPickerPlatform {
   static void registerWith(dynamic registrar) =>
       DirPickerPlatform.instance = DirPickerWeb();
   @override
-  Future<PickedLocation?> pick({PickOptions? options}) =>
-      throw UnsupportedError('DirPicker is not supported on this platform.');
+  Future<PickedLocation?> pick({
+    PickOptions? options,
+    PickedLocation? initialDirectory,
+  }) => throw UnsupportedError('DirPicker is not supported on this platform.');
   @override
   Future<List<FileSystemEntry>> listEntries(
     PickedLocation location, {

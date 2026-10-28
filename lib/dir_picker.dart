@@ -24,6 +24,20 @@ class DirPicker {
 
   /// Picks a directory and returns a [PickedLocation], or `null` if cancelled.
   ///
+  /// The picker opens in [initialDirectory] when the platform supports it,
+  /// usually a location from an earlier [pick]. Where it isn't supported, or
+  /// the location doesn't fit the platform, it's ignored and the picker opens
+  /// in its default place:
+  ///
+  /// | Platform | Support |
+  /// |----------|---------|
+  /// | Android  | API 26+. A `content://` location from an earlier pick (`EXTRA_INITIAL_URI`). |
+  /// | iOS      | iOS 13+. A `file://` location (`directoryURL`). |
+  /// | macOS    | A `file://` location (`NSOpenPanel.directoryURL`). |
+  /// | Windows  | A `file://` location (`IFileDialog::SetFolder`). |
+  /// | Linux    | A `file://` location: XDG portal `current_folder`, zenity `--filename`, kdialog's start folder. |
+  /// | Web      | A [WebPickedLocation] (`startIn`). It takes precedence over [WebOptions.startIn]. |
+  ///
   /// Only one picker can be open at a time. Calling [pick] again before the
   /// previous call completes throws an [Exception] starting with
   /// `ALREADY_ACTIVE`, and the open picker is left as it is.
@@ -58,13 +72,19 @@ class DirPicker {
   ///   [WebPickedLocation.handle] (`FileSystemDirectoryHandle`) to access
   ///   directory contents. Requires `package:web` in your app's dependencies.
   ///   Customize the access mode and starting folder with [WebOptions].
-  static Future<PickedLocation?> pick({PickOptions? options}) async {
+  static Future<PickedLocation?> pick({
+    PickOptions? options,
+    PickedLocation? initialDirectory,
+  }) async {
     if (_isPicking) {
       throw Exception('ALREADY_ACTIVE: A directory picker is already open');
     }
     _isPicking = true;
     try {
-      return await DirPickerPlatform.instance.pick(options: options);
+      return await DirPickerPlatform.instance.pick(
+        options: options,
+        initialDirectory: initialDirectory,
+      );
     } finally {
       _isPicking = false;
     }

@@ -7,8 +7,10 @@ import '../platform_interface/dir_picker_platform.dart';
 class DirPickerWindows extends DirPickerPlatform {
   static void registerWith() => DirPickerPlatform.instance = DirPickerWindows();
   @override
-  Future<PickedLocation?> pick({PickOptions? options}) =>
-      throw UnsupportedError('DirPicker is not supported on this platform.');
+  Future<PickedLocation?> pick({
+    PickOptions? options,
+    PickedLocation? initialDirectory,
+  }) => throw UnsupportedError('DirPicker is not supported on this platform.');
   @override
   Future<List<FileSystemEntry>> listEntries(
     PickedLocation location, {
@@ -19,8 +21,10 @@ class DirPickerWindows extends DirPickerPlatform {
 class DirPickerLinux extends DirPickerPlatform {
   static void registerWith() => DirPickerPlatform.instance = DirPickerLinux();
   @override
-  Future<PickedLocation?> pick({PickOptions? options}) =>
-      throw UnsupportedError('DirPicker is not supported on this platform.');
+  Future<PickedLocation?> pick({
+    PickOptions? options,
+    PickedLocation? initialDirectory,
+  }) => throw UnsupportedError('DirPicker is not supported on this platform.');
   @override
   Future<List<FileSystemEntry>> listEntries(
     PickedLocation location, {
@@ -31,8 +35,10 @@ class DirPickerLinux extends DirPickerPlatform {
 class DirPickerAndroid extends DirPickerPlatform {
   static void registerWith() => DirPickerPlatform.instance = DirPickerAndroid();
   @override
-  Future<PickedLocation?> pick({PickOptions? options}) =>
-      throw UnsupportedError('DirPicker is not supported on this platform.');
+  Future<PickedLocation?> pick({
+    PickOptions? options,
+    PickedLocation? initialDirectory,
+  }) => throw UnsupportedError('DirPicker is not supported on this platform.');
   @override
   Future<List<FileSystemEntry>> listEntries(
     PickedLocation location, {
@@ -43,8 +49,10 @@ class DirPickerAndroid extends DirPickerPlatform {
 class DirPickerDarwin extends DirPickerPlatform {
   static void registerWith() => DirPickerPlatform.instance = DirPickerDarwin();
   @override
-  Future<PickedLocation?> pick({PickOptions? options}) =>
-      throw UnsupportedError('DirPicker is not supported on this platform.');
+  Future<PickedLocation?> pick({
+    PickOptions? options,
+    PickedLocation? initialDirectory,
+  }) => throw UnsupportedError('DirPicker is not supported on this platform.');
   @override
   Future<List<FileSystemEntry>> listEntries(
     PickedLocation location, {

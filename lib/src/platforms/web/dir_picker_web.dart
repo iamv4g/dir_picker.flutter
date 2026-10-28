@@ -19,12 +19,16 @@ extension on web.Window {
 /// The `showDirectoryPicker()` options object. Unset options are left out:
 /// the browser would turn a null `id` into the string "null" and reject a
 /// null `startIn`.
-JSObject _pickerOptions(WebOptions options) {
+///
+/// A handle in [initialDirectory] takes precedence over [WebOptions.startIn].
+JSObject _pickerOptions(WebOptions options, PickedLocation? initialDirectory) {
   final object = JSObject()..['mode'] = options.mode.name.toJS;
   if (options.id case final id?) {
     object['id'] = id.toJS;
   }
-  if (options.startIn case final startIn?) {
+  if (initialDirectory is WebPickedLocation) {
+    object['startIn'] = initialDirectory.handle;
+  } else if (options.startIn case final startIn?) {
     object['startIn'] = startIn.name.toJS;
   }
   return object;
@@ -62,7 +66,10 @@ class DirPickerWeb extends DirPickerPlatform {
   }
 
   @override
-  Future<PickedLocation?> pick({PickOptions? options}) async {
+  Future<PickedLocation?> pick({
+    PickOptions? options,
+    PickedLocation? initialDirectory,
+  }) async {
     if (!_supportsShowDirectoryPicker) {
       throw UnsupportedError(
         'showDirectoryPicker() is not supported in this browser. '
@@ -74,6 +81,7 @@ class DirPickerWeb extends DirPickerPlatform {
           .showDirectoryPicker(
             _pickerOptions(
               options is WebOptions ? options : const WebOptions(),
+              initialDirectory,
             ),
           )
           .toDart;

@@ -24,10 +24,13 @@ private let pickerLock = NSLock()
 public func dirPickerPick(
     _ nativePort: Int64,
     _ acceptLabelPtr: UnsafePointer<CChar>?,
-    _ messagePtr: UnsafePointer<CChar>?
+    _ messagePtr: UnsafePointer<CChar>?,
+    _ initialDirectoryPtr: UnsafePointer<CChar>?
 ) {
     // acceptLabel and message are macOS-only — ignored on iOS
     let reporter = DirPickerReporter(port: nativePort)
+    // Copy now: Dart frees the C string right after this call returns.
+    let initialDirectory = initialDirectoryPtr.flatMap { URL(string: String(cString: $0)) }
 
     DispatchQueue.main.async {
         guard let rootVC = getRootViewController() else {
@@ -57,7 +60,7 @@ public func dirPickerPick(
         activePickerHelper = helper
         pickerLock.unlock()
 
-        helper.pick(from: topViewController(from: rootVC)) { url in
+        helper.pick(from: topViewController(from: rootVC), initialDirectory: initialDirectory) { url in
             pickerLock.lock()
             activePickerHelper = nil
             pickerLock.unlock()
@@ -99,14 +102,20 @@ private func getRootViewController() -> UIViewController? {
 public func dirPickerPick(
     _ nativePort: Int64,
     _ acceptLabelPtr: UnsafePointer<CChar>?,
-    _ messagePtr: UnsafePointer<CChar>?
+    _ messagePtr: UnsafePointer<CChar>?,
+    _ initialDirectoryPtr: UnsafePointer<CChar>?
 ) {
     let reporter = DirPickerReporter(port: nativePort)
     // Copy C strings immediately — safe to free the Dart-side pointers after this call returns
     let acceptLabel = acceptLabelPtr.map { String(cString: $0) } ?? "Select"
     let message = messagePtr.map { String(cString: $0) } ?? "Choose a directory"
+    let initialDirectory = initialDirectoryPtr.flatMap { URL(string: String(cString: $0)) }
 
-    PanelPickerHelper.pick(acceptLabel: acceptLabel, message: message) { url in
+    PanelPickerHelper.pick(
+        acceptLabel: acceptLabel,
+        message: message,
+        initialDirectory: initialDirectory
+    ) { url in
         if let url = url {
             reporter.sendUriSuccess(url.absoluteString)
         } else {

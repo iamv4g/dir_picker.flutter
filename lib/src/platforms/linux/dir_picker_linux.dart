@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dbus/dbus.dart';
@@ -63,12 +64,19 @@ class DirPickerLinux extends DirPickerPlatform {
   _runProcess;
 
   @override
-  Future<PickedLocation?> pick({PickOptions? options}) async {
+  Future<PickedLocation?> pick({
+    PickOptions? options,
+    PickedLocation? initialDirectory,
+  }) async {
     final opts = options is LinuxOptions ? options : const LinuxOptions();
+    final folder = switch (initialDirectory?.uri) {
+      final uri? when uri.scheme == 'file' => uri.toFilePath(),
+      _ => null,
+    };
     for (final picker in [
-      () => _pickWithPortal(opts),
-      () => _pickWithZenity(opts),
-      () => _pickWithKdialog(opts),
+      () => _pickWithPortal(opts, folder),
+      () => _pickWithZenity(opts, folder),
+      () => _pickWithKdialog(opts, folder),
     ]) {
       try {
         final uri = await picker();
@@ -84,15 +92,18 @@ class DirPickerLinux extends DirPickerPlatform {
     );
   }
 
-  Future<Uri?> _pickWithPortal(LinuxOptions opts) async {
+  Future<Uri?> _pickWithPortal(LinuxOptions opts, String? folder) async {
     try {
-      return await (_portalPicker ?? _pickWithDbusPortal)(opts);
+      final portalPicker = _portalPicker;
+      return portalPicker != null
+          ? await portalPicker(opts)
+          : await _pickWithDbusPortal(opts, folder);
     } catch (_) {
       throw _PickerUnavailableException();
     }
   }
 
-  Future<Uri?> _pickWithDbusPortal(LinuxOptions opts) async {
+  Future<Uri?> _pickWithDbusPortal(LinuxOptions opts, String? folder) async {
     final client = _sessionBus();
     try {
       final object = DBusRemoteObject(
@@ -136,6 +147,9 @@ class DirPickerLinux extends DirPickerPlatform {
             'directory': DBusBoolean(true),
             'modal': DBusBoolean(true),
             'accept_label': DBusString(opts.acceptLabel),
+            // A NUL-terminated byte string, per the FileChooser spec.
+            if (folder != null)
+              'current_folder': DBusArray.byte([...utf8.encode(folder), 0]),
           }),
         ],
         replySignature: DBusSignature('o'),
@@ -168,13 +182,16 @@ class DirPickerLinux extends DirPickerPlatform {
     }
   }
 
-  Future<Uri?> _pickWithZenity(LinuxOptions opts) async {
+  Future<Uri?> _pickWithZenity(LinuxOptions opts, String? folder) async {
     try {
       final result = await _runProcess('zenity', [
         '--file-selection',
         '--directory',
         '--title=${opts.title}',
         // No --ok-label: zenity 4 rejects it for file selection (exit 255).
+        // A trailing slash makes zenity open inside the folder.
+        if (folder != null)
+          '--filename=${folder.endsWith('/') ? folder : '$folder/'}',
       ]);
       final path = _dialogResult('zenity', result);
       return path == null ? null : Uri.directory(path);
@@ -183,13 +200,13 @@ class DirPickerLinux extends DirPickerPlatform {
     }
   }
 
-  Future<Uri?> _pickWithKdialog(LinuxOptions opts) async {
+  Future<Uri?> _pickWithKdialog(LinuxOptions opts, String? folder) async {
     try {
       final result = await _runProcess('kdialog', [
         '--title',
         opts.title,
         '--getexistingdirectory',
-        Platform.environment['HOME'] ?? '/',
+        folder ?? Platform.environment['HOME'] ?? '/',
       ]);
       final path = _dialogResult('kdialog', result);
       return path == null ? null : Uri.directory(path);

@@ -134,6 +134,22 @@ final _isWindowVisible = _user32
 final _getCurrentProcessId = _kernel32
     .lookupFunction<Uint32 Function(), int Function()>('GetCurrentProcessId');
 
+final _shCreateItemFromParsingName = DynamicLibrary.open('shell32.dll')
+    .lookupFunction<
+      HRESULT Function(
+        Pointer<Utf16>,
+        Pointer<Void>,
+        Pointer<_GUID>,
+        Pointer<Pointer<Void>>,
+      ),
+      int Function(
+        Pointer<Utf16>,
+        Pointer<Void>,
+        Pointer<_GUID>,
+        Pointer<Pointer<Void>>,
+      )
+    >('SHCreateItemFromParsingName');
+
 final _coTaskMemFree = _ole32
     .lookupFunction<Void Function(LPVOID), void Function(Pointer<Void>)>(
       'CoTaskMemFree',
@@ -164,6 +180,10 @@ typedef _ReleaseDart = int Function(Pointer<Void>);
 // IFileDialog::SetOptions (vtable index 9)
 typedef _SetOptionsNative = HRESULT Function(Pointer<Void>, DWORD);
 typedef _SetOptionsDart = int Function(Pointer<Void>, int);
+
+// IFileDialog::SetFolder (vtable index 12)
+typedef _SetFolderNative = HRESULT Function(Pointer<Void>, Pointer<Void>);
+typedef _SetFolderDart = int Function(Pointer<Void>, Pointer<Void>);
 
 // IFileDialog::GetOptions (vtable index 10)
 typedef _GetOptionsNative = HRESULT Function(Pointer<Void>, Pointer<DWORD>);
@@ -205,25 +225,37 @@ class DirPickerWindows extends DirPickerPlatform {
   /// The dialog is owned by the app's window, so it stays on top of it and
   /// the window can't be used until the dialog closes.
   @override
-  Future<PickedLocation?> pick({PickOptions? options}) async {
+  Future<PickedLocation?> pick({
+    PickOptions? options,
+    PickedLocation? initialDirectory,
+  }) async {
     final opts = options is WindowsOptions ? options : const WindowsOptions();
     final owner = _ownerWindow();
+    final folder = switch (initialDirectory?.uri) {
+      final uri? when uri.scheme == 'file' => uri.toFilePath(windows: true),
+      _ => null,
+    };
     final path = await Isolate.run(
-      () => _pickSync(opts.title, opts.acceptLabel, owner),
+      () => _pickSync(opts.title, opts.acceptLabel, owner, folder),
     );
     if (path == null) return null;
     return IOPickedLocation(Uri.directory(path, windows: true));
   }
 
-  static String? _pickSync(String title, String acceptLabel, int owner) =>
-      _withCom(() {
-        final dialog = _createDialog(title, acceptLabel);
-        try {
-          return _showDialog(dialog, owner);
-        } finally {
-          _release(dialog);
-        }
-      });
+  static String? _pickSync(
+    String title,
+    String acceptLabel,
+    int owner,
+    String? folder,
+  ) => _withCom(() {
+    final dialog = _createDialog(title, acceptLabel);
+    try {
+      if (folder != null) _setFolder(dialog, folder);
+      return _showDialog(dialog, owner);
+    } finally {
+      _release(dialog);
+    }
+  });
 
   /// The window to own the dialog, or 0 for none: the foreground window if
   /// it belongs to this app, otherwise the app's visible Flutter runner
@@ -347,6 +379,35 @@ class DirPickerWindows extends DirPickerPlatform {
       setString(dialog, valuePtr);
     } finally {
       calloc.free(valuePtr);
+    }
+  }
+
+  /// Opens [dialog] in [path]. A path the shell can't parse, such as one that
+  /// no longer exists, is ignored and the dialog opens in its default folder.
+  static void _setFolder(Pointer<Void> dialog, String path) {
+    // IID_IShellItem: {43826D1E-E718-42EE-BC55-A1E261C37BFE}
+    final iid = calloc<_GUID>()
+      ..ref.parse('{43826D1E-E718-42EE-BC55-A1E261C37BFE}');
+    final pathPtr = path.toNativeUtf16();
+    final ppItem = calloc<Pointer<Void>>();
+    try {
+      if (_shCreateItemFromParsingName(pathPtr, nullptr, iid, ppItem) < 0) {
+        return;
+      }
+      final item = ppItem.value;
+      try {
+        final setFolder = _vtableEntry<_SetFolderNative>(
+          dialog,
+          12,
+        ).asFunction<_SetFolderDart>();
+        setFolder(dialog, item);
+      } finally {
+        _release(item);
+      }
+    } finally {
+      calloc.free(iid);
+      calloc.free(pathPtr);
+      calloc.free(ppItem);
     }
   }
 
