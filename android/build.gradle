@@ -1,4 +1,4 @@
-group = "com.vanvixi.dir_picker"
+group = "com.iamv4g.dir_picker"
 version = "1.0"
 
 buildscript {
@@ -25,7 +25,7 @@ rootProject.allprojects {
 apply plugin: "com.android.library"
 
 android {
-    namespace = "com.vanvixi.dir_picker"
+    namespace = "com.iamv4g.dir_picker"
 
     compileSdk = 36
 

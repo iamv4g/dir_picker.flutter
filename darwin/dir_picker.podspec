@@ -2,16 +2,19 @@
 # To learn more about a Podspec see http://guides.cocoapods.org/syntax/podspec.html.
 # Run `pod lib lint dir_picker.podspec` to validate before publishing.
 #
+require 'yaml'
+pubspec = YAML.load_file(File.join(__dir__, '..', 'pubspec.yaml'))
+
 Pod::Spec.new do |s|
-  s.name             = 'dir_picker'
-  s.version          = '0.0.1'
+  s.name             = pubspec['name']
+  s.version          = pubspec['version']
   s.summary          = 'Directory Picker via FFI for iOS and macOS'
   s.description      = <<-DESC
 A Flutter plugin for picking directories on iOS and macOS using FFI and DartApiDl NativePort.
                        DESC
-  s.homepage         = 'https://github.com/vanvixi/dir_picker.flutter'
+  s.homepage         = 'https://github.com/iamv4g/dir_picker.flutter'
   s.license          = { :file => '../LICENSE' }
-  s.author           = { 'Vanvixi' => 'vanvixi.dev@gmail.com' }
+  s.author           = { 'iamv4g' => 'iamv4g.dev@gmail.com' }
 
   s.source           = { :path => '.' }
   s.source_files = 'dir_picker/Sources/**/*.{h,c,swift}'

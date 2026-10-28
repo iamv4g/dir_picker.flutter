@@ -1,12 +1,13 @@
-package com.vanvixi.dir_picker
+package com.iamv4g.dir_picker
 
 /**
- * Callback interface for directory listing results.
+ * Callback interface for directory picker results.
  *
  * jnigen generates a Dart binding with [implement()] factory that creates
  * a Java object backed by a RawReceivePort (native port under the hood).
  */
-interface ListEntriesCallback {
-    fun onSuccess(json: String)
+interface PickerCallback {
+    fun onSuccess(uri: String)
+    fun onCancelled()
     fun onError(code: String, message: String)
 }

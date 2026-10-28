@@ -1,4 +1,4 @@
-package com.vanvixi.dir_picker
+package com.iamv4g.dir_picker
 
 import android.content.Context
 import android.net.Uri

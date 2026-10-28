@@ -39,11 +39,11 @@ import 'package:jni/jni.dart' as jni$_;
 
 const _$jniVersionCheck = jni$_.JniVersionCheck(1, 0);
 
-/// from: `com.vanvixi.dir_picker.DirPicker$Companion`
+/// from: `com.iamv4g.dir_picker.DirPicker$Companion`
 extension type DirPicker$Companion._(jni$_.JObject _$this)
     implements jni$_.JObject {
   static final _class = jni$_.JClass.forName(
-    r'com/vanvixi/dir_picker/DirPicker$Companion',
+    r'com/iamv4g/dir_picker/DirPicker$Companion',
   );
 
   /// The type which includes information such as the signature of this class.
@@ -153,7 +153,7 @@ extension DirPicker$Companion$$Methods on DirPicker$Companion {
   static final _id_get$pickerHandler = DirPicker$Companion._class
       .instanceMethodId(
         r'getPickerHandler',
-        r'()Lcom/vanvixi/dir_picker/PickerHandler;',
+        r'()Lcom/iamv4g/dir_picker/PickerHandler;',
       );
 
   static final _get$pickerHandler =
@@ -172,7 +172,7 @@ extension DirPicker$Companion$$Methods on DirPicker$Companion {
             )
           >();
 
-  /// from: `public final com.vanvixi.dir_picker.PickerHandler getPickerHandler()`
+  /// from: `public final com.iamv4g.dir_picker.PickerHandler getPickerHandler()`
   /// The returned object must be released after use, by calling the [release] method.
   jni$_.JObject? get pickerHandler {
     return _get$pickerHandler(
@@ -184,7 +184,7 @@ extension DirPicker$Companion$$Methods on DirPicker$Companion {
   static final _id_set$pickerHandler = DirPicker$Companion._class
       .instanceMethodId(
         r'setPickerHandler',
-        r'(Lcom/vanvixi/dir_picker/PickerHandler;)V',
+        r'(Lcom/iamv4g/dir_picker/PickerHandler;)V',
       );
 
   static final _set$pickerHandler =
@@ -205,7 +205,7 @@ extension DirPicker$Companion$$Methods on DirPicker$Companion {
             )
           >();
 
-  /// from: `public final void setPickerHandler(com.vanvixi.dir_picker.PickerHandler pickerHandler)`
+  /// from: `public final void setPickerHandler(com.iamv4g.dir_picker.PickerHandler pickerHandler)`
   set pickerHandler(jni$_.JObject? pickerHandler) {
     final _$pickerHandler = pickerHandler?.reference ?? jni$_.jNullReference;
     _set$pickerHandler(
@@ -217,7 +217,7 @@ extension DirPicker$Companion$$Methods on DirPicker$Companion {
 
   static final _id_pick = DirPicker$Companion._class.instanceMethodId(
     r'pick',
-    r'(ZLcom/vanvixi/dir_picker/PickerCallback;)V',
+    r'(ZLcom/iamv4g/dir_picker/PickerCallback;)V',
   );
 
   static final _pick =
@@ -239,7 +239,7 @@ extension DirPicker$Companion$$Methods on DirPicker$Companion {
             )
           >();
 
-  /// from: `public fun pick(shouldPersist: kotlin.Boolean, callback: com.vanvixi.dir_picker.PickerCallback): kotlin.Unit`
+  /// from: `public fun pick(shouldPersist: kotlin.Boolean, callback: com.iamv4g.dir_picker.PickerCallback): kotlin.Unit`
   void pick(core$_.bool z, PickerCallback pickerCallback) {
     final _$pickerCallback = pickerCallback.reference;
     _pick(
@@ -252,7 +252,7 @@ extension DirPicker$Companion$$Methods on DirPicker$Companion {
 
   static final _id_listEntries = DirPicker$Companion._class.instanceMethodId(
     r'listEntries',
-    r'(Ljava/lang/String;ZLcom/vanvixi/dir_picker/ListEntriesCallback;)V',
+    r'(Ljava/lang/String;ZLcom/iamv4g/dir_picker/ListEntriesCallback;)V',
   );
 
   static final _listEntries =
@@ -281,7 +281,7 @@ extension DirPicker$Companion$$Methods on DirPicker$Companion {
             )
           >();
 
-  /// from: `public fun listEntries(treeUri: kotlin.String, recursive: kotlin.Boolean, callback: com.vanvixi.dir_picker.ListEntriesCallback): kotlin.Unit`
+  /// from: `public fun listEntries(treeUri: kotlin.String, recursive: kotlin.Boolean, callback: com.iamv4g.dir_picker.ListEntriesCallback): kotlin.Unit`
   void listEntries(
     jni$_.JString string,
     core$_.bool z,
@@ -306,23 +306,23 @@ final class $DirPicker$Companion$Type$
 
   @jni$_.internal
   @core$_.override
-  String get signature => r'Lcom/vanvixi/dir_picker/DirPicker$Companion;';
+  String get signature => r'Lcom/iamv4g/dir_picker/DirPicker$Companion;';
 }
 
-/// from: `com.vanvixi.dir_picker.DirPicker`
+/// from: `com.iamv4g.dir_picker.DirPicker`
 extension type DirPicker._(jni$_.JObject _$this) implements jni$_.JObject {
   static final _class = jni$_.JClass.forName(
-    r'com/vanvixi/dir_picker/DirPicker',
+    r'com/iamv4g/dir_picker/DirPicker',
   );
 
   /// The type which includes information such as the signature of this class.
   static const jni$_.JType<DirPicker> type = $DirPicker$Type$();
   static final _id_Companion = _class.staticFieldId(
     r'Companion',
-    r'Lcom/vanvixi/dir_picker/DirPicker$Companion;',
+    r'Lcom/iamv4g/dir_picker/DirPicker$Companion;',
   );
 
-  /// from: `static public final com.vanvixi.dir_picker.DirPicker$Companion Companion`
+  /// from: `static public final com.iamv4g.dir_picker.DirPicker$Companion Companion`
   /// The returned object must be released after use, by calling the [release] method.
   static DirPicker$Companion get Companion =>
       _id_Companion.get(_class, DirPicker$Companion.type)
@@ -357,7 +357,7 @@ extension type DirPicker._(jni$_.JObject _$this) implements jni$_.JObject {
 
   static final _id_pick = _class.staticMethodId(
     r'pick',
-    r'(ZLcom/vanvixi/dir_picker/PickerCallback;)V',
+    r'(ZLcom/iamv4g/dir_picker/PickerCallback;)V',
   );
 
   static final _pick =
@@ -379,7 +379,7 @@ extension type DirPicker._(jni$_.JObject _$this) implements jni$_.JObject {
             )
           >();
 
-  /// from: `static public final void pick(boolean z, com.vanvixi.dir_picker.PickerCallback pickerCallback)`
+  /// from: `static public final void pick(boolean z, com.iamv4g.dir_picker.PickerCallback pickerCallback)`
   static void pick(core$_.bool z, PickerCallback pickerCallback) {
     final _$pickerCallback = pickerCallback.reference;
     _pick(
@@ -392,7 +392,7 @@ extension type DirPicker._(jni$_.JObject _$this) implements jni$_.JObject {
 
   static final _id_listEntries = _class.staticMethodId(
     r'listEntries',
-    r'(Ljava/lang/String;ZLcom/vanvixi/dir_picker/ListEntriesCallback;)V',
+    r'(Ljava/lang/String;ZLcom/iamv4g/dir_picker/ListEntriesCallback;)V',
   );
 
   static final _listEntries =
@@ -421,7 +421,7 @@ extension type DirPicker._(jni$_.JObject _$this) implements jni$_.JObject {
             )
           >();
 
-  /// from: `static public final void listEntries(java.lang.String string, boolean z, com.vanvixi.dir_picker.ListEntriesCallback listEntriesCallback)`
+  /// from: `static public final void listEntries(java.lang.String string, boolean z, com.iamv4g.dir_picker.ListEntriesCallback listEntriesCallback)`
   static void listEntries(
     jni$_.JString string,
     core$_.bool z,
@@ -445,14 +445,14 @@ final class $DirPicker$Type$ extends jni$_.JType<DirPicker> {
 
   @jni$_.internal
   @core$_.override
-  String get signature => r'Lcom/vanvixi/dir_picker/DirPicker;';
+  String get signature => r'Lcom/iamv4g/dir_picker/DirPicker;';
 }
 
-/// from: `com.vanvixi.dir_picker.ListEntriesCallback`
+/// from: `com.iamv4g.dir_picker.ListEntriesCallback`
 extension type ListEntriesCallback._(jni$_.JObject _$this)
     implements jni$_.JObject {
   static final _class = jni$_.JClass.forName(
-    r'com/vanvixi/dir_picker/ListEntriesCallback',
+    r'com/iamv4g/dir_picker/ListEntriesCallback',
   );
 
   /// The type which includes information such as the signature of this class.
@@ -519,7 +519,7 @@ extension type ListEntriesCallback._(jni$_.JObject _$this)
       jni$_.ProtectedJniExtensions.returnResult($i.result, $r);
     });
     implementer.add(
-      r'com.vanvixi.dir_picker.ListEntriesCallback',
+      r'com.iamv4g.dir_picker.ListEntriesCallback',
       $p,
       _$invokePointer,
       [
@@ -656,13 +656,13 @@ final class $ListEntriesCallback$Type$
 
   @jni$_.internal
   @core$_.override
-  String get signature => r'Lcom/vanvixi/dir_picker/ListEntriesCallback;';
+  String get signature => r'Lcom/iamv4g/dir_picker/ListEntriesCallback;';
 }
 
-/// from: `com.vanvixi.dir_picker.PickerCallback`
+/// from: `com.iamv4g.dir_picker.PickerCallback`
 extension type PickerCallback._(jni$_.JObject _$this) implements jni$_.JObject {
   static final _class = jni$_.JClass.forName(
-    r'com/vanvixi/dir_picker/PickerCallback',
+    r'com/iamv4g/dir_picker/PickerCallback',
   );
 
   /// The type which includes information such as the signature of this class.
@@ -732,7 +732,7 @@ extension type PickerCallback._(jni$_.JObject _$this) implements jni$_.JObject {
       jni$_.ProtectedJniExtensions.returnResult($i.result, $r);
     });
     implementer
-        .add(r'com.vanvixi.dir_picker.PickerCallback', $p, _$invokePointer, [
+        .add(r'com.iamv4g.dir_picker.PickerCallback', $p, _$invokePointer, [
           if ($impl.onSuccess$async) r'onSuccess(Ljava/lang/String;)V',
           if ($impl.onCancelled$async) r'onCancelled()V',
           if ($impl.onError$async)
@@ -904,5 +904,5 @@ final class $PickerCallback$Type$ extends jni$_.JType<PickerCallback> {
 
   @jni$_.internal
   @core$_.override
-  String get signature => r'Lcom/vanvixi/dir_picker/PickerCallback;';
+  String get signature => r'Lcom/iamv4g/dir_picker/PickerCallback;';
 }
