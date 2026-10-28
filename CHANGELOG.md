@@ -2,6 +2,7 @@
 
 * iOS/macOS: `listEntries` now returns `name` and `relativePath` in precomposed Unicode (NFC), like the other platforms. Before, names with accents such as `tài liệu` came back decomposed (NFD) and did not compare equal to Dart strings
 * iOS/macOS: `listEntries(recursive: true)` now throws for a missing directory or a path that is not a directory. Before, it returned an empty list
+* Web: `listEntries` no longer requires `showDirectoryPicker`, so it works in Firefox and Safari for any `FileSystemDirectoryHandle`, such as one from the origin private file system. Only `pick()` throws `UnsupportedError` there (#23)
 * `pick()` now throws `Exception('ALREADY_ACTIVE: …')` when called while another `pick()` is still open. Before, on Android and iOS, one of the two Futures never completed (#19)
 * iOS: the picker is now presented from the top-most view controller, so `pick()` works while another view controller (a sheet, an alert, another plugin's modal) is presented. Before, UIKit ignored the request and the Future never completed (#20)
 * Android: the picker is now launched on the main thread instead of a background thread (#21)
