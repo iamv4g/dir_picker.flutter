@@ -52,6 +52,8 @@ class DirPicker {
                     } else {
                         callback.onCancelled()
                     }
+                } catch (e: PickerException) {
+                    callback.onError(e.code, e.message ?: "Unknown error")
                 } catch (e: Exception) {
                     callback.onError("PICKER_ERROR", e.message ?: "Unknown error")
                 }
@@ -109,6 +111,9 @@ class DirPicker {
         }
     }
 }
+
+/** A picker failure reported to Dart with [code] instead of `PICKER_ERROR`. */
+internal class PickerException(val code: String, message: String) : Exception(message)
 
 private data class ListedDocumentEntry(
     val document: DocumentFile,

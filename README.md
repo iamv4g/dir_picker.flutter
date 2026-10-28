@@ -194,6 +194,8 @@ Options for other platforms are silently ignored — only the one matching the c
 | `WebPickedLocation`    | Web — use `.handle` (`FileSystemDirectoryHandle`) to access directory contents. `.uri` is `null`. |
 | `null`                 | The user cancelled.                                                                               |
 
+Only one picker can be open at a time. Calling `pick()` again before the previous call completes throws an `Exception` whose message starts with `ALREADY_ACTIVE`.
+
 ### Native Mechanisms
 
 | Platform | Mechanism                                        |
