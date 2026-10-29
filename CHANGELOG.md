@@ -1,5 +1,6 @@
 ## Unreleased
 
+* Android: `listEntries` now reads each directory with one `DocumentsContract` query instead of going through `DocumentFile`, which queried every field of every child separately. Listing 2,040 entries in the Downloads provider went from about 136 s to 1.5 s on a Galaxy Note 9, with identical results. The `androidx.documentfile` dependency is gone (#35)
 * `FileSystemEntry` and `IOPickedLocation` now have value equality (`==` and `hashCode`), so two listings of the same folder compare equal and locations work as `Set`/`Map` keys (#29)
 * `DirPicker` now throws a `StateError` that says what to do when no platform implementation is registered. Before, release builds failed with a bare null-check error (#30)
 * iOS/macOS: `listEntries` now returns `name` and `relativePath` in precomposed Unicode (NFC), like the other platforms. Before, names with accents such as `tài liệu` came back decomposed (NFD) and did not compare equal to Dart strings
