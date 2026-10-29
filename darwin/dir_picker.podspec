@@ -29,6 +29,9 @@ A Flutter plugin for picking directories on iOS and macOS using FFI and DartApiD
   s.ios.deployment_target = '13.0'
   s.osx.deployment_target = '10.15'
 
+  s.resource_bundles = {
+    'dir_picker_privacy' => ['dir_picker/Sources/dir_picker/PrivacyInfo.xcprivacy']
+  }
   s.preserve_paths = 'dir_picker/Sources/DartApiDl/include/module.modulemap'
 
   s.pod_target_xcconfig = {
