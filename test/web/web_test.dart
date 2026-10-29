@@ -44,19 +44,27 @@ void main() {
       globalContext.delete('showDirectoryPicker'.toJS);
     }
     globalContext.delete('dirPickerTestRoot'.toJS);
+    globalContext.delete('dirPickerTestOptions'.toJS);
     await storage
         .removeEntry(root.name, web.FileSystemRemoveOptions(recursive: true))
         .toDart;
   });
 
-  /// Replaces `window.showDirectoryPicker` with `() => <promiseExpression>`.
+  /// Replaces `window.showDirectoryPicker` with `() => <promiseExpression>`,
+  /// recording the options it's called with as JSON.
   void stubPicker(String promiseExpression) {
     globalContext['dirPickerTestRoot'] = root;
     globalContext.callMethod(
       'eval'.toJS,
-      'window.showDirectoryPicker = () => $promiseExpression'.toJS,
+      'window.showDirectoryPicker = (options) => { '
+              'window.dirPickerTestOptions = JSON.stringify(options); '
+              'return $promiseExpression; }'
+          .toJS,
     );
   }
+
+  String? pickerOptions() =>
+      (globalContext['dirPickerTestOptions'] as JSString?)?.toDart;
 
   group('DirPickerWeb.pick', () {
     test('returns the picked directory handle', () async {
@@ -68,6 +76,31 @@ void main() {
       location as WebPickedLocation;
       expect(location.name, root.name);
       expect(location.uri, isNull);
+    });
+
+    test('asks for read access by default', () async {
+      stubPicker('Promise.resolve(window.dirPickerTestRoot)');
+
+      await DirPickerWeb().pick();
+
+      expect(pickerOptions(), '{"mode":"read"}');
+    });
+
+    test('passes the web options to showDirectoryPicker', () async {
+      stubPicker('Promise.resolve(window.dirPickerTestRoot)');
+
+      await DirPickerWeb().pick(
+        options: const PickOptions.web(
+          mode: WebPermissionMode.readwrite,
+          id: 'exports',
+          startIn: WebStartIn.documents,
+        ),
+      );
+
+      expect(
+        pickerOptions(),
+        '{"mode":"readwrite","id":"exports","startIn":"documents"}',
+      );
     });
 
     test('returns null when the user cancels', () async {

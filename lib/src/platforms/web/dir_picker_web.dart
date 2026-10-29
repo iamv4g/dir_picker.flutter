@@ -11,7 +11,23 @@ import '../../options/pick_options.dart';
 import '../../platform_interface/dir_picker_platform.dart';
 
 extension on web.Window {
-  external JSPromise<web.FileSystemDirectoryHandle> showDirectoryPicker();
+  external JSPromise<web.FileSystemDirectoryHandle> showDirectoryPicker([
+    JSObject options,
+  ]);
+}
+
+/// The `showDirectoryPicker()` options object. Unset options are left out:
+/// the browser would turn a null `id` into the string "null" and reject a
+/// null `startIn`.
+JSObject _pickerOptions(WebOptions options) {
+  final object = JSObject()..['mode'] = options.mode.name.toJS;
+  if (options.id case final id?) {
+    object['id'] = id.toJS;
+  }
+  if (options.startIn case final startIn?) {
+    object['startIn'] = startIn.name.toJS;
+  }
+  return object;
 }
 
 extension on web.FileSystemDirectoryHandle {
@@ -54,7 +70,13 @@ class DirPickerWeb extends DirPickerPlatform {
       );
     }
     try {
-      final handle = await web.window.showDirectoryPicker().toDart;
+      final handle = await web.window
+          .showDirectoryPicker(
+            _pickerOptions(
+              options is WebOptions ? options : const WebOptions(),
+            ),
+          )
+          .toDart;
       return WebPickedLocation(handle);
     } catch (e) {
       // AbortError → user cancelled
@@ -83,12 +105,14 @@ class DirPickerWeb extends DirPickerPlatform {
   }
 }
 
+/// Lists [handle], reading the files of each directory and the
+/// subdirectories in parallel. Entries keep the browser's iteration order.
 Future<List<FileSystemEntry>> _listHandle(
   web.FileSystemDirectoryHandle handle, {
   required bool recursive,
   String parentPath = '',
 }) async {
-  final entries = <FileSystemEntry>[];
+  final pending = <Future<List<FileSystemEntry>>>[];
   final iterator = handle.values();
 
   while (true) {
@@ -99,43 +123,45 @@ Future<List<FileSystemEntry>> _listHandle(
     final relativePath = _joinRelativePath(parentPath, item.name);
 
     if (item.kind == 'file') {
-      final fileHandle = item as web.FileSystemFileHandle;
-      final file = await fileHandle.getFile().toDart;
-      entries.add(
-        FileSystemEntry(
-          name: item.name,
-          relativePath: relativePath,
-          isDirectory: false,
-          uri: null,
-          size: file.size,
-          lastModified: DateTime.fromMillisecondsSinceEpoch(file.lastModified),
-        ),
-      );
+      pending.add(_fileEntry(item as web.FileSystemFileHandle, relativePath));
       continue;
     }
 
-    final directoryHandle = item as web.FileSystemDirectoryHandle;
-    entries.add(
-      FileSystemEntry(
-        name: item.name,
-        relativePath: relativePath,
-        isDirectory: true,
-        uri: null,
-      ),
+    final directory = FileSystemEntry(
+      name: item.name,
+      relativePath: relativePath,
+      isDirectory: true,
+      uri: null,
     );
-
-    if (recursive) {
-      entries.addAll(
-        await _listHandle(
-          directoryHandle,
-          recursive: true,
-          parentPath: relativePath,
-        ),
-      );
-    }
+    pending.add(
+      recursive
+          ? _listHandle(
+              item as web.FileSystemDirectoryHandle,
+              recursive: true,
+              parentPath: relativePath,
+            ).then((children) => [directory, ...children])
+          : Future.value([directory]),
+    );
   }
 
-  return entries;
+  return [for (final entries in await Future.wait(pending)) ...entries];
+}
+
+Future<List<FileSystemEntry>> _fileEntry(
+  web.FileSystemFileHandle handle,
+  String relativePath,
+) async {
+  final file = await handle.getFile().toDart;
+  return [
+    FileSystemEntry(
+      name: handle.name,
+      relativePath: relativePath,
+      isDirectory: false,
+      uri: null,
+      size: file.size,
+      lastModified: DateTime.fromMillisecondsSinceEpoch(file.lastModified),
+    ),
+  ];
 }
 
 String _joinRelativePath(String parentPath, String name) =>

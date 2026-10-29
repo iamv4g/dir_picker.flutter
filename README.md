@@ -153,6 +153,14 @@ final location = await DirPicker.pick(
 final location = await DirPicker.pick(
   options: PickOptions.windows(title: 'Select Folder', acceptLabel: 'Choose'),
 );
+
+final location = await DirPicker.pick(
+  options: PickOptions.web(
+    mode: WebPermissionMode.readwrite,
+    id: 'exports',
+    startIn: WebStartIn.documents,
+  ),
+);
 ```
 
 Options for other platforms are silently ignored — only the one matching the current platform is applied.
@@ -183,6 +191,16 @@ Options for other platforms are silently ignored — only the one matching the c
 |---------------|----------|----------------------|----------------------------------------------------------------------|
 | `title`       | `String` | `'Select Directory'` | Window title of the dialog (`IFileDialog::SetTitle`).                |
 | `acceptLabel` | `String` | `'Select'`           | Label for the confirmation button (`IFileDialog::SetOkButtonLabel`). |
+
+### WebOptions
+
+Passed to `window.showDirectoryPicker()`.
+
+| Parameter | Type                | Default                    | Description                                                                                                  |
+|-----------|---------------------|----------------------------|--------------------------------------------------------------------------------------------------------------|
+| `mode`    | `WebPermissionMode` | `WebPermissionMode.read`   | Access to request. `readwrite` lets the handle create, change and delete files without asking again.         |
+| `id`      | `String?`           | `null`                     | Remembers the last folder picked for this purpose. At most 32 letters, digits, `_` or `-`.                     |
+| `startIn` | `WebStartIn?`       | `null`                     | Well-known folder to open in (`desktop`, `documents`, `downloads`, `music`, `pictures`, `videos`) when there's no remembered folder for `id`. |
 
 ## Core Concepts
 

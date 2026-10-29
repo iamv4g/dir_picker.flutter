@@ -54,6 +54,7 @@ class DirPicker {
   ///   is always `null` (browsers restrict path access); use
   ///   [WebPickedLocation.handle] (`FileSystemDirectoryHandle`) to access
   ///   directory contents. Requires `package:web` in your app's dependencies.
+  ///   Customize the access mode and starting folder with [WebOptions].
   static Future<PickedLocation?> pick({PickOptions? options}) async {
     if (_isPicking) {
       throw Exception('ALREADY_ACTIVE: A directory picker is already open');

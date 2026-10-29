@@ -10,6 +10,12 @@ sealed class PickOptions {
 
   const factory PickOptions.windows({String title, String acceptLabel}) =
       WindowsOptions;
+
+  const factory PickOptions.web({
+    WebPermissionMode mode,
+    String? id,
+    WebStartIn? startIn,
+  }) = WebOptions;
 }
 
 /// Options for directory picking on Android.
@@ -77,3 +83,36 @@ class WindowsOptions implements PickOptions {
   /// Applied via `IFileDialog::SetOkButtonLabel`.
   final String acceptLabel;
 }
+
+/// Options for directory picking on the web, passed to
+/// `window.showDirectoryPicker()`.
+class WebOptions implements PickOptions {
+  const WebOptions({this.mode = WebPermissionMode.read, this.id, this.startIn})
+    : assert(
+        id == null || (id.length > 0 && id.length <= 32),
+        'id must be 1 to 32 characters (letters, digits, "_" or "-")',
+      );
+
+  /// The access the browser asks the user for.
+  ///
+  /// With [WebPermissionMode.readwrite], the returned handle can create,
+  /// change and delete files without asking again. Defaults to
+  /// [WebPermissionMode.read].
+  final WebPermissionMode mode;
+
+  /// Lets the browser remember the last folder picked for this purpose and
+  /// open there next time, separately from pickers with other ids.
+  ///
+  /// At most 32 characters: letters, digits, `_` and `-`.
+  final String? id;
+
+  /// A well-known folder to open in when the browser has no remembered
+  /// folder for [id].
+  final WebStartIn? startIn;
+}
+
+/// The permission `showDirectoryPicker()` requests.
+enum WebPermissionMode { read, readwrite }
+
+/// Well-known folders `showDirectoryPicker()` can open in.
+enum WebStartIn { desktop, documents, downloads, music, pictures, videos }
