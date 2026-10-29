@@ -1,11 +1,10 @@
 ## Unreleased
 
-* Add `initialDirectory` to `DirPicker.pick()`, so the picker opens in a folder from an earlier pick: `EXTRA_INITIAL_URI` on Android 8+, `directoryURL` on iOS 13+ and macOS, `IFileDialog::SetFolder` on Windows, `current_folder`/`--filename`/the start folder on Linux, and `startIn` on the web. Platforms that can't use the given location ignore it. The example app reopens the last picked folder (#27)
-* **Breaking** for custom `DirPickerPlatform` implementations only: `pick()` takes a new `initialDirectory` parameter. Apps that call `DirPicker` are not affected
-* Web: add `PickOptions.web(mode:, id:, startIn:)`, passed to `showDirectoryPicker()`. `mode: WebPermissionMode.readwrite` returns a handle that can write without asking again, `id` lets the browser remember the last folder per purpose, and `startIn` opens in a well-known folder (#34)
-* Web: `listEntries` now reads files and subdirectories in parallel instead of awaiting each `getFile()` in turn (#34)
 * Windows: the folder dialog is now owned by the app's window, so it stays on top of it and the window can't be used until it closes. Before, it opened as a separate top-level window (#33)
 * Linux: on X11, the XDG Desktop Portal dialog is now modal to the app's window (`parent_window`). On Wayland, and with the zenity and kdialog fallbacks, it still opens as a separate window (#33)
+* Web: add `PickOptions.web(mode:, id:, startIn:)`, passed to `showDirectoryPicker()`. `mode: WebPermissionMode.readwrite` returns a handle that can write without asking again, `id` lets the browser remember the last folder per purpose, and `startIn` opens in a well-known folder (#34)
+* Web: `listEntries` now reads files and subdirectories in parallel instead of awaiting each `getFile()` in turn (#34)
+* Android: `listEntries` now reads each directory with one `DocumentsContract` query instead of going through `DocumentFile`, which queried every field of every child separately. Listing 2,040 entries in the Downloads provider went from about 136 s to 1.5 s on a Galaxy Note 9, with identical results. The `androidx.documentfile` dependency is gone (#35)
 * `FileSystemEntry` and `IOPickedLocation` now have value equality (`==` and `hashCode`), so two listings of the same folder compare equal and locations work as `Set`/`Map` keys (#29)
 * `DirPicker` now throws a `StateError` that says what to do when no platform implementation is registered. Before, release builds failed with a bare null-check error (#30)
 * iOS/macOS: `listEntries` now returns `name` and `relativePath` in precomposed Unicode (NFC), like the other platforms. Before, names with accents such as `tài liệu` came back decomposed (NFD) and did not compare equal to Dart strings

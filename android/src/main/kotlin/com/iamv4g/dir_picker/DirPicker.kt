@@ -1,8 +1,10 @@
 package com.iamv4g.dir_picker
 
+import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
-import androidx.documentfile.provider.DocumentFile
+import android.provider.DocumentsContract
+import android.provider.DocumentsContract.Document
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -74,37 +76,26 @@ class DirPicker {
                 }
 
                 try {
-                    val root = DocumentFile.fromTreeUri(context, Uri.parse(treeUri))
-                    if (root == null || !root.isDirectory) {
+                    val tree = Uri.parse(treeUri)
+                    // Like DocumentFile.fromTreeUri: a URI for a document inside
+                    // the tree (e.g. an entry's uri) lists that document.
+                    val rootId = try {
+                        if (DocumentsContract.isDocumentUri(context, tree)) {
+                            DocumentsContract.getDocumentId(tree)
+                        } else {
+                            DocumentsContract.getTreeDocumentId(tree)
+                        }
+                    } catch (_: IllegalArgumentException) {
+                        null
+                    }
+                    if (rootId == null || !isDirectory(context.contentResolver, tree, rootId)) {
                         callback.onError("INVALID_URI", "Cannot open directory URI")
                         return@launch
                     }
 
-                    val entries = collectEntries(root, recursive)
-                    val jsonArray = JSONArray()
-                    for (entry in entries) {
-                        jsonArray.put(
-                            JSONObject().apply {
-                                put("name", entry.name)
-                                put("relativePath", entry.relativePath)
-                                put("isDirectory", entry.document.isDirectory)
-                                put("uri", entry.document.uri.toString())
-                                if (entry.document.isFile) {
-                                    put("size", entry.document.length())
-                                } else {
-                                    put("size", JSONObject.NULL)
-                                }
-
-                                val lastModified = entry.document.lastModified()
-                                if (lastModified > 0L) {
-                                    put("lastModified", lastModified)
-                                } else {
-                                    put("lastModified", JSONObject.NULL)
-                                }
-                            }
-                        )
-                    }
-                    callback.onSuccess(jsonArray.toString())
+                    val entries = JSONArray()
+                    collectEntries(context.contentResolver, tree, rootId, "", recursive, entries)
+                    callback.onSuccess(entries.toString())
                 } catch (e: Exception) {
                     callback.onError("LIST_ERROR", e.message ?: "Unknown error")
                 }
@@ -116,39 +107,77 @@ class DirPicker {
 /** A picker failure reported to Dart with [code] instead of `PICKER_ERROR`. */
 internal class PickerException(val code: String, message: String) : Exception(message)
 
-private data class ListedDocumentEntry(
-    val document: DocumentFile,
-    val name: String,
-    val relativePath: String
+private val CHILD_COLUMNS = arrayOf(
+    Document.COLUMN_DOCUMENT_ID,
+    Document.COLUMN_DISPLAY_NAME,
+    Document.COLUMN_MIME_TYPE,
+    Document.COLUMN_SIZE,
+    Document.COLUMN_LAST_MODIFIED,
 )
 
+private fun isDirectory(resolver: ContentResolver, tree: Uri, documentId: String): Boolean =
+    resolver.query(
+        DocumentsContract.buildDocumentUriUsingTree(tree, documentId),
+        arrayOf(Document.COLUMN_MIME_TYPE),
+        null,
+        null,
+        null,
+    )?.use { it.moveToFirst() && it.getString(0) == Document.MIME_TYPE_DIR } ?: false
+
+/**
+ * Appends the children of [parentId] to [out], with one query per directory.
+ * `DocumentFile` runs a separate query for every field of every child, which
+ * is far slower on large trees.
+ *
+ * A subdirectory that can't be queried is skipped; only the root throws.
+ */
 private fun collectEntries(
-    directory: DocumentFile,
+    resolver: ContentResolver,
+    tree: Uri,
+    parentId: String,
+    parentPath: String,
     recursive: Boolean,
-    parentRelativePath: String = ""
-): List<ListedDocumentEntry> {
-    val entries = mutableListOf<ListedDocumentEntry>()
+    out: JSONArray,
+) {
+    val subdirectories = mutableListOf<Pair<String, String>>()
 
-    for (child in directory.listFiles()) {
-        val name = child.name ?: child.uri.lastPathSegment ?: ""
-        val relativePath = if (parentRelativePath.isEmpty()) {
-            name
-        } else {
-            "$parentRelativePath/$name"
-        }
+    val cursor = resolver.query(
+        DocumentsContract.buildChildDocumentsUriUsingTree(tree, parentId),
+        CHILD_COLUMNS,
+        null,
+        null,
+        null,
+    ) ?: throw IllegalStateException("Cannot list $parentPath")
 
-        entries.add(
-            ListedDocumentEntry(
-                document = child,
-                name = name,
-                relativePath = relativePath
+    cursor.use {
+        while (it.moveToNext()) {
+            val documentId = it.getString(0)
+            val name = it.getString(1) ?: documentId
+            val isDirectory = it.getString(2) == Document.MIME_TYPE_DIR
+            val relativePath = if (parentPath.isEmpty()) name else "$parentPath/$name"
+            val lastModified = if (it.isNull(4)) 0L else it.getLong(4)
+
+            out.put(
+                JSONObject().apply {
+                    put("name", name)
+                    put("relativePath", relativePath)
+                    put("isDirectory", isDirectory)
+                    put("uri", DocumentsContract.buildDocumentUriUsingTree(tree, documentId).toString())
+                    put("size", if (isDirectory || it.isNull(3)) JSONObject.NULL else it.getLong(3))
+                    put("lastModified", if (lastModified > 0L) lastModified else JSONObject.NULL)
+                }
             )
-        )
 
-        if (recursive && child.isDirectory) {
-            entries.addAll(collectEntries(child, recursive = true, parentRelativePath = relativePath))
+            if (recursive && isDirectory) subdirectories.add(documentId to relativePath)
         }
     }
 
-    return entries
+    // Recurse after closing the cursor, so only one is open at a time.
+    for ((documentId, relativePath) in subdirectories) {
+        try {
+            collectEntries(resolver, tree, documentId, relativePath, recursive = true, out)
+        } catch (_: Exception) {
+            // Unreadable subdirectory: keep its entry, skip its contents.
+        }
+    }
 }
