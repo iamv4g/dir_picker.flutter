@@ -13,9 +13,11 @@ final class DocumentPickerHelper: NSObject {
     ///
     /// - Parameters:
     ///   - viewController: The view controller to present the picker from
+    ///   - initialDirectory: The folder to open in, if any (iOS 13+)
     ///   - completion: Called with the selected directory URL, or nil if cancelled
     func pick(
         from viewController: UIViewController,
+        initialDirectory: URL? = nil,
         completion: @escaping (URL?) -> Void
     ) {
         self.completion = completion
@@ -34,6 +36,9 @@ final class DocumentPickerHelper: NSObject {
         picker.delegate = self
         picker.allowsMultipleSelection = false
         picker.modalPresentationStyle = .formSheet
+        if #available(iOS 13.0, *), let initialDirectory = initialDirectory {
+            picker.directoryURL = initialDirectory
+        }
 
         viewController.present(picker, animated: true)
     }

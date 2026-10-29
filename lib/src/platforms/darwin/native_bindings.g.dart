@@ -42,15 +42,17 @@ class DirPickerBindings {
   /// - Cancelled:  [1]
   /// - Error:      [2, errorCode, errorMessage]
   ///
-  /// @param native_port   Dart NativePort for result reporting
-  /// @param accept_label  Label for the confirmation button (macOS only, nullable)
-  /// @param message       Descriptive text in the panel (macOS only, nullable)
+  /// @param native_port        Dart NativePort for result reporting
+  /// @param accept_label       Label for the confirmation button (macOS only, nullable)
+  /// @param message            Descriptive text in the panel (macOS only, nullable)
+  /// @param initial_directory  file:// URI of the folder to open in (nullable)
   void pick(
     int native_port,
     ffi.Pointer<ffi.Char> accept_label,
     ffi.Pointer<ffi.Char> message,
+    ffi.Pointer<ffi.Char> initial_directory,
   ) {
-    return _pick(native_port, accept_label, message);
+    return _pick(native_port, accept_label, message, initial_directory);
   }
 
   late final _pickPtr =
@@ -60,12 +62,18 @@ class DirPickerBindings {
             ffi.Int64,
             ffi.Pointer<ffi.Char>,
             ffi.Pointer<ffi.Char>,
+            ffi.Pointer<ffi.Char>,
           )
         >
       >('dir_picker_pick');
   late final _pick = _pickPtr
       .asFunction<
-        void Function(int, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)
+        void Function(
+          int,
+          ffi.Pointer<ffi.Char>,
+          ffi.Pointer<ffi.Char>,
+          ffi.Pointer<ffi.Char>,
+        )
       >();
 
   /// List directory entries and report the result via NativePort.

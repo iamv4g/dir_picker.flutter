@@ -20,7 +20,14 @@ abstract class DirPickerPlatform {
 
   static set instance(DirPickerPlatform platform) => _instance = platform;
 
-  Future<PickedLocation?> pick({PickOptions? options});
+  /// Shows the directory picker. See `DirPicker.pick`.
+  ///
+  /// Implementations should open in [initialDirectory] when the platform can,
+  /// and ignore it otherwise.
+  Future<PickedLocation?> pick({
+    PickOptions? options,
+    PickedLocation? initialDirectory,
+  });
 
   Future<List<FileSystemEntry>> listEntries(
     PickedLocation location, {

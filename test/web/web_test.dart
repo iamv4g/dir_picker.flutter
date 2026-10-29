@@ -103,6 +103,30 @@ void main() {
       );
     });
 
+    test('starts in the initial directory handle', () async {
+      stubPicker('Promise.resolve(window.dirPickerTestRoot)');
+      globalContext.callMethod(
+        'eval'.toJS,
+        'const stub = window.showDirectoryPicker; '
+                'window.showDirectoryPicker = (options) => { '
+                'window.dirPickerTestStartsInRoot = '
+                'options.startIn === window.dirPickerTestRoot; '
+                'return stub(options); }'
+            .toJS,
+      );
+
+      await DirPickerWeb().pick(
+        options: const PickOptions.web(startIn: WebStartIn.desktop),
+        initialDirectory: WebPickedLocation(root),
+      );
+
+      expect(
+        (globalContext['dirPickerTestStartsInRoot'] as JSBoolean).toDart,
+        isTrue,
+      );
+      globalContext.delete('dirPickerTestStartsInRoot'.toJS);
+    });
+
     test('returns null when the user cancels', () async {
       stubPicker(
         "Promise.reject(new DOMException('The user aborted a request.', "

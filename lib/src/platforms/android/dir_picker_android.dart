@@ -19,7 +19,10 @@ class DirPickerAndroid extends DirPickerPlatform {
   }
 
   @override
-  Future<PickedLocation?> pick({PickOptions? options}) {
+  Future<PickedLocation?> pick({
+    PickOptions? options,
+    PickedLocation? initialDirectory,
+  }) {
     final androidOptions = options is AndroidOptions
         ? options
         : AndroidOptions();
@@ -43,8 +46,18 @@ class DirPickerAndroid extends DirPickerPlatform {
       ),
     );
 
+    // Only a content:// location from an earlier pick can be opened.
+    final initialUri = switch (initialDirectory?.uri) {
+      final uri? when uri.scheme == 'content' => uri.toString().toJString(),
+      _ => null,
+    };
+
     // Non-blocking: Kotlin launches coroutine internally
-    native.DirPicker.pick(androidOptions.shouldPersist, callback);
+    try {
+      native.DirPicker.pick(androidOptions.shouldPersist, initialUri, callback);
+    } finally {
+      initialUri?.release();
+    }
 
     return completer.future.whenComplete(() => callback.release());
   }

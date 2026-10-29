@@ -43,6 +43,18 @@ void main() {
       expect(await first, same(picked));
     });
 
+    test('passes the initial directory to the platform', () async {
+      final platform = _FakePlatform();
+      DirPickerPlatform.instance = platform;
+      final initial = IOPickedLocation(Uri.directory('/tmp/start'));
+
+      final picked = DirPicker.pick(initialDirectory: initial);
+      platform.pickResult.complete(null);
+      await picked;
+
+      expect(platform.initialDirectory, same(initial));
+    });
+
     test('allows a new call after the previous one completes', () async {
       final platform = _FakePlatform();
       DirPickerPlatform.instance = platform;
@@ -145,10 +157,15 @@ class _FakePlatform extends DirPickerPlatform {
 
   Completer<PickedLocation?> pickResult = Completer();
   int pickCalls = 0;
+  PickedLocation? initialDirectory;
 
   @override
-  Future<PickedLocation?> pick({PickOptions? options}) {
+  Future<PickedLocation?> pick({
+    PickOptions? options,
+    PickedLocation? initialDirectory,
+  }) {
     pickCalls++;
+    this.initialDirectory = initialDirectory;
     return pickResult.future;
   }
 }

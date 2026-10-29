@@ -2,6 +2,7 @@
 library;
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dbus/dbus.dart';
@@ -117,6 +118,30 @@ void main() {
       );
     });
 
+    test('opens zenity and kdialog in the initial directory', () async {
+      final initial = IOPickedLocation(Uri.directory('/home/user/Projects'));
+
+      await picker(
+        tools: {'zenity': cancelled()},
+      ).pick(initialDirectory: initial);
+      expect(runs.single, contains('--filename=/home/user/Projects/'));
+
+      runs.clear();
+      await picker(
+        tools: {'kdialog': cancelled()},
+      ).pick(initialDirectory: initial);
+      expect(runs.last.last, '/home/user/Projects/');
+    });
+
+    test('ignores an initial directory that is not a file URI', () async {
+      await picker(tools: {'zenity': cancelled()}).pick(
+        initialDirectory: IOPickedLocation(
+          Uri.parse('content://com.example/tree/1'),
+        ),
+      );
+      expect(runs.single.where((arg) => arg.startsWith('--filename')), isEmpty);
+    });
+
     test('falls back to kdialog when zenity is missing', () async {
       final location = await picker(
         tools: {'kdialog': selected('/home/user/Projects')},
@@ -193,6 +218,19 @@ void main() {
         expect(portal.parentWindow, 'x11:3a00007');
       });
 
+      test('passes the initial directory as current_folder', () async {
+        portal.response = 0;
+
+        await DirPickerLinux.withBackends(
+          sessionBus: () => DBusClient(address),
+          appWindow: () => null,
+        ).pick(
+          initialDirectory: IOPickedLocation(Uri.directory('/home/user/ä')),
+        );
+
+        expect(portal.currentFolder, [...utf8.encode('/home/user/ä/'), 0]);
+      });
+
       test('passes no parent window when the app window is unknown', () async {
         portal.response = 0;
         await pick();
@@ -247,6 +285,7 @@ class _FakePortal extends DBusObject {
   int response = 0;
   bool respondBeforeReply = false;
   String? parentWindow;
+  List<int>? currentFolder;
   bool legacyHandle = false;
 
   @override
@@ -256,6 +295,10 @@ class _FakePortal extends DBusObject {
       return DBusMethodErrorResponse.unknownMethod();
     }
     parentWindow = call.values[0].asString();
+    currentFolder = call.values[2]
+        .asStringVariantDict()['current_folder']
+        ?.asByteArray()
+        .toList();
     final token = call.values[2]
         .asStringVariantDict()['handle_token']!
         .asString();

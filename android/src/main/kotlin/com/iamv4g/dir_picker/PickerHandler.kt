@@ -1,5 +1,7 @@
 package com.iamv4g.dir_picker
 
+import android.net.Uri
+
 /**
  * Bridge interface for picking a directory via SAF.
  *
@@ -15,7 +17,8 @@ fun interface PickerHandler {
      * until the user responds.
      *
      * @param shouldPersist Whether to take persistable URI permission
+     * @param initialUri The folder to open in, or null
      * @return Selected directory URI string, or null if cancelled
      */
-    suspend fun pick(shouldPersist: Boolean): String?
+    suspend fun pick(shouldPersist: Boolean, initialUri: Uri?): String?
 }
