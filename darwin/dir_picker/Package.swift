@@ -22,6 +22,10 @@ let package = Package(
             name: "dir_picker",
             dependencies: ["DartApiDl"],
             path: "Sources/dir_picker",
+            resources: [
+                // Declares the file timestamps listEntries reads.
+                .process("PrivacyInfo.xcprivacy"),
+            ],
             cSettings: [
                 .headerSearchPath("include"),
             ]
