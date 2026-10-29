@@ -310,6 +310,99 @@ extension DirPicker$Companion$$Methods on DirPicker$Companion {
       _$listEntriesCallback.pointer,
     ).check();
   }
+
+  static final _id_persist = DirPicker$Companion._class.instanceMethodId(
+    r'persist',
+    r'(Ljava/lang/String;)V',
+  );
+
+  static final _persist =
+      jni$_.ProtectedJniExtensions.lookup<
+            jni$_.NativeFunction<
+              jni$_.JThrowablePtr Function(
+                jni$_.Pointer<jni$_.Void>,
+                jni$_.JMethodIDPtr,
+                jni$_.VarArgs<(jni$_.Pointer<jni$_.Void>,)>,
+              )
+            >
+          >('globalEnv_CallVoidMethod')
+          .asFunction<
+            jni$_.JThrowablePtr Function(
+              jni$_.Pointer<jni$_.Void>,
+              jni$_.JMethodIDPtr,
+              jni$_.Pointer<jni$_.Void>,
+            )
+          >();
+
+  /// from: `public fun persist(uri: kotlin.String): kotlin.Unit`
+  void persist(jni$_.JString string) {
+    final _$string = string.reference;
+    _persist(reference.pointer, _id_persist.pointer, _$string.pointer).check();
+  }
+
+  static final _id_isPersisted = DirPicker$Companion._class.instanceMethodId(
+    r'isPersisted',
+    r'(Ljava/lang/String;)Z',
+  );
+
+  static final _isPersisted =
+      jni$_.ProtectedJniExtensions.lookup<
+            jni$_.NativeFunction<
+              jni$_.JniResult Function(
+                jni$_.Pointer<jni$_.Void>,
+                jni$_.JMethodIDPtr,
+                jni$_.VarArgs<(jni$_.Pointer<jni$_.Void>,)>,
+              )
+            >
+          >('globalEnv_CallBooleanMethod')
+          .asFunction<
+            jni$_.JniResult Function(
+              jni$_.Pointer<jni$_.Void>,
+              jni$_.JMethodIDPtr,
+              jni$_.Pointer<jni$_.Void>,
+            )
+          >();
+
+  /// from: `public fun isPersisted(uri: kotlin.String): kotlin.Boolean`
+  core$_.bool isPersisted(jni$_.JString string) {
+    final _$string = string.reference;
+    return _isPersisted(
+      reference.pointer,
+      _id_isPersisted.pointer,
+      _$string.pointer,
+    ).boolean;
+  }
+
+  static final _id_releasePersisted = DirPicker$Companion._class
+      .instanceMethodId(r'releasePersisted', r'(Ljava/lang/String;)V');
+
+  static final _releasePersisted =
+      jni$_.ProtectedJniExtensions.lookup<
+            jni$_.NativeFunction<
+              jni$_.JThrowablePtr Function(
+                jni$_.Pointer<jni$_.Void>,
+                jni$_.JMethodIDPtr,
+                jni$_.VarArgs<(jni$_.Pointer<jni$_.Void>,)>,
+              )
+            >
+          >('globalEnv_CallVoidMethod')
+          .asFunction<
+            jni$_.JThrowablePtr Function(
+              jni$_.Pointer<jni$_.Void>,
+              jni$_.JMethodIDPtr,
+              jni$_.Pointer<jni$_.Void>,
+            )
+          >();
+
+  /// from: `public fun releasePersisted(uri: kotlin.String): kotlin.Unit`
+  void releasePersisted(jni$_.JString string) {
+    final _$string = string.reference;
+    _releasePersisted(
+      reference.pointer,
+      _id_releasePersisted.pointer,
+      _$string.pointer,
+    ).check();
+  }
 }
 
 final class $DirPicker$Companion$Type$
@@ -461,6 +554,105 @@ extension type DirPicker._(jni$_.JObject _$this) implements jni$_.JObject {
       _$string.pointer,
       z ? 1 : 0,
       _$listEntriesCallback.pointer,
+    ).check();
+  }
+
+  static final _id_persist = _class.staticMethodId(
+    r'persist',
+    r'(Ljava/lang/String;)V',
+  );
+
+  static final _persist =
+      jni$_.ProtectedJniExtensions.lookup<
+            jni$_.NativeFunction<
+              jni$_.JThrowablePtr Function(
+                jni$_.Pointer<jni$_.Void>,
+                jni$_.JMethodIDPtr,
+                jni$_.VarArgs<(jni$_.Pointer<jni$_.Void>,)>,
+              )
+            >
+          >('globalEnv_CallStaticVoidMethod')
+          .asFunction<
+            jni$_.JThrowablePtr Function(
+              jni$_.Pointer<jni$_.Void>,
+              jni$_.JMethodIDPtr,
+              jni$_.Pointer<jni$_.Void>,
+            )
+          >();
+
+  /// from: `static public final void persist(java.lang.String string)`
+  static void persist(jni$_.JString string) {
+    final _$string = string.reference;
+    _persist(
+      _class.reference.pointer,
+      _id_persist.pointer,
+      _$string.pointer,
+    ).check();
+  }
+
+  static final _id_isPersisted = _class.staticMethodId(
+    r'isPersisted',
+    r'(Ljava/lang/String;)Z',
+  );
+
+  static final _isPersisted =
+      jni$_.ProtectedJniExtensions.lookup<
+            jni$_.NativeFunction<
+              jni$_.JniResult Function(
+                jni$_.Pointer<jni$_.Void>,
+                jni$_.JMethodIDPtr,
+                jni$_.VarArgs<(jni$_.Pointer<jni$_.Void>,)>,
+              )
+            >
+          >('globalEnv_CallStaticBooleanMethod')
+          .asFunction<
+            jni$_.JniResult Function(
+              jni$_.Pointer<jni$_.Void>,
+              jni$_.JMethodIDPtr,
+              jni$_.Pointer<jni$_.Void>,
+            )
+          >();
+
+  /// from: `static public final boolean isPersisted(java.lang.String string)`
+  static core$_.bool isPersisted(jni$_.JString string) {
+    final _$string = string.reference;
+    return _isPersisted(
+      _class.reference.pointer,
+      _id_isPersisted.pointer,
+      _$string.pointer,
+    ).boolean;
+  }
+
+  static final _id_releasePersisted = _class.staticMethodId(
+    r'releasePersisted',
+    r'(Ljava/lang/String;)V',
+  );
+
+  static final _releasePersisted =
+      jni$_.ProtectedJniExtensions.lookup<
+            jni$_.NativeFunction<
+              jni$_.JThrowablePtr Function(
+                jni$_.Pointer<jni$_.Void>,
+                jni$_.JMethodIDPtr,
+                jni$_.VarArgs<(jni$_.Pointer<jni$_.Void>,)>,
+              )
+            >
+          >('globalEnv_CallStaticVoidMethod')
+          .asFunction<
+            jni$_.JThrowablePtr Function(
+              jni$_.Pointer<jni$_.Void>,
+              jni$_.JMethodIDPtr,
+              jni$_.Pointer<jni$_.Void>,
+            )
+          >();
+
+  /// from: `static public final void releasePersisted(java.lang.String string)`
+  static void releasePersisted(jni$_.JString string) {
+    final _$string = string.reference;
+    _releasePersisted(
+      _class.reference.pointer,
+      _id_releasePersisted.pointer,
+      _$string.pointer,
     ).check();
   }
 }

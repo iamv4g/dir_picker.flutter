@@ -12,7 +12,7 @@ A Flutter plugin for picking a directory across all platforms using native syste
 - 📁 **All Platforms** – Android, iOS, macOS, Windows, Linux, and Web
 - ⚡ **Native Performance** – Powered by FFI (iOS/macOS/Windows) and JNI (Android) for near-zero overhead
 - 🎨 **Customizable Dialogs** – Platform-specific options for title, button labels, and more
-- 🔗 **Persistent Permissions** – Android SAF persistent URI access across reboots
+- 🔗 **Persistent Access** – keep using a picked folder after the app restarts: persisted URI permissions on Android, bookmarks on iOS and macOS
 - 🐧 **Linux Portals** – XDG Desktop Portal with zenity/kdialog fallback
 
 If you want to say thank you, star us on GitHub or like us on pub.dev.
@@ -149,6 +149,39 @@ final next = await DirPicker.pick(initialDirectory: previousLocation);
 | Windows  | A `file://` location (`IFileDialog::SetFolder`). |
 | Linux    | A `file://` location: XDG portal `current_folder`, zenity `--filename`, kdialog's start folder. |
 | Web      | A `WebPickedLocation` (`startIn`). It takes precedence over `WebOptions.startIn`. |
+
+### Keep access to a folder after the app restarts
+
+```dart
+final prefs = SharedPreferencesAsync();
+
+// After a pick: keep access and save the token.
+final token = await DirPicker.persist(location);
+await prefs.setString('workspace', token);
+
+// On a later launch: get the folder back without asking the user.
+final saved = await prefs.getString('workspace');
+final restored = saved == null ? null : await DirPicker.restore(saved);
+if (restored == null) {
+  // Deleted, revoked or released: ask the user to pick again.
+}
+
+// When the app no longer needs it.
+await DirPicker.release(token);
+await prefs.remove('workspace');
+```
+
+| Platform | Token | What `persist` keeps |
+|----------|-------|----------------------|
+| Android  | The `content://` URI | A persistable URI permission. Android keeps at most 128 per app (512 from Android 11) and drops the oldest, so `release` folders you no longer need. |
+| iOS      | Bookmark data (base64) | A bookmark. `restore` opens access again until `release` or the app exits. |
+| macOS    | Security-scoped bookmark data (base64) | A security-scoped bookmark. Needs the same `com.apple.security.files.user-selected.read-write` entitlement as `pick`. |
+| Windows, Linux | The `file://` URI | Nothing: the path stays usable. `restore` returns `null` once the folder is gone. |
+| Web      | – | Not supported (`UnsupportedError`). Store `WebPickedLocation.handle` in IndexedDB instead. |
+
+A bookmark follows the folder when it's moved or renamed, but the token goes stale. Call `persist` on the restored location and save the new token, as the example app does.
+
+`PickOptions.android(shouldPersist: true)` still takes the permission during `pick`. `persist` does the same afterwards, and works on every platform except web.
 
 ## Platform Options
 
@@ -293,6 +326,8 @@ final location = await DirPicker.pick(
 );
 ```
 
+To keep access on every platform, use [`DirPicker.persist`](#keep-access-to-a-folder-after-the-app-restarts) instead.
+
 ## API Reference
 
 ### `DirPicker.pick`
@@ -325,6 +360,16 @@ Behavior:
 - Lists only immediate children when `recursive` is `false`.
 - Lists all nested descendants when `recursive` is `true`.
 - Does not guarantee output ordering.
+
+### `DirPicker.persist`, `DirPicker.restore`, `DirPicker.release`
+
+```dart
+static Future<String> persist(PickedLocation location)
+static Future<PickedLocation?> restore(String token)
+static Future<void> release(String token)
+```
+
+`persist` keeps access to a picked or restored location and returns a token to save. `restore` returns the location with access restored, or `null` when the token no longer gives access. `release` gives up that access. See [Keep access to a folder after the app restarts](#keep-access-to-a-folder-after-the-app-restarts). All three throw `UnsupportedError` on web.
 
 ### `PickedLocation`
 

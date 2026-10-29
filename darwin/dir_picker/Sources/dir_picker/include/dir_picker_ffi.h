@@ -36,4 +36,35 @@ void dir_picker_pick(int64_t native_port, const char* accept_label, const char* 
 /// @param recursive     Whether to walk nested descendants
 void dir_picker_list_entries(int64_t native_port, const char* uri, bool recursive);
 
+/// Create a bookmark of a directory, as a base64 token, and report it via
+/// NativePort. On macOS the bookmark is security-scoped.
+///
+/// Messages sent to native_port:
+/// - Success:    [0, token]
+/// - Error:      [2, errorCode, errorMessage]
+///
+/// @param native_port   Dart NativePort for result reporting
+/// @param uri           file:// URI of a picked or restored directory
+void dir_picker_persist(int64_t native_port, const char* uri);
+
+/// Resolve a token from dir_picker_persist and start accessing the directory,
+/// until dir_picker_release.
+///
+/// Messages sent to native_port:
+/// - Success:    [0, directoryUri]
+/// - Unusable:   [1] (invalid, unresolvable or revoked token)
+///
+/// @param native_port   Dart NativePort for result reporting
+/// @param token         Token from dir_picker_persist
+void dir_picker_restore(int64_t native_port, const char* token);
+
+/// Stop accessing the directory a token from dir_picker_persist points to.
+///
+/// Messages sent to native_port:
+/// - Done:       [1]
+///
+/// @param native_port   Dart NativePort for result reporting
+/// @param token         Token from dir_picker_persist
+void dir_picker_release(int64_t native_port, const char* token);
+
 #endif /* dir_picker_ffi_h */

@@ -151,6 +151,14 @@ void main() {
     });
   });
 
+  test('persist, restore and release are unsupported', () {
+    final picker = DirPickerWeb();
+
+    expect(picker.persist(WebPickedLocation(root)), throwsUnsupportedError);
+    expect(picker.restore('token'), throwsUnsupportedError);
+    expect(picker.release('token'), throwsUnsupportedError);
+  });
+
   group('DirPickerWeb.listEntries', () {
     // Listing only needs the handle, so it must work in browsers without
     // showDirectoryPicker, such as Firefox and Safari (#23).

@@ -107,4 +107,59 @@ class DirPickerAndroid extends DirPickerPlatform {
 
     return completer.future.whenComplete(() => callback.release());
   }
+
+  @override
+  Future<String> persist(PickedLocation location) async {
+    final uri = location.uri;
+    if (uri == null || uri.scheme != 'content') {
+      throw ArgumentError.value(
+        location,
+        'location',
+        'persist requires a content:// location on Android.',
+      );
+    }
+    final token = uri.toString();
+    _callWithUri(token, native.DirPicker.persist, errorCode: 'PERSIST_ERROR');
+    return token;
+  }
+
+  @override
+  Future<PickedLocation?> restore(String token) async {
+    final uri = Uri.tryParse(token);
+    if (uri == null || uri.scheme != 'content') return null;
+    final isPersisted = _callWithUri(
+      token,
+      native.DirPicker.isPersisted,
+      errorCode: 'RESTORE_ERROR',
+    );
+    return isPersisted ? IOPickedLocation(uri) : null;
+  }
+
+  @override
+  Future<void> release(String token) async {
+    _callWithUri(
+      token,
+      native.DirPicker.releasePersisted,
+      errorCode: 'RELEASE_ERROR',
+    );
+  }
+
+  /// Calls [method] with [uri] as a Java string, and turns a Java exception
+  /// into an `Exception('$errorCode: …')`.
+  static T _callWithUri<T>(
+    String uri,
+    T Function(JString uri) method, {
+    required String errorCode,
+  }) {
+    final jUri = uri.toJString();
+    try {
+      return method(jUri);
+    } on JThrowable catch (e) {
+      final message = e.message;
+      e.release();
+      throw Exception('$errorCode: $message');
+    } finally {
+      jUri.release();
+    }
+  }
 }

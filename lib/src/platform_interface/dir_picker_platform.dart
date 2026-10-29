@@ -33,4 +33,21 @@ abstract class DirPickerPlatform {
     PickedLocation location, {
     bool recursive = false,
   });
+
+  /// Keeps access to [location] across app restarts. See `DirPicker.persist`.
+  ///
+  /// Not abstract, so implementations written before it was added still
+  /// compile. They throw [UnimplementedError].
+  Future<String> persist(PickedLocation location) async =>
+      throw UnimplementedError('persist() has not been implemented.');
+
+  /// Turns a token from [persist] back into a location. See
+  /// `DirPicker.restore`.
+  Future<PickedLocation?> restore(String token) async =>
+      throw UnimplementedError('restore() has not been implemented.');
+
+  /// Gives up the access a token from [persist] keeps. See
+  /// `DirPicker.release`.
+  Future<void> release(String token) async =>
+      throw UnimplementedError('release() has not been implemented.');
 }

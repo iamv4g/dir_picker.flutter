@@ -90,6 +90,36 @@ void main() {
     });
   });
 
+  group('decodePersistMessage', () {
+    test('decodes the token', () {
+      expect(decodePersistMessage([0, 'Ym9va21hcms=']), 'Ym9va21hcms=');
+    });
+
+    test('turns an error message into an exception', () {
+      expect(
+        () => decodePersistMessage([2, 'PERSIST_ERROR', 'No access']),
+        _throwsExceptionWith('PERSIST_ERROR: No access'),
+      );
+    });
+  });
+
+  test('decodePickMessage decodes an unusable restore token as null', () {
+    expect(decodePickMessage([1]), isNull);
+  });
+
+  group('decodeReleaseMessage', () {
+    test('accepts the done message', () {
+      expect(() => decodeReleaseMessage([1]), returnsNormally);
+    });
+
+    test('rejects anything else', () {
+      expect(
+        () => decodeReleaseMessage([0, 'x']),
+        _throwsStateError('Invalid message format'),
+      );
+    });
+  });
+
   group('decodeEntriesJson', () {
     test('decodes files and directories', () {
       final entries = decodeEntriesJson(

@@ -7,7 +7,8 @@ import '../entries_json.dart';
 // - Cancelled:  [1]
 // - Error:      [2, errorCode, errorMessage]
 
-/// Decodes a `dir_picker_pick` result. Returns `null` when cancelled.
+/// Decodes a `dir_picker_pick` or `dir_picker_restore` result. Returns
+/// `null` when the picker was cancelled or the token can't be restored.
 PickedLocation? decodePickMessage(Object? message) {
   switch (message) {
     case [0, final String uri]:
@@ -35,3 +36,23 @@ Object _decodeFailure(Object? message) => switch (message) {
   [final int type, ...] => StateError('Unknown message type: $type'),
   _ => StateError('Invalid message format'),
 };
+
+/// Decodes a `dir_picker_persist` result: the token.
+String decodePersistMessage(Object? message) {
+  switch (message) {
+    case [0, final String token]:
+      return token;
+    default:
+      throw _decodeFailure(message);
+  }
+}
+
+/// Decodes a `dir_picker_release` result.
+void decodeReleaseMessage(Object? message) {
+  switch (message) {
+    case [1]:
+      return;
+    default:
+      throw _decodeFailure(message);
+  }
+}

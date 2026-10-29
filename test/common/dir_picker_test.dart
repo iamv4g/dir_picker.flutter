@@ -72,6 +72,27 @@ void main() {
     });
   });
 
+  test('persist, restore and release forward to the platform', () async {
+    final platform = _FakePlatform();
+    DirPickerPlatform.instance = platform;
+    final location = IOPickedLocation(Uri.directory('/tmp/example'));
+
+    final token = await DirPicker.persist(location);
+    expect(token, 'token:file:///tmp/example/');
+    expect(await DirPicker.restore(token), location);
+    await DirPicker.release(token);
+    expect(platform.released, [token]);
+  });
+
+  test('a platform without persistence throws UnimplementedError', () {
+    final platform = _PlatformWithoutPersistence();
+    final location = IOPickedLocation(Uri.directory('/tmp/example'));
+
+    expect(platform.persist(location), throwsUnimplementedError);
+    expect(platform.restore('token'), throwsUnimplementedError);
+    expect(platform.release('token'), throwsUnimplementedError);
+  });
+
   test('WebPickedLocation can be checked for on every platform', () {
     // Compiling this file on native is the real check: the stub must declare
     // the same members as the web class, or the README example breaks.
@@ -168,4 +189,32 @@ class _FakePlatform extends DirPickerPlatform {
     this.initialDirectory = initialDirectory;
     return pickResult.future;
   }
+
+  final released = <String>[];
+
+  @override
+  Future<String> persist(PickedLocation location) async =>
+      'token:${location.uri}';
+
+  @override
+  Future<PickedLocation?> restore(String token) async =>
+      IOPickedLocation(Uri.parse(token.substring('token:'.length)));
+
+  @override
+  Future<void> release(String token) async => released.add(token);
+}
+
+/// A platform written before persistence was added.
+class _PlatformWithoutPersistence extends DirPickerPlatform {
+  @override
+  Future<PickedLocation?> pick({
+    PickOptions? options,
+    PickedLocation? initialDirectory,
+  }) async => null;
+
+  @override
+  Future<List<FileSystemEntry>> listEntries(
+    PickedLocation location, {
+    bool recursive = false,
+  }) async => const [];
 }
