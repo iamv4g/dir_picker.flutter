@@ -223,7 +223,6 @@ void main() {
 
         await DirPickerLinux.withBackends(
           sessionBus: () => DBusClient(address),
-
           appWindow: () => null,
         ).pick(
           initialDirectory: IOPickedLocation(Uri.directory('/home/user/ä')),
