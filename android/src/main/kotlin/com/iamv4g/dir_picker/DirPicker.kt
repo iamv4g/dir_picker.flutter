@@ -31,6 +31,18 @@ class DirPicker {
         var pickerHandler: PickerHandler? = null
 
         /**
+         * A picked URI that arrived after the Activity that opened the picker
+         * was destroyed, waiting for [retrieveLostPick].
+         */
+        private var lostPickUri: String? = null
+
+        internal fun keepLostPick(uri: String) = synchronized(this) { lostPickUri = uri }
+
+        private fun takeLostPick(): String? = synchronized(this) {
+            lostPickUri.also { lostPickUri = null }
+        }
+
+        /**
          * Shows the directory picker and delivers the result via [callback].
          *
          * Non-blocking: launches a coroutine internally so Dart can return
@@ -58,6 +70,27 @@ class DirPicker {
                     }
                 } catch (e: PickerException) {
                     callback.onError(e.code, e.message ?: "Unknown error")
+                } catch (e: Exception) {
+                    callback.onError("PICKER_ERROR", e.message ?: "Unknown error")
+                }
+            }
+        }
+
+        /**
+         * Reports a pick whose Activity was destroyed before the result came
+         * back, via [PickerCallback.onSuccess], once; or
+         * [PickerCallback.onCancelled] when there is none.
+         *
+         * Waits until the Activity is resumed, because Android delivers the
+         * result to the new Activity just before `onResume`.
+         */
+        @JvmStatic
+        fun retrieveLostPick(callback: PickerCallback) {
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    pickerHandler?.awaitResumed()
+                    val uri = takeLostPick()
+                    if (uri != null) callback.onSuccess(uri) else callback.onCancelled()
                 } catch (e: Exception) {
                     callback.onError("PICKER_ERROR", e.message ?: "Unknown error")
                 }

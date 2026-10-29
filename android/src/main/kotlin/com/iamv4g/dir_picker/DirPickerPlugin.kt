@@ -9,14 +9,20 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.PluginRegistry.ActivityResultListener
 import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -32,6 +38,7 @@ class DirPickerPlugin : FlutterPlugin, ActivityAware, ActivityResultListener {
         private const val TAG = "DirPicker"
         private const val REQUEST_CODE_PICK_DIRECTORY = 47291
         private const val PICKER_REGISTRY_KEY = "com.iamv4g.dir_picker.picker"
+        private const val RESUME_TIMEOUT_MS = 10_000L
     }
 
     private var activity: Activity? = null
@@ -111,9 +118,19 @@ class DirPickerPlugin : FlutterPlugin, ActivityAware, ActivityResultListener {
     }
 
     private fun setupPickerHandler() {
-        DirPicker.pickerHandler = PickerHandler { shouldPersist, initialUri ->
+        DirPicker.pickerHandler = object : PickerHandler {
             // Activity APIs must be called on the main thread.
-            withContext(Dispatchers.Main) { launchPicker(shouldPersist, initialUri) }
+            override suspend fun pick(shouldPersist: Boolean, initialUri: Uri?): String? =
+                withContext(Dispatchers.Main) { launchPicker(shouldPersist, initialUri) }
+
+            override suspend fun awaitResumed() {
+                withContext(Dispatchers.Main) {
+                    val lifecycle = (activity as? LifecycleOwner)?.lifecycle ?: return@withContext
+                    // An Activity that never resumes (finished in the
+                    // meantime) must not hang the caller.
+                    withTimeoutOrNull(RESUME_TIMEOUT_MS) { lifecycle.awaitResumed() }
+                }
+            }
         }
     }
 
@@ -179,7 +196,13 @@ class DirPickerPlugin : FlutterPlugin, ActivityAware, ActivityResultListener {
         activity?.let { DocumentsContract.isDocumentUri(it, uri) } ?: false
 
     private fun handlePickerResult(uri: Uri?) {
-        val continuation = pendingContinuation ?: return
+        val continuation = pendingContinuation
+        if (continuation == null) {
+            // The Activity that opened the picker was destroyed, and this one
+            // got the result. Keep it for DirPicker.retrieveLostPick.
+            if (uri != null) DirPicker.keepLostPick(uri.toString())
+            return
+        }
         pendingContinuation = null
 
         if (uri == null) {
@@ -209,5 +232,23 @@ class DirPickerPlugin : FlutterPlugin, ActivityAware, ActivityResultListener {
         val uri = if (resultCode == Activity.RESULT_OK) data?.data else null
         handlePickerResult(uri)
         return true
+    }
+}
+
+/** Suspends until this lifecycle is at least resumed. */
+private suspend fun Lifecycle.awaitResumed() {
+    if (currentState.isAtLeast(Lifecycle.State.RESUMED)) return
+    suspendCancellableCoroutine { continuation ->
+        val observer = object : DefaultLifecycleObserver {
+            override fun onResume(owner: LifecycleOwner) {
+                removeObserver(this)
+                if (continuation.isActive) continuation.resume(Unit)
+            }
+        }
+        addObserver(observer)
+        continuation.invokeOnCancellation {
+            // Lifecycle observers must be removed on the main thread.
+            CoroutineScope(Dispatchers.Main).launch { removeObserver(observer) }
+        }
     }
 }

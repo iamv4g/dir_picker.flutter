@@ -158,6 +158,19 @@ final next = await DirPicker.pick(initialDirectory: previousLocation);
 | Linux    | A `file://` location: XDG portal `current_folder`, zenity `--filename`, kdialog's start folder. |
 | Web      | A `WebPickedLocation` (`startIn`). It takes precedence over `WebOptions.startIn`. |
 
+### Android: get back a pick lost to a destroyed Activity
+
+Android can destroy the app's Activity, or kill its process, while the system picker is open (low memory, "Don't keep activities"). The app restarts when the user picks, and the `pick()` call that opened the picker never completes. Call `retrieveLostPick` at startup to get that folder:
+
+```dart
+final lost = await DirPicker.retrieveLostPick(); // null on other platforms
+if (lost != null) {
+  // Handle it like the result of pick().
+}
+```
+
+Each lost pick is returned once. `shouldPersist` isn't applied to it, so call `DirPicker.persist` if you need to keep access.
+
 ### Keep access to a folder after the app restarts
 
 ```dart
@@ -368,6 +381,14 @@ Behavior:
 - Lists only immediate children when `recursive` is `false`.
 - Lists all nested descendants when `recursive` is `true`.
 - Does not guarantee output ordering.
+
+### `DirPicker.retrieveLostPick`
+
+```dart
+static Future<PickedLocation?> retrieveLostPick()
+```
+
+Returns the folder from a `pick()` whose result came back after Android destroyed the app's Activity, once, or `null`. Always `null` on other platforms. See [Android: get back a pick lost to a destroyed Activity](#android-get-back-a-pick-lost-to-a-destroyed-activity).
 
 ### `DirPicker.streamEntries`
 

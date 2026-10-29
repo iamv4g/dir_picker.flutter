@@ -40,7 +40,7 @@ Never edit `*.g.dart` by hand. Change the native source (the C header or the Kot
 
 Each stub has to declare the same class names and `registerWith` signatures as the real implementation (web's `registerWith` takes a `registrar`). When you add a platform class or a public type, update the matching stub too, or the build on the other target breaks.
 
-Registration: `pubspec.yaml` declares a `dartPluginClass` for every platform except web (`pluginClass: DirPickerWeb`). Each class's static `registerWith()` sets `DirPickerPlatform.instance`. `DirPickerPlatform` (`src/platform_interface/`) is a plain abstract class (not `plugin_platform_interface`). Its abstract methods are `pick` and `listEntries`. `persist`, `restore` and `release` have default bodies that throw `UnimplementedError`, and `streamEntries` defaults to emitting the result of `listEntries`, so implementations written before they existed still compile. The bundled implementations do the reverse: `listEntries` is `streamEntries(...).toList()` (except on web, which keeps a faster parallel `listEntries`).
+Registration: `pubspec.yaml` declares a `dartPluginClass` for every platform except web (`pluginClass: DirPickerWeb`). Each class's static `registerWith()` sets `DirPickerPlatform.instance`. `DirPickerPlatform` (`src/platform_interface/`) is a plain abstract class (not `plugin_platform_interface`). Its abstract methods are `pick` and `listEntries`. `persist`, `restore` and `release` have default bodies that throw `UnimplementedError`, `retrieveLostPick` defaults to `null`, and `streamEntries` defaults to emitting the result of `listEntries`, so implementations written before they existed still compile. The bundled implementations do the reverse: `listEntries` is `streamEntries(...).toList()` (except on web, which keeps a faster parallel `listEntries`).
 
 ### Per-platform bridges
 
@@ -58,7 +58,7 @@ Cross-platform conventions to keep consistent when changing any bridge:
 - Errors come back to Dart as `Exception('$CODE: $message')`. Cancelling resolves to `null`.
 - Darwin C-string args are copied synchronously in Swift, so Dart frees them right after the call.
 - Darwin security scope: access to a folder from the iOS picker or from a resolved bookmark belongs to that `URL` object, so `ScopedAccess.swift` keeps those URLs with access started, keyed by path. Every entry point that takes a URI from Dart looks it up with `ScopedAccess.url(for:)` instead of `URL(string:)`.
-- Android: `DirPickerPlugin` (ActivityAware) installs a `PickerHandler` into the static `DirPicker` companion. `DirPicker.pick` / `streamEntries` run on `Dispatchers.IO` coroutines and report through the callback. Dart releases the JNI callback in `whenComplete`, or for a stream in `onDone`/`onError`, which Kotlin always calls last, even after `EntriesStream.cancel()`.
+- Android: `DirPickerPlugin` (ActivityAware) installs a `PickerHandler` into the static `DirPicker` companion. A picker result that arrives with no pending pick (the Activity or process that opened it died) is kept in the companion for `DirPicker.retrieveLostPick`, which first waits for the Activity to resume, because Android delivers results just before `onResume`. `DirPicker.pick` / `streamEntries` run on `Dispatchers.IO` coroutines and report through the callback. Dart releases the JNI callback in `whenComplete`, or for a stream in `onDone`/`onError`, which Kotlin always calls last, even after `EntriesStream.cancel()`.
 
 ### Native build packaging
 
