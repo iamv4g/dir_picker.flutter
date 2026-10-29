@@ -8,6 +8,7 @@ import '../../location/picked_location.dart';
 import '../../options/pick_options.dart';
 import '../../platform_interface/dir_picker_platform.dart';
 import '../io_entries.dart';
+import 'app_window.dart';
 
 /// Thrown when a picker method is not available on the current system
 /// (e.g. portal daemon not running, CLI tool not installed).
@@ -35,15 +36,18 @@ class DirPickerLinux extends DirPickerPlatform {
   /// [portalPicker] replaces the XDG Desktop Portal call. Throwing from it
   /// marks the portal as unavailable. [sessionBus] replaces
   /// [DBusClient.session] for the real portal call. [runProcess] replaces
-  /// [Process.run] for the zenity and kdialog fallbacks.
+  /// [Process.run] for the zenity and kdialog fallbacks. [appWindow]
+  /// replaces the lookup of the app window's X11 ID.
   @visibleForTesting
   DirPickerLinux.withBackends({
     this._portalPicker,
     DBusClient Function()? sessionBus,
     Future<ProcessResult> Function(String executable, List<String> arguments)?
     runProcess,
+    int? Function()? appWindow,
   }) : _sessionBus = sessionBus ?? DBusClient.session,
-       _runProcess = runProcess ?? Process.run;
+       _runProcess = runProcess ?? Process.run,
+       _appWindow = appWindow ?? appWindowXid;
 
   static void registerWith() {
     DirPickerPlatform.instance = DirPickerLinux();
@@ -51,6 +55,7 @@ class DirPickerLinux extends DirPickerPlatform {
 
   final Future<Uri?> Function(LinuxOptions options)? _portalPicker;
   final DBusClient Function() _sessionBus;
+  final int? Function() _appWindow;
   final Future<ProcessResult> Function(
     String executable,
     List<String> arguments,
@@ -119,7 +124,12 @@ class DirPickerLinux extends DirPickerPlatform {
         'org.freedesktop.portal.FileChooser',
         'OpenFile',
         [
-          DBusString(''), // parent_window
+          // Makes the dialog modal to the app window. Only X11 window IDs
+          // are supported; on Wayland the dialog has no parent.
+          DBusString(switch (_appWindow()) {
+            final xid? => 'x11:${xid.toRadixString(16)}',
+            null => '',
+          }), // parent_window
           DBusString(opts.title), // title
           DBusDict.stringVariant({
             'handle_token': DBusString(token),
