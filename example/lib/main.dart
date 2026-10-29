@@ -2,6 +2,7 @@ import 'package:dir_picker/dir_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const MyApp());
@@ -24,8 +25,65 @@ class DirPickerHomePage extends StatefulWidget {
 }
 
 class _DirPickerHomePageState extends State<DirPickerHomePage> {
+  static const _tokenKey = 'dir_picker_example.token';
+
   String _result = 'Press the button to pick a directory';
   PickedLocation? _pickedLocation;
+
+  /// The saved token of the folder the app remembers. Web can't persist.
+  String? _token;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!kIsWeb) _restoreSavedFolder();
+  }
+
+  /// Reopens the folder picked in an earlier run, without asking again.
+  Future<void> _restoreSavedFolder() async {
+    final prefs = SharedPreferencesAsync();
+    final token = await prefs.getString(_tokenKey);
+    if (token == null) return;
+
+    final location = await DirPicker.restore(token);
+    if (!mounted) return;
+    if (location == null) {
+      await prefs.remove(_tokenKey);
+      setState(() => _result = 'The remembered folder is no longer available');
+      return;
+    }
+    // On iOS and macOS a moved folder gives a stale bookmark: save a new one.
+    final freshToken = await DirPicker.persist(location);
+    await prefs.setString(_tokenKey, freshToken);
+    setState(() {
+      _pickedLocation = location;
+      _token = freshToken;
+      _result = 'Restored: $location';
+    });
+  }
+
+  /// Keeps access to [location] for the next run, in place of the folder
+  /// remembered before.
+  Future<void> _rememberFolder(PickedLocation location) async {
+    final prefs = SharedPreferencesAsync();
+    final token = await DirPicker.persist(location);
+    if (_token case final previous? when previous != token) {
+      await DirPicker.release(previous);
+    }
+    await prefs.setString(_tokenKey, token);
+    _token = token;
+  }
+
+  Future<void> _forgetFolder() async {
+    final token = _token;
+    if (token == null) return;
+    await DirPicker.release(token);
+    await SharedPreferencesAsync().remove(_tokenKey);
+    setState(() {
+      _token = null;
+      _result = 'Forgot the remembered folder';
+    });
+  }
 
   Future<PickedLocation?> _pickLocation() {
     return DirPicker.pick(
@@ -63,6 +121,7 @@ class _DirPickerHomePageState extends State<DirPickerHomePage> {
         return;
       }
 
+      if (!kIsWeb) await _rememberFolder(location);
       setState(() {
         _pickedLocation = location;
         _result = 'Picked: $location';
@@ -105,6 +164,13 @@ class _DirPickerHomePageState extends State<DirPickerHomePage> {
               FilledButton(
                 onPressed: _openEntriesScreen,
                 child: const Text('View Directory Entries'),
+              ),
+            ],
+            if (_token != null) ...[
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: _forgetFolder,
+                child: const Text('Forget Remembered Folder'),
               ),
             ],
           ],

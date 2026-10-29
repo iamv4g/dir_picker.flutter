@@ -97,4 +97,62 @@ class DirPickerBindings {
       >('dir_picker_list_entries');
   late final _listEntries = _listEntriesPtr
       .asFunction<void Function(int, ffi.Pointer<ffi.Char>, bool)>();
+
+  /// Create a bookmark of a directory, as a base64 token, and report it via
+  /// NativePort. On macOS the bookmark is security-scoped.
+  ///
+  /// Messages sent to native_port:
+  /// - Success:    [0, token]
+  /// - Error:      [2, errorCode, errorMessage]
+  ///
+  /// @param native_port   Dart NativePort for result reporting
+  /// @param uri           file:// URI of a picked or restored directory
+  void persist(int native_port, ffi.Pointer<ffi.Char> uri) {
+    return _persist(native_port, uri);
+  }
+
+  late final _persistPtr =
+      _lookup<
+        ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<ffi.Char>)>
+      >('dir_picker_persist');
+  late final _persist = _persistPtr
+      .asFunction<void Function(int, ffi.Pointer<ffi.Char>)>();
+
+  /// Resolve a token from dir_picker_persist and start accessing the directory,
+  /// until dir_picker_release.
+  ///
+  /// Messages sent to native_port:
+  /// - Success:    [0, directoryUri]
+  /// - Unusable:   [1] (invalid, unresolvable or revoked token)
+  ///
+  /// @param native_port   Dart NativePort for result reporting
+  /// @param token         Token from dir_picker_persist
+  void restore(int native_port, ffi.Pointer<ffi.Char> token) {
+    return _restore(native_port, token);
+  }
+
+  late final _restorePtr =
+      _lookup<
+        ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<ffi.Char>)>
+      >('dir_picker_restore');
+  late final _restore = _restorePtr
+      .asFunction<void Function(int, ffi.Pointer<ffi.Char>)>();
+
+  /// Stop accessing the directory a token from dir_picker_persist points to.
+  ///
+  /// Messages sent to native_port:
+  /// - Done:       [1]
+  ///
+  /// @param native_port   Dart NativePort for result reporting
+  /// @param token         Token from dir_picker_persist
+  void release(int native_port, ffi.Pointer<ffi.Char> token) {
+    return _release(native_port, token);
+  }
+
+  late final _releasePtr =
+      _lookup<
+        ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<ffi.Char>)>
+      >('dir_picker_release');
+  late final _release = _releasePtr
+      .asFunction<void Function(int, ffi.Pointer<ffi.Char>)>();
 }

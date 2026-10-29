@@ -107,4 +107,52 @@ class DirPicker {
     PickedLocation location, {
     bool recursive = false,
   }) => DirPickerPlatform.instance.listEntries(location, recursive: recursive);
+
+  /// Keeps access to [location] after the app restarts, and returns a token
+  /// to save, for example in shared preferences. Pass the token to [restore]
+  /// on a later launch to use the folder again without asking the user.
+  ///
+  /// [location] has to come from [pick] or [restore]. What the token holds
+  /// and keeps depends on the platform:
+  ///
+  /// | Platform | Token | Keeps |
+  /// |----------|-------|-------|
+  /// | Android  | The `content://` URI | A persistable URI permission (`takePersistableUriPermission`). The system keeps at most 128 of them per app (512 from Android 11) and drops the oldest, so [release] the ones you no longer need. |
+  /// | iOS      | Bookmark data (base64) | A bookmark of the folder. Access is restored when the bookmark is resolved. |
+  /// | macOS    | Security-scoped bookmark data (base64) | A security-scoped bookmark. A sandboxed app needs the `com.apple.security.files.user-selected.read-write` entitlement, as for [pick]. |
+  /// | Windows, Linux | The `file://` URI | Nothing: these apps aren't sandboxed, so the path stays usable. |
+  /// | Web      | – | Not supported, throws [UnsupportedError]. |
+  ///
+  /// Throws an [Exception] starting with `PERSIST_ERROR` when the platform
+  /// refuses, for example on Android when the app no longer has access to
+  /// the folder.
+  static Future<String> persist(PickedLocation location) =>
+      DirPickerPlatform.instance.persist(location);
+
+  /// Returns the location a [persist] token points to, with access to it
+  /// restored, or `null` when the token no longer gives access: the folder
+  /// was deleted or moved out of reach, the permission was revoked or
+  /// [release]d, or the token isn't valid on this platform.
+  ///
+  /// On iOS and macOS a bookmark can go stale when the folder is moved or
+  /// renamed. It still resolves, so call [persist] on the restored location
+  /// and save the new token.
+  ///
+  /// Throws [UnsupportedError] on web.
+  static Future<PickedLocation?> restore(String token) =>
+      DirPickerPlatform.instance.restore(token);
+
+  /// Gives up the access a [persist] token keeps, for a folder the app no
+  /// longer needs:
+  ///
+  /// - **Android**: releases the persisted permission. [restore] then returns
+  ///   `null` for the token.
+  /// - **iOS, macOS**: a bookmark can't be revoked, so delete the token you
+  ///   saved. This ends the access that [restore] (and on iOS, [pick])
+  ///   started for the folder, which otherwise lasts until the app exits.
+  /// - **Windows, Linux**: does nothing.
+  ///
+  /// Throws [UnsupportedError] on web.
+  static Future<void> release(String token) =>
+      DirPickerPlatform.instance.release(token);
 }

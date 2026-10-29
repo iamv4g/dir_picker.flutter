@@ -111,7 +111,25 @@ class DirPickerWeb extends DirPickerPlatform {
 
     return _listHandle(location.handle, recursive: recursive);
   }
+
+  @override
+  Future<String> persist(PickedLocation location) async =>
+      throw UnsupportedError(_persistUnsupported);
+
+  @override
+  Future<PickedLocation?> restore(String token) async =>
+      throw UnsupportedError(_persistUnsupported);
+
+  @override
+  Future<void> release(String token) async =>
+      throw UnsupportedError(_persistUnsupported);
 }
+
+// A FileSystemDirectoryHandle can't be turned into a string token. Apps can
+// store the handle itself in IndexedDB.
+const _persistUnsupported =
+    'persist(), restore() and release() are not supported on web. Store '
+    'WebPickedLocation.handle in IndexedDB to keep a directory.';
 
 /// Lists [handle], reading the files of each directory and the
 /// subdirectories in parallel. Entries keep the browser's iteration order.

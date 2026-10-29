@@ -31,23 +31,49 @@ class DirPickerDarwin extends DirPickerPlatform {
 
   late final native.DirPickerBindings _bindings;
 
-  @override
-  Future<PickedLocation?> pick({
-    PickOptions? options,
-    PickedLocation? initialDirectory,
-  }) async {
-    final completer = Completer<PickedLocation?>();
+  /// Calls [send] with a new port, and completes with [decode] of the one
+  /// message the native side posts back.
+  Future<T> _request<T>(
+    void Function(int nativePort) send,
+    T Function(Object? message) decode,
+  ) {
+    final completer = Completer<T>();
     final port = ReceivePort();
 
     port.listen((message) {
       port.close();
       try {
-        completer.complete(decodePickMessage(message));
+        completer.complete(decode(message));
       } catch (error, stackTrace) {
         completer.completeError(error, stackTrace);
       }
     });
 
+    try {
+      send(port.sendPort.nativePort);
+    } catch (_) {
+      port.close();
+      rethrow;
+    }
+    return completer.future;
+  }
+
+  /// Calls [send] with [value] as a C string, freed when it returns. Swift
+  /// copies it synchronously.
+  static void _withCString(String value, void Function(Pointer<Char>) send) {
+    final pointer = value.toNativeUtf8().cast<Char>();
+    try {
+      send(pointer);
+    } finally {
+      calloc.free(pointer);
+    }
+  }
+
+  @override
+  Future<PickedLocation?> pick({
+    PickOptions? options,
+    PickedLocation? initialDirectory,
+  }) async {
     // Allocate C strings for macOS options; Swift copies them synchronously
     // before dispatching to the main queue, so freeing after the call is safe.
     final opts = options is MacosOptions ? options : const MacosOptions();
@@ -59,20 +85,15 @@ class DirPickerDarwin extends DirPickerPlatform {
       _ => nullptr.cast<Char>(),
     };
 
-    try {
-      _bindings.pick(
-        port.sendPort.nativePort,
-        acceptLabelPtr,
-        messagePtr,
-        initialDirectoryPtr,
-      );
-    } finally {
-      calloc.free(acceptLabelPtr);
-      calloc.free(messagePtr);
-      if (initialDirectoryPtr != nullptr) calloc.free(initialDirectoryPtr);
-    }
-
-    return completer.future;
+    return _request((port) {
+      try {
+        _bindings.pick(port, acceptLabelPtr, messagePtr, initialDirectoryPtr);
+      } finally {
+        calloc.free(acceptLabelPtr);
+        calloc.free(messagePtr);
+        if (initialDirectoryPtr != nullptr) calloc.free(initialDirectoryPtr);
+      }
+    }, decodePickMessage);
   }
 
   @override
@@ -89,25 +110,45 @@ class DirPickerDarwin extends DirPickerPlatform {
       );
     }
 
-    final completer = Completer<List<FileSystemEntry>>();
-    final port = ReceivePort();
-
-    port.listen((message) {
-      port.close();
-      try {
-        completer.complete(decodeListEntriesMessage(message));
-      } catch (error, stackTrace) {
-        completer.completeError(error, stackTrace);
-      }
-    });
-
-    final uriPtr = uri.toString().toNativeUtf8().cast<Char>();
-    try {
-      _bindings.listEntries(port.sendPort.nativePort, uriPtr, recursive);
-    } finally {
-      calloc.free(uriPtr);
-    }
-
-    return completer.future;
+    return _request(
+      (port) => _withCString(
+        uri.toString(),
+        (uriPtr) => _bindings.listEntries(port, uriPtr, recursive),
+      ),
+      decodeListEntriesMessage,
+    );
   }
+
+  @override
+  Future<String> persist(PickedLocation location) async {
+    final uri = location.uri;
+    if (uri == null || uri.scheme != 'file') {
+      throw ArgumentError.value(
+        location,
+        'location',
+        'persist requires a file:// location on iOS and macOS.',
+      );
+    }
+    return _request(
+      (port) => _withCString(
+        uri.toString(),
+        (uriPtr) => _bindings.persist(port, uriPtr),
+      ),
+      decodePersistMessage,
+    );
+  }
+
+  @override
+  Future<PickedLocation?> restore(String token) => _request(
+    (port) =>
+        _withCString(token, (tokenPtr) => _bindings.restore(port, tokenPtr)),
+    decodePickMessage,
+  );
+
+  @override
+  Future<void> release(String token) => _request(
+    (port) =>
+        _withCString(token, (tokenPtr) => _bindings.release(port, tokenPtr)),
+    decodeReleaseMessage,
+  );
 }

@@ -2,6 +2,7 @@ package com.iamv4g.dir_picker
 
 import android.content.ContentResolver
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.provider.DocumentsContract
 import android.provider.DocumentsContract.Document
@@ -101,8 +102,51 @@ class DirPicker {
                 }
             }
         }
+
+        /**
+         * Takes a persistable permission for [uri], read and write when the
+         * grant allows it, read only otherwise.
+         *
+         * @throws SecurityException when the app has no grant for [uri] to persist
+         */
+        @JvmStatic
+        fun persist(uri: String) {
+            val resolver = requireContext().contentResolver
+            val parsed = Uri.parse(uri)
+            try {
+                resolver.takePersistableUriPermission(parsed, READ_WRITE)
+            } catch (_: SecurityException) {
+                resolver.takePersistableUriPermission(parsed, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+        }
+
+        /** Whether the app holds a persisted read permission for [uri]. */
+        @JvmStatic
+        fun isPersisted(uri: String): Boolean {
+            val parsed = Uri.parse(uri)
+            return requireContext().contentResolver.persistedUriPermissions
+                .any { it.uri == parsed && it.isReadPermission }
+        }
+
+        /** Releases the persisted permission for [uri], if the app holds one. */
+        @JvmStatic
+        fun releasePersisted(uri: String) {
+            val resolver = requireContext().contentResolver
+            val parsed = Uri.parse(uri)
+            val permission = resolver.persistedUriPermissions.firstOrNull { it.uri == parsed } ?: return
+            var flags = 0
+            if (permission.isReadPermission) flags = flags or Intent.FLAG_GRANT_READ_URI_PERMISSION
+            if (permission.isWritePermission) flags = flags or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            resolver.releasePersistableUriPermission(parsed, flags)
+        }
+
+        private fun requireContext(): Context =
+            applicationContext ?: throw IllegalStateException("No application context available")
     }
 }
+
+private const val READ_WRITE =
+    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
 
 /** A picker failure reported to Dart with [code] instead of `PICKER_ERROR`. */
 internal class PickerException(val code: String, message: String) : Exception(message)

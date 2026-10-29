@@ -40,7 +40,10 @@ void main() {
       include: Declarations.includeSet({
         'dir_picker_init_dart_api_dl',
         'dir_picker_list_entries',
+        'dir_picker_persist',
         'dir_picker_pick',
+        'dir_picker_release',
+        'dir_picker_restore',
       }),
       rename: (decl) {
         final stripped = decl.originalName.replaceFirst('dir_picker_', '');

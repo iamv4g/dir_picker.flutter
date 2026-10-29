@@ -23,6 +23,10 @@ final class DirPickerReporter {
         sendStringSuccess(json)
     }
 
+    func sendTokenSuccess(_ token: String) {
+        sendStringSuccess(token)
+    }
+
     private func sendStringSuccess(_ value: String) {
         guard !isClosed else { return }
         sendArray([createInt(0), createString(value)])

@@ -11,6 +11,7 @@ import '../../location/picked_location.dart';
 import '../../options/pick_options.dart';
 import '../../platform_interface/dir_picker_platform.dart';
 import '../io_entries.dart';
+import '../io_tokens.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Win32 type aliases
@@ -499,4 +500,14 @@ class DirPickerWindows extends DirPickerPlatform {
 
     return listIoEntries(Directory.fromUri(uri), recursive: recursive);
   }
+
+  @override
+  Future<String> persist(PickedLocation location) async =>
+      persistIoLocation(location);
+
+  @override
+  Future<PickedLocation?> restore(String token) => restoreIoLocation(token);
+
+  @override
+  Future<void> release(String token) async {}
 }

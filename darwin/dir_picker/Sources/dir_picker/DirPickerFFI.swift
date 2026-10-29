@@ -66,6 +66,8 @@ public func dirPickerPick(
             pickerLock.unlock()
 
             if let url = url {
+                // The access the picker granted belongs to this URL object.
+                ScopedAccess.keep(url)
                 reporter.sendUriSuccess(url.absoluteString)
             } else {
                 reporter.sendCancelled()
@@ -134,7 +136,7 @@ public func dirPickerListEntries(
     let reporter = DirPickerReporter(port: nativePort)
 
     guard let uriString = uriPtr.map({ String(cString: $0) }),
-          let rootUrl = URL(string: uriString) else {
+          let rootUrl = ScopedAccess.url(for: uriString) else {
         reporter.sendError(code: "INVALID_URI", message: "Invalid URI")
         return
     }
@@ -191,6 +193,89 @@ public func dirPickerListEntries(
             reporter.sendError(code: "LIST_ERROR", message: error.localizedDescription)
         }
     }
+}
+
+// MARK: - Persistence
+
+#if os(macOS)
+private let bookmarkCreationOptions: URL.BookmarkCreationOptions = [.withSecurityScope]
+private let bookmarkResolutionOptions: URL.BookmarkResolutionOptions = [.withSecurityScope, .withoutUI]
+#else
+private let bookmarkCreationOptions: URL.BookmarkCreationOptions = [.minimalBookmark]
+private let bookmarkResolutionOptions: URL.BookmarkResolutionOptions = [.withoutUI]
+#endif
+
+@_cdecl("dir_picker_persist")
+public func dirPickerPersist(_ nativePort: Int64, _ uriPtr: UnsafePointer<CChar>?) {
+    let reporter = DirPickerReporter(port: nativePort)
+
+    guard let url = uriPtr.flatMap({ ScopedAccess.url(for: String(cString: $0)) }) else {
+        reporter.sendError(code: "INVALID_URI", message: "Invalid URI")
+        return
+    }
+
+    DispatchQueue.global(qos: .userInitiated).async {
+        let isAccessing = url.startAccessingSecurityScopedResource()
+        defer {
+            if isAccessing {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+
+        do {
+            let bookmark = try url.bookmarkData(
+                options: bookmarkCreationOptions,
+                includingResourceValuesForKeys: nil,
+                relativeTo: nil
+            )
+            reporter.sendTokenSuccess(bookmark.base64EncodedString())
+        } catch {
+            reporter.sendError(code: "PERSIST_ERROR", message: error.localizedDescription)
+        }
+    }
+}
+
+@_cdecl("dir_picker_restore")
+public func dirPickerRestore(_ nativePort: Int64, _ tokenPtr: UnsafePointer<CChar>?) {
+    let reporter = DirPickerReporter(port: nativePort)
+    let token = tokenPtr.map { String(cString: $0) } ?? ""
+
+    DispatchQueue.global(qos: .userInitiated).async {
+        guard let url = resolveBookmark(token) else {
+            reporter.sendCancelled()
+            return
+        }
+        // Access lasts until dir_picker_release or the process exits.
+        ScopedAccess.keep(url)
+        reporter.sendUriSuccess(url.absoluteString)
+    }
+}
+
+@_cdecl("dir_picker_release")
+public func dirPickerRelease(_ nativePort: Int64, _ tokenPtr: UnsafePointer<CChar>?) {
+    let reporter = DirPickerReporter(port: nativePort)
+    let token = tokenPtr.map { String(cString: $0) } ?? ""
+
+    DispatchQueue.global(qos: .userInitiated).async {
+        if let url = resolveBookmark(token) {
+            ScopedAccess.release(url)
+        }
+        reporter.sendCancelled()
+    }
+}
+
+/// The URL a base64 bookmark points to, or nil when it isn't a bookmark or
+/// can't be resolved, such as when the folder was deleted. A stale bookmark
+/// still resolves: `DirPicker.restore` tells apps to persist it again.
+private func resolveBookmark(_ token: String) -> URL? {
+    guard let bookmark = Data(base64Encoded: token) else { return nil }
+    var isStale = false
+    return try? URL(
+        resolvingBookmarkData: bookmark,
+        options: bookmarkResolutionOptions,
+        relativeTo: nil,
+        bookmarkDataIsStale: &isStale
+    )
 }
 
 private func makeEntryDictionary(
