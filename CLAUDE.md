@@ -40,25 +40,25 @@ Never edit `*.g.dart` by hand. Change the native source (the C header or the Kot
 
 Each stub has to declare the same class names and `registerWith` signatures as the real implementation (web's `registerWith` takes a `registrar`). When you add a platform class or a public type, update the matching stub too, or the build on the other target breaks.
 
-Registration: `pubspec.yaml` declares a `dartPluginClass` for every platform except web (`pluginClass: DirPickerWeb`). Each class's static `registerWith()` sets `DirPickerPlatform.instance`. `DirPickerPlatform` (`src/platform_interface/`) is a plain abstract class (not `plugin_platform_interface`). Its abstract methods are `pick` and `listEntries`. `persist`, `restore` and `release` have default bodies that throw `UnimplementedError`, so implementations written before they existed still compile.
+Registration: `pubspec.yaml` declares a `dartPluginClass` for every platform except web (`pluginClass: DirPickerWeb`). Each class's static `registerWith()` sets `DirPickerPlatform.instance`. `DirPickerPlatform` (`src/platform_interface/`) is a plain abstract class (not `plugin_platform_interface`). Its abstract methods are `pick` and `listEntries`. `persist`, `restore` and `release` have default bodies that throw `UnimplementedError`, and `streamEntries` defaults to emitting the result of `listEntries`, so implementations written before they existed still compile. The bundled implementations do the reverse: `listEntries` is `streamEntries(...).toList()` (except on web, which keeps a faster parallel `listEntries`).
 
 ### Per-platform bridges
 
 | Platform | Dart side | Native side | Transport |
 |---|---|---|---|
 | iOS / macOS | `platforms/darwin/dir_picker_darwin.dart` | `darwin/dir_picker/Sources/dir_picker/*.swift` (shared source, `sharedDarwinSource: true`) | FFI `@_cdecl` functions from `include/dir_picker_ffi.h`, results posted back via `Dart_PostCObject_DL` to a `ReceivePort` |
-| Android | `platforms/android/dir_picker_android.dart` | `android/src/main/kotlin/com/iamv4g/dir_picker/` | JNI via `package:jni`; Dart implements the `PickerCallback` / `ListEntriesCallback` Kotlin interfaces |
+| Android | `platforms/android/dir_picker_android.dart` | `android/src/main/kotlin/com/iamv4g/dir_picker/` | JNI via `package:jni`; Dart implements the `PickerCallback` / `EntriesStreamCallback` Kotlin interfaces |
 | Windows | `platforms/windows/dir_picker_windows.dart` | none, pure Dart FFI against `ole32.dll` COM `IFileOpenDialog` | FFI |
 | Linux | `platforms/linux/dir_picker_linux.dart` | none | `package:dbus` XDG Portal → `zenity` → `kdialog` (falls through on `_PickerUnavailableException`) |
 | Web | `platforms/web/dir_picker_web.dart` | none | `package:web` `showDirectoryPicker()`; returns `WebPickedLocation` (handle, `uri == null`) |
 
 Cross-platform conventions to keep consistent when changing any bridge:
-- **Darwin message protocol** (`DirPickerReporter.swift` ↔ `dir_picker_darwin.dart`): `[0, string]` success, `[1]` cancelled, `[2, code, message]` error. The reporter sends at most once.
-- **`listEntries` payload**: every native side serializes to a JSON array of `{name, relativePath, isDirectory, uri, size, lastModified(ms epoch)}`, which Dart parses with `FileSystemEntry.fromJson`. `relativePath` uses `/` separators and the picked root is excluded.
+- **Darwin message protocol** (`DirPickerReporter.swift` ↔ `dir_picker_darwin.dart`): `[0, string]` success, `[1]` cancelled (or: no result, stream done), `[2, code, message]` error. The reporter sends at most one of these. `dir_picker_stream_entries` sends any number of `[3, jsonArray]` batches first. Dart cancels a stream with `dir_picker_cancel_entries(port)`, and Swift still ends it with `[1]`.
+- **Entries payload**: every native side serializes each batch (200 entries) to a JSON array of `{name, relativePath, isDirectory, uri, size, lastModified(ms epoch)}`, which Dart parses with `FileSystemEntry.fromJson`. `relativePath` uses `/` separators and the picked root is excluded.
 - Errors come back to Dart as `Exception('$CODE: $message')`. Cancelling resolves to `null`.
 - Darwin C-string args are copied synchronously in Swift, so Dart frees them right after the call.
 - Darwin security scope: access to a folder from the iOS picker or from a resolved bookmark belongs to that `URL` object, so `ScopedAccess.swift` keeps those URLs with access started, keyed by path. Every entry point that takes a URI from Dart looks it up with `ScopedAccess.url(for:)` instead of `URL(string:)`.
-- Android: `DirPickerPlugin` (ActivityAware) installs a `PickerHandler` into the static `DirPicker` companion. `DirPicker.pick` / `listEntries` run on `Dispatchers.IO` coroutines and report through the callback. Dart releases the JNI callback in `whenComplete`.
+- Android: `DirPickerPlugin` (ActivityAware) installs a `PickerHandler` into the static `DirPicker` companion. `DirPicker.pick` / `streamEntries` run on `Dispatchers.IO` coroutines and report through the callback. Dart releases the JNI callback in `whenComplete`, or for a stream in `onDone`/`onError`, which Kotlin always calls last, even after `EntriesStream.cancel()`.
 
 ### Native build packaging
 

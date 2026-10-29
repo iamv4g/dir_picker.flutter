@@ -113,6 +113,24 @@ class DirPickerWeb extends DirPickerPlatform {
   }
 
   @override
+  Stream<FileSystemEntry> streamEntries(
+    PickedLocation location, {
+    bool recursive = false,
+  }) {
+    if (location is! WebPickedLocation) {
+      return Stream.error(
+        ArgumentError.value(
+          location,
+          'location',
+          'listEntries requires a WebPickedLocation on web.',
+        ),
+      );
+    }
+
+    return _streamHandle(location.handle, recursive: recursive);
+  }
+
+  @override
   Future<String> persist(PickedLocation location) async =>
       throw UnsupportedError(_persistUnsupported);
 
@@ -171,6 +189,59 @@ Future<List<FileSystemEntry>> _listHandle(
   }
 
   return [for (final entries in await Future.wait(pending)) ...entries];
+}
+
+/// Streams [handle] one directory at a time: the files of a directory are
+/// read in parallel and emitted together, then its subdirectories are walked.
+/// Cancelling stops the walk at the next directory.
+Stream<FileSystemEntry> _streamHandle(
+  web.FileSystemDirectoryHandle handle, {
+  required bool recursive,
+  String parentPath = '',
+}) async* {
+  final pending = <Future<List<FileSystemEntry>>>[];
+  final subdirectories = <(web.FileSystemDirectoryHandle, String)>[];
+  final iterator = handle.values();
+
+  while (true) {
+    final result = await iterator.next().toDart;
+    if (result.done) break;
+
+    final item = result.value! as web.FileSystemHandle;
+    final relativePath = _joinRelativePath(parentPath, item.name);
+
+    if (item.kind == 'file') {
+      pending.add(_fileEntry(item as web.FileSystemFileHandle, relativePath));
+      continue;
+    }
+
+    pending.add(
+      Future.value([
+        FileSystemEntry(
+          name: item.name,
+          relativePath: relativePath,
+          isDirectory: true,
+          uri: null,
+        ),
+      ]),
+    );
+    subdirectories.add((item as web.FileSystemDirectoryHandle, relativePath));
+  }
+
+  for (final entries in await Future.wait(pending)) {
+    for (final entry in entries) {
+      yield entry;
+    }
+  }
+
+  if (!recursive) return;
+  for (final (subdirectory, relativePath) in subdirectories) {
+    yield* _streamHandle(
+      subdirectory,
+      recursive: true,
+      parentPath: relativePath,
+    );
+  }
 }
 
 Future<List<FileSystemEntry>> _fileEntry(

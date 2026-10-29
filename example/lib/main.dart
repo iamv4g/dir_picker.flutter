@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dir_picker/dir_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -190,40 +192,47 @@ class FileEntriesPage extends StatefulWidget {
 }
 
 class _FileEntriesPageState extends State<FileEntriesPage> {
+  final List<FileSystemEntry> entries = [];
+  StreamSubscription<FileSystemEntry>? _subscription;
+  bool isDone = false;
   String error = '';
-  List<FileSystemEntry>? entries;
 
   @override
   void initState() {
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      try {
-        final listedEntries = await DirPicker.listEntries(
-          widget.location,
-          recursive: true,
-        );
-        if (!mounted) return;
-        setState(() => entries = listedEntries);
-      } catch (e) {
-        if (!mounted) return;
-        setState(() {
-          entries = [];
-          error = 'Error listing entries: $e';
-        });
-      }
-    });
     super.initState();
+    // Show entries while the folder is still being read. Leaving the page
+    // cancels the subscription, which stops the walk.
+    _subscription = DirPicker.streamEntries(widget.location, recursive: true)
+        .listen(
+          (entry) => setState(() => entries.add(entry)),
+          onError: (Object e) =>
+              setState(() => error = 'Error listing entries: $e'),
+          onDone: () => setState(() => isDone = true),
+        );
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Directory Entries')),
+      appBar: AppBar(
+        title: Text(
+          isDone
+              ? 'Directory Entries (${entries.length})'
+              : 'Reading… ${entries.length} entries',
+        ),
+      ),
       body: switch (entries) {
-        null => const Center(child: CircularProgressIndicator()),
-
-        final _ when error.isNotEmpty => Center(
+        _ when error.isNotEmpty => Center(
           child: Text(error, textAlign: TextAlign.center),
         ),
+
+        [] when !isDone => const Center(child: CircularProgressIndicator()),
 
         [] => Center(
           child: Text(

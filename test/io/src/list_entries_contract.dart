@@ -128,6 +128,41 @@ void listEntriesContract(
       platform.listEntries(_NoUriLocation()),
       throwsA(isA<ArgumentError>()),
     );
+    expect(
+      platform.streamEntries(_NoUriLocation()),
+      emitsError(isA<ArgumentError>()),
+    );
+  });
+
+  test('streams the same entries as listEntries', () async {
+    final listed = await platform.listEntries(location(), recursive: true);
+    final streamed = await platform
+        .streamEntries(location(), recursive: true)
+        .toList();
+
+    expect(streamed, unorderedEquals(listed));
+  });
+
+  test('can stop after the first entry', () async {
+    // Enough files that the walk would still be running after the first.
+    for (var i = 0; i < 50; i++) {
+      await File(p.join(root.path, 'sub', 'nested', 'f$i')).writeAsString('');
+    }
+
+    final first = await platform
+        .streamEntries(location(), recursive: true)
+        .first;
+
+    expect(first.relativePath, isNotEmpty);
+  });
+
+  test('emits an error for a directory that does not exist', () {
+    expect(
+      platform.streamEntries(
+        IOPickedLocation(Uri.directory(p.join(root.path, 'missing'))),
+      ),
+      emitsError(isA<FileSystemException>()),
+    );
   });
 }
 

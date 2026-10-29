@@ -66,46 +66,81 @@ class DirPickerAndroid extends DirPickerPlatform {
   Future<List<FileSystemEntry>> listEntries(
     PickedLocation location, {
     bool recursive = false,
+  }) => streamEntries(location, recursive: recursive).toList();
+
+  @override
+  Stream<FileSystemEntry> streamEntries(
+    PickedLocation location, {
+    bool recursive = false,
   }) {
     final uri = location.uri;
     if (uri == null) {
-      throw ArgumentError.value(
-        location,
-        'location',
-        'listEntries requires a native picked location with a URI.',
+      return Stream.error(
+        ArgumentError.value(
+          location,
+          'location',
+          'listEntries requires a native picked location with a URI.',
+        ),
       );
     }
 
-    final completer = Completer<List<FileSystemEntry>>();
-    final callback = native.ListEntriesCallback.implement(
-      native.$ListEntriesCallback(
-        onSuccess: (jJson) {
-          final json = jJson.toDartString();
-          jJson.release();
-          try {
-            completer.complete(decodeEntriesJson(json));
-          } catch (error, stackTrace) {
-            completer.completeError(error, stackTrace);
-          }
-        },
-        onError: (jCode, jMessage) {
-          final code = jCode.toDartString();
-          final message = jMessage.toDartString();
-          jCode.release();
-          jMessage.release();
-          completer.completeError(Exception('$code: $message'));
-        },
-      ),
-    );
+    late final StreamController<FileSystemEntry> controller;
+    native.EntriesStream? stream;
+    native.EntriesStreamCallback? callback;
+    var isCancelled = false;
 
-    final treeUri = uri.toString().toJString();
-    try {
-      native.DirPicker.listEntries(treeUri, recursive, callback);
-    } finally {
-      treeUri.release();
+    // Kotlin always ends with onDone or onError, also after a cancel, so the
+    // callback and stream are released there.
+    void finish([Object? error]) {
+      callback?.release();
+      stream?.release();
+      if (isCancelled) return;
+      if (error != null) controller.addError(error);
+      controller.close();
     }
 
-    return completer.future.whenComplete(() => callback.release());
+    controller = StreamController(
+      onListen: () {
+        callback = native.EntriesStreamCallback.implement(
+          native.$EntriesStreamCallback(
+            onBatch: (jJson) {
+              final json = jJson.toDartString();
+              jJson.release();
+              if (isCancelled) return;
+              try {
+                decodeEntriesJson(json).forEach(controller.add);
+              } catch (error, stackTrace) {
+                controller.addError(error, stackTrace);
+              }
+            },
+            onDone: finish,
+            onError: (jCode, jMessage) {
+              final code = jCode.toDartString();
+              final message = jMessage.toDartString();
+              jCode.release();
+              jMessage.release();
+              finish(Exception('$code: $message'));
+            },
+          ),
+        );
+        final treeUri = uri.toString().toJString();
+        try {
+          stream = native.DirPicker.streamEntries(
+            treeUri,
+            recursive,
+            callback!,
+          );
+        } finally {
+          treeUri.release();
+        }
+      },
+      onCancel: () {
+        if (controller.isClosed) return;
+        isCancelled = true;
+        stream?.cancel();
+      },
+    );
+    return controller.stream;
   }
 
   @override

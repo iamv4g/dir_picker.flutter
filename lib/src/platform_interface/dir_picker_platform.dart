@@ -34,6 +34,18 @@ abstract class DirPickerPlatform {
     bool recursive = false,
   });
 
+  /// Lists [location] as a stream. See `DirPicker.streamEntries`.
+  ///
+  /// The default waits for [listEntries] and emits its entries, so
+  /// implementations written before it was added still work, without the
+  /// early results and cancellation.
+  Stream<FileSystemEntry> streamEntries(
+    PickedLocation location, {
+    bool recursive = false,
+  }) => Stream.fromFuture(
+    listEntries(location, recursive: recursive),
+  ).expand((entries) => entries);
+
   /// Keeps access to [location] across app restarts. See `DirPicker.persist`.
   ///
   /// Not abstract, so implementations written before it was added still

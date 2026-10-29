@@ -54,7 +54,8 @@ void main(List<String> args) async {
       ],
       classes: [
         'com.iamv4g.dir_picker.DirPicker',
-        'com.iamv4g.dir_picker.ListEntriesCallback',
+        'com.iamv4g.dir_picker.EntriesStream',
+        'com.iamv4g.dir_picker.EntriesStreamCallback',
         'com.iamv4g.dir_picker.PickerCallback',
       ],
     ),

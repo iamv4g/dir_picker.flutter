@@ -65,10 +65,17 @@ class DirPicker {
         }
 
         /**
-         * Lists files and directories inside a previously picked SAF tree URI.
+         * Walks a previously picked SAF tree URI and reports its entries to
+         * [callback] in batches. The walk stops early after
+         * [EntriesStream.cancel] on the returned stream.
          */
         @JvmStatic
-        fun listEntries(treeUri: String, recursive: Boolean, callback: ListEntriesCallback) {
+        fun streamEntries(
+            treeUri: String,
+            recursive: Boolean,
+            callback: EntriesStreamCallback,
+        ): EntriesStream {
+            val stream = EntriesStream()
             CoroutineScope(Dispatchers.IO).launch {
                 val context = applicationContext
                 if (context == null) {
@@ -94,13 +101,15 @@ class DirPicker {
                         return@launch
                     }
 
-                    val entries = JSONArray()
-                    collectEntries(context.contentResolver, tree, rootId, "", recursive, entries)
-                    callback.onSuccess(entries.toString())
+                    val batcher = EntryBatcher(callback, stream)
+                    collectEntries(context.contentResolver, tree, rootId, "", recursive, batcher)
+                    batcher.flush()
+                    callback.onDone()
                 } catch (e: Exception) {
                     callback.onError("LIST_ERROR", e.message ?: "Unknown error")
                 }
             }
+            return stream
         }
 
         /**
@@ -168,8 +177,31 @@ private fun isDirectory(resolver: ContentResolver, tree: Uri, documentId: String
         null,
     )?.use { it.moveToFirst() && it.getString(0) == Document.MIME_TYPE_DIR } ?: false
 
+/** Entries sent per [EntriesStreamCallback.onBatch]. */
+private const val BATCH_SIZE = 200
+
+/** Collects entries and sends them to [callback] in batches of [BATCH_SIZE]. */
+private class EntryBatcher(
+    private val callback: EntriesStreamCallback,
+    private val stream: EntriesStream,
+) {
+    private var batch = JSONArray()
+
+    val isCancelled: Boolean get() = stream.isCancelled
+
+    fun add(entry: JSONObject) {
+        batch.put(entry)
+        if (batch.length() >= BATCH_SIZE) flush()
+    }
+
+    fun flush() {
+        if (batch.length() > 0 && !stream.isCancelled) callback.onBatch(batch.toString())
+        batch = JSONArray()
+    }
+}
+
 /**
- * Appends the children of [parentId] to [out], with one query per directory.
+ * Adds the children of [parentId] to [out], with one query per directory.
  * `DocumentFile` runs a separate query for every field of every child, which
  * is far slower on large trees.
  *
@@ -181,8 +213,10 @@ private fun collectEntries(
     parentId: String,
     parentPath: String,
     recursive: Boolean,
-    out: JSONArray,
+    out: EntryBatcher,
 ) {
+    if (out.isCancelled) return
+
     val subdirectories = mutableListOf<Pair<String, String>>()
 
     val cursor = resolver.query(
@@ -194,14 +228,14 @@ private fun collectEntries(
     ) ?: throw IllegalStateException("Cannot list $parentPath")
 
     cursor.use {
-        while (it.moveToNext()) {
+        while (!out.isCancelled && it.moveToNext()) {
             val documentId = it.getString(0)
             val name = it.getString(1) ?: documentId
             val isDirectory = it.getString(2) == Document.MIME_TYPE_DIR
             val relativePath = if (parentPath.isEmpty()) name else "$parentPath/$name"
             val lastModified = if (it.isNull(4)) 0L else it.getLong(4)
 
-            out.put(
+            out.add(
                 JSONObject().apply {
                     put("name", name)
                     put("relativePath", relativePath)

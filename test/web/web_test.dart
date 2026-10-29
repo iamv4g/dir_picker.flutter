@@ -199,6 +199,49 @@ void main() {
       );
     });
   });
+
+  group('DirPickerWeb.streamEntries', () {
+    setUp(() => globalContext.delete('showDirectoryPicker'.toJS));
+
+    test('streams the same entries as listEntries', () async {
+      final location = WebPickedLocation(root);
+      final listed = await DirPickerWeb().listEntries(
+        location,
+        recursive: true,
+      );
+      final streamed = await DirPickerWeb()
+          .streamEntries(location, recursive: true)
+          .toList();
+
+      expect(streamed, unorderedEquals(listed));
+    });
+
+    test('streams only immediate children by default', () async {
+      final entries = await DirPickerWeb()
+          .streamEntries(WebPickedLocation(root))
+          .toList();
+
+      expect(
+        entries.map((e) => e.relativePath),
+        unorderedEquals(['a.txt', 'sub']),
+      );
+    });
+
+    test('can stop after the first entry', () async {
+      final first = await DirPickerWeb()
+          .streamEntries(WebPickedLocation(root), recursive: true)
+          .first;
+
+      expect(['a.txt', 'sub'], contains(first.relativePath));
+    });
+
+    test('rejects a non-web location', () {
+      expect(
+        DirPickerWeb().streamEntries(IOPickedLocation(Uri.directory('/tmp'))),
+        emitsError(isA<ArgumentError>()),
+      );
+    });
+  });
 }
 
 Future<void> _writeFile(

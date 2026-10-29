@@ -100,23 +100,71 @@ class DirPickerDarwin extends DirPickerPlatform {
   Future<List<FileSystemEntry>> listEntries(
     PickedLocation location, {
     bool recursive = false,
-  }) async {
+  }) => streamEntries(location, recursive: recursive).toList();
+
+  @override
+  Stream<FileSystemEntry> streamEntries(
+    PickedLocation location, {
+    bool recursive = false,
+  }) {
     final uri = location.uri;
     if (uri == null) {
-      throw ArgumentError.value(
-        location,
-        'location',
-        'listEntries requires a native picked location with a URI.',
+      return Stream.error(
+        ArgumentError.value(
+          location,
+          'location',
+          'listEntries requires a native picked location with a URI.',
+        ),
       );
     }
 
-    return _request(
-      (port) => _withCString(
-        uri.toString(),
-        (uriPtr) => _bindings.listEntries(port, uriPtr, recursive),
-      ),
-      decodeListEntriesMessage,
+    late final StreamController<FileSystemEntry> controller;
+    late final ReceivePort port;
+    var isDone = false;
+
+    void finish([Object? error, StackTrace? stackTrace]) {
+      isDone = true;
+      port.close();
+      if (error != null) controller.addError(error, stackTrace);
+      controller.close();
+    }
+
+    controller = StreamController(
+      onListen: () {
+        port = ReceivePort();
+        port.listen((message) {
+          final List<FileSystemEntry>? batch;
+          try {
+            batch = decodeEntriesStreamMessage(message);
+          } catch (error, stackTrace) {
+            finish(error, stackTrace);
+            return;
+          }
+          if (batch == null) {
+            finish();
+          } else {
+            batch.forEach(controller.add);
+          }
+        });
+        _withCString(
+          uri.toString(),
+          (uriPtr) => _bindings.streamEntries(
+            port.sendPort.nativePort,
+            uriPtr,
+            recursive,
+          ),
+        );
+      },
+      onCancel: () {
+        if (isDone) return;
+        // Swift stops at the next entry. Its remaining messages go to a
+        // closed port and are dropped.
+        _bindings.cancelEntries(port.sendPort.nativePort);
+        isDone = true;
+        port.close();
+      },
     );
+    return controller.stream;
   }
 
   @override
