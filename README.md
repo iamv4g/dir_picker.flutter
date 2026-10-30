@@ -5,13 +5,14 @@
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-purple.svg" alt="License: MIT"></a>
 </p>
 
-A Flutter plugin for picking a directory across all platforms using native system dialogs. Returns a `PickedLocation?` — null if the user cancelled, and can list entries from a previously picked directory with `DirPicker.listEntries()`.
+A Flutter plugin for picking a directory across all platforms using native system dialogs. `DirPicker.pick()` returns a `PickedLocation?` (null if the user cancelled). You can then list what's inside with `DirPicker.listEntries()` or `DirPicker.streamEntries()`, and keep access to the folder after the app restarts with `DirPicker.persist()`.
 
 ## Features
 
 - 📁 **All Platforms** – Android, iOS, macOS, Windows, Linux, and Web
 - ⚡ **Native Performance** – Powered by FFI (iOS/macOS/Windows) and JNI (Android) for near-zero overhead
-- 🎨 **Customizable Dialogs** – Platform-specific options for title, button labels, and more
+- 🎨 **Customizable Dialogs** – Platform-specific options for title, button labels, and more, and an initial folder to open in
+- 📜 **Directory Listing** – list a picked folder at once, or stream large trees in batches and stop early
 - 🔗 **Persistent Access** – keep using a picked folder after the app restarts: persisted URI permissions on Android, bookmarks on iOS and macOS
 - 🐧 **Linux Portals** – XDG Desktop Portal with zenity/kdialog fallback
 
@@ -41,6 +42,8 @@ No configuration needed. The plugin uses the Storage Access Framework (`Intent.A
 **Supported:** iOS 13.0+
 
 No configuration needed. The plugin uses `UIDocumentPickerViewController`, which is available without extra entitlements.
+
+The plugin ships a privacy manifest (`PrivacyInfo.xcprivacy`) that declares its file timestamp access (reasons `3B52.1` and `C617.1`), so App Store Connect sees it without changes to your app's own manifest. The same applies on macOS.
 
 </details>
 
@@ -381,14 +384,7 @@ Behavior:
 - Lists only immediate children when `recursive` is `false`.
 - Lists all nested descendants when `recursive` is `true`.
 - Does not guarantee output ordering.
-
-### `DirPicker.retrieveLostPick`
-
-```dart
-static Future<PickedLocation?> retrieveLostPick()
-```
-
-Returns the folder from a `pick()` whose result came back after Android destroyed the app's Activity, once, or `null`. Always `null` on other platforms. See [Android: get back a pick lost to a destroyed Activity](#android-get-back-a-pick-lost-to-a-destroyed-activity).
+- Completes only once every entry has been read. For large trees, use `streamEntries`.
 
 ### `DirPicker.streamEntries`
 
@@ -411,6 +407,14 @@ static Future<void> release(String token)
 
 `persist` keeps access to a picked or restored location and returns a token to save. `restore` returns the location with access restored, or `null` when the token no longer gives access. `release` gives up that access. See [Keep access to a folder after the app restarts](#keep-access-to-a-folder-after-the-app-restarts). All three throw `UnsupportedError` on web.
 
+### `DirPicker.retrieveLostPick`
+
+```dart
+static Future<PickedLocation?> retrieveLostPick()
+```
+
+Returns the folder from a `pick()` whose result came back after Android destroyed the app's Activity, once, or `null`. Always `null` on other platforms. See [Android: get back a pick lost to a destroyed Activity](#android-get-back-a-pick-lost-to-a-destroyed-activity).
+
 ### `PickedLocation`
 
 Base type returned by `DirPicker.pick()`.
@@ -422,7 +426,7 @@ Base type returned by `DirPicker.pick()`.
 
 ### `FileSystemEntry`
 
-Model returned by `DirPicker.listEntries()`.
+Model returned by `DirPicker.listEntries()` and `DirPicker.streamEntries()`.
 
 | Field          | Type        | Description                                                    |
 |----------------|-------------|----------------------------------------------------------------|
@@ -443,6 +447,7 @@ Platform-specific options passed to `DirPicker.pick()`.
 | `PickOptions.macos()`   | macOS    | Customizes the open panel accept label and message.            |
 | `PickOptions.linux()`   | Linux    | Customizes dialog title and accept label.                      |
 | `PickOptions.windows()` | Windows  | Customizes dialog title and accept label.                      |
+| `PickOptions.web()`     | Web      | Sets the access mode, remembered-folder `id` and start folder. |
 
 ## Platform Support
 
@@ -460,7 +465,7 @@ Platform-specific options passed to `DirPicker.pick()`.
 - iOS 13.0+
 - macOS 10.15+
 - Windows 10+
-- Web: Chrome/Edge 86+
+- Web: Chrome/Edge 86+ for `pick()`; `listEntries()` works in any browser with a `FileSystemDirectoryHandle`
 
 ## Contributing
 

@@ -1,5 +1,13 @@
-## Unreleased
+## 0.6.0
 
+* **Breaking:** for custom `DirPickerPlatform` implementations only, `pick()` takes a new `initialDirectory` parameter. Apps that call `DirPicker` are not affected
+* Add `initialDirectory` to `DirPicker.pick()`, so the picker opens in a folder from an earlier pick: `EXTRA_INITIAL_URI` on Android 8+, `directoryURL` on iOS 13+ and macOS, `IFileDialog::SetFolder` on Windows, `current_folder`/`--filename`/the start folder on Linux, and `startIn` on the web. Platforms that can't use the given location ignore it. The example app reopens the last picked folder (#27)
+* Add `DirPicker.persist`, `DirPicker.restore` and `DirPicker.release` to keep using a picked folder after the app restarts: persisted URI permissions on Android, bookmarks on iOS, security-scoped bookmarks on macOS, and the path on Windows and Linux. Not supported on web. On Android, `release` gives back a persisted permission, so apps can stay under the system's per-app limit (#31, part of #32)
+* Add `DirPicker.streamEntries`, which emits the entries of `listEntries` while the folder is still being read, in batches of 200 on Android, iOS and macOS. Cancelling the subscription stops the walk. `listEntries` is now built on it (#28)
+* Android: add `DirPicker.retrieveLostPick()`. When Android destroys the Activity or kills the process while the picker is open, the picked folder is no longer dropped: call it at startup to get it, once. Other platforms return `null` (#22)
+* `DirPickerPlatform` gains `persist`, `restore`, `release`, `streamEntries` and `retrieveLostPick`, with default implementations (`UnimplementedError` for the first three, the result of `listEntries` as a stream, and `null`), so existing custom implementations still compile
+* iOS: `pick()` keeps the security scope of the picked folder open until `release` or the app exits, so later `listEntries` calls use the URL the picker returned
+* iOS/macOS: add a privacy manifest (`PrivacyInfo.xcprivacy`) declaring the file timestamp access in `listEntries` (reasons `3B52.1` and `C617.1`). Before, App Store Connect could flag apps that use the plugin with ITMS-91053 (#51)
 * Windows: the folder dialog is now owned by the app's window, so it stays on top of it and the window can't be used until it closes. Before, it opened as a separate top-level window (#33)
 * Linux: on X11, the XDG Desktop Portal dialog is now modal to the app's window (`parent_window`). On Wayland, and with the zenity and kdialog fallbacks, it still opens as a separate window (#33)
 * Web: add `PickOptions.web(mode:, id:, startIn:)`, passed to `showDirectoryPicker()`. `mode: WebPermissionMode.readwrite` returns a handle that can write without asking again, `id` lets the browser remember the last folder per purpose, and `startIn` opens in a well-known folder (#34)

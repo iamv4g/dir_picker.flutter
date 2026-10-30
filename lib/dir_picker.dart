@@ -119,6 +119,10 @@ class DirPicker {
   /// When [recursive] is `false`, only immediate children are returned.
   /// When `true`, all nested descendants are returned.
   ///
+  /// The list completes only once every entry has been read. For a large
+  /// tree, [streamEntries] emits entries as they are read and can be stopped
+  /// early.
+  ///
   /// A symbolic link is reported as what it points to: a link to a directory
   /// has [FileSystemEntry.isDirectory] set, and a broken link is a
   /// non-directory without a size. Links are never followed, so a recursive
