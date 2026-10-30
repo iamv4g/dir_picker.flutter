@@ -25,16 +25,23 @@ intptr_t dir_picker_init_dart_api_dl(void* data);
 void dir_picker_pick(int64_t native_port, const char* accept_label, const char* message,
                      const char* initial_directory);
 
-/// List directory entries and report the result via NativePort.
+/// Walk a directory and report its entries via NativePort, in batches.
 ///
 /// Messages sent to native_port:
-/// - Success:    [0, jsonString]
-/// - Error:      [2, errorCode, errorMessage]
+/// - Batch:      [3, jsonArray] (zero or more)
+/// - Done:       [1] (also after dir_picker_cancel_entries)
+/// - Error:      [2, errorCode, errorMessage] (instead of Done)
 ///
 /// @param native_port   Dart NativePort for result reporting
 /// @param uri           Directory URI (nullable only for invalid input handling)
 /// @param recursive     Whether to walk nested descendants
-void dir_picker_list_entries(int64_t native_port, const char* uri, bool recursive);
+void dir_picker_stream_entries(int64_t native_port, const char* uri, bool recursive);
+
+/// Stop the dir_picker_stream_entries walk that reports to native_port. It
+/// sends no more batches, only Done.
+///
+/// @param native_port   The port passed to dir_picker_stream_entries
+void dir_picker_cancel_entries(int64_t native_port);
 
 /// Create a bookmark of a directory, as a base64 token, and report it via
 /// NativePort. On macOS the bookmark is security-scoped.

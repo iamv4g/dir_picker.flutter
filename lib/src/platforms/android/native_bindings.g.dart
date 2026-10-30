@@ -263,15 +263,15 @@ extension DirPicker$Companion$$Methods on DirPicker$Companion {
     ).check();
   }
 
-  static final _id_listEntries = DirPicker$Companion._class.instanceMethodId(
-    r'listEntries',
-    r'(Ljava/lang/String;ZLcom/iamv4g/dir_picker/ListEntriesCallback;)V',
+  static final _id_streamEntries = DirPicker$Companion._class.instanceMethodId(
+    r'streamEntries',
+    r'(Ljava/lang/String;ZLcom/iamv4g/dir_picker/EntriesStreamCallback;)Lcom/iamv4g/dir_picker/EntriesStream;',
   );
 
-  static final _listEntries =
+  static final _streamEntries =
       jni$_.ProtectedJniExtensions.lookup<
             jni$_.NativeFunction<
-              jni$_.JThrowablePtr Function(
+              jni$_.JniResult Function(
                 jni$_.Pointer<jni$_.Void>,
                 jni$_.JMethodIDPtr,
                 jni$_.VarArgs<
@@ -283,9 +283,9 @@ extension DirPicker$Companion$$Methods on DirPicker$Companion {
                 >,
               )
             >
-          >('globalEnv_CallVoidMethod')
+          >('globalEnv_CallObjectMethod')
           .asFunction<
-            jni$_.JThrowablePtr Function(
+            jni$_.JniResult Function(
               jni$_.Pointer<jni$_.Void>,
               jni$_.JMethodIDPtr,
               jni$_.Pointer<jni$_.Void>,
@@ -294,21 +294,22 @@ extension DirPicker$Companion$$Methods on DirPicker$Companion {
             )
           >();
 
-  /// from: `public fun listEntries(treeUri: kotlin.String, recursive: kotlin.Boolean, callback: com.iamv4g.dir_picker.ListEntriesCallback): kotlin.Unit`
-  void listEntries(
+  /// from: `public fun streamEntries(treeUri: kotlin.String, recursive: kotlin.Boolean, callback: com.iamv4g.dir_picker.EntriesStreamCallback): com.iamv4g.dir_picker.EntriesStream`
+  /// The returned object must be released after use, by calling the [release] method.
+  EntriesStream streamEntries(
     jni$_.JString string,
     core$_.bool z,
-    ListEntriesCallback listEntriesCallback,
+    EntriesStreamCallback entriesStreamCallback,
   ) {
     final _$string = string.reference;
-    final _$listEntriesCallback = listEntriesCallback.reference;
-    _listEntries(
+    final _$entriesStreamCallback = entriesStreamCallback.reference;
+    return _streamEntries(
       reference.pointer,
-      _id_listEntries.pointer,
+      _id_streamEntries.pointer,
       _$string.pointer,
       z ? 1 : 0,
-      _$listEntriesCallback.pointer,
-    ).check();
+      _$entriesStreamCallback.pointer,
+    ).object<EntriesStream>();
   }
 
   static final _id_persist = DirPicker$Companion._class.instanceMethodId(
@@ -509,15 +510,15 @@ extension type DirPicker._(jni$_.JObject _$this) implements jni$_.JObject {
     ).check();
   }
 
-  static final _id_listEntries = _class.staticMethodId(
-    r'listEntries',
-    r'(Ljava/lang/String;ZLcom/iamv4g/dir_picker/ListEntriesCallback;)V',
+  static final _id_streamEntries = _class.staticMethodId(
+    r'streamEntries',
+    r'(Ljava/lang/String;ZLcom/iamv4g/dir_picker/EntriesStreamCallback;)Lcom/iamv4g/dir_picker/EntriesStream;',
   );
 
-  static final _listEntries =
+  static final _streamEntries =
       jni$_.ProtectedJniExtensions.lookup<
             jni$_.NativeFunction<
-              jni$_.JThrowablePtr Function(
+              jni$_.JniResult Function(
                 jni$_.Pointer<jni$_.Void>,
                 jni$_.JMethodIDPtr,
                 jni$_.VarArgs<
@@ -529,9 +530,9 @@ extension type DirPicker._(jni$_.JObject _$this) implements jni$_.JObject {
                 >,
               )
             >
-          >('globalEnv_CallStaticVoidMethod')
+          >('globalEnv_CallStaticObjectMethod')
           .asFunction<
-            jni$_.JThrowablePtr Function(
+            jni$_.JniResult Function(
               jni$_.Pointer<jni$_.Void>,
               jni$_.JMethodIDPtr,
               jni$_.Pointer<jni$_.Void>,
@@ -540,21 +541,22 @@ extension type DirPicker._(jni$_.JObject _$this) implements jni$_.JObject {
             )
           >();
 
-  /// from: `static public final void listEntries(java.lang.String string, boolean z, com.iamv4g.dir_picker.ListEntriesCallback listEntriesCallback)`
-  static void listEntries(
+  /// from: `static public final com.iamv4g.dir_picker.EntriesStream streamEntries(java.lang.String string, boolean z, com.iamv4g.dir_picker.EntriesStreamCallback entriesStreamCallback)`
+  /// The returned object must be released after use, by calling the [release] method.
+  static EntriesStream streamEntries(
     jni$_.JString string,
     core$_.bool z,
-    ListEntriesCallback listEntriesCallback,
+    EntriesStreamCallback entriesStreamCallback,
   ) {
     final _$string = string.reference;
-    final _$listEntriesCallback = listEntriesCallback.reference;
-    _listEntries(
+    final _$entriesStreamCallback = entriesStreamCallback.reference;
+    return _streamEntries(
       _class.reference.pointer,
-      _id_listEntries.pointer,
+      _id_streamEntries.pointer,
       _$string.pointer,
       z ? 1 : 0,
-      _$listEntriesCallback.pointer,
-    ).check();
+      _$entriesStreamCallback.pointer,
+    ).object<EntriesStream>();
   }
 
   static final _id_persist = _class.staticMethodId(
@@ -666,19 +668,121 @@ final class $DirPicker$Type$ extends jni$_.JType<DirPicker> {
   String get signature => r'Lcom/iamv4g/dir_picker/DirPicker;';
 }
 
-/// from: `com.iamv4g.dir_picker.ListEntriesCallback`
-extension type ListEntriesCallback._(jni$_.JObject _$this)
-    implements jni$_.JObject {
+/// from: `com.iamv4g.dir_picker.EntriesStream`
+extension type EntriesStream._(jni$_.JObject _$this) implements jni$_.JObject {
   static final _class = jni$_.JClass.forName(
-    r'com/iamv4g/dir_picker/ListEntriesCallback',
+    r'com/iamv4g/dir_picker/EntriesStream',
   );
 
   /// The type which includes information such as the signature of this class.
-  static const jni$_.JType<ListEntriesCallback> type =
-      $ListEntriesCallback$Type$();
+  static const jni$_.JType<EntriesStream> type = $EntriesStream$Type$();
+  static final _id_new$ = _class.constructorId(r'()V');
+
+  static final _new$ =
+      jni$_.ProtectedJniExtensions.lookup<
+            jni$_.NativeFunction<
+              jni$_.JniResult Function(
+                jni$_.Pointer<jni$_.Void>,
+                jni$_.JMethodIDPtr,
+              )
+            >
+          >('globalEnv_NewObject')
+          .asFunction<
+            jni$_.JniResult Function(
+              jni$_.Pointer<jni$_.Void>,
+              jni$_.JMethodIDPtr,
+            )
+          >();
+
+  /// from: `public void <init>()`
+  /// The returned object must be released after use, by calling the [release] method.
+  factory EntriesStream() {
+    return _new$(
+      _class.reference.pointer,
+      _id_new$.pointer,
+    ).object<EntriesStream>();
+  }
+}
+
+extension EntriesStream$$Methods on EntriesStream {
+  static final _id_get$isCancelled = EntriesStream._class.instanceMethodId(
+    r'isCancelled',
+    r'()Z',
+  );
+
+  static final _get$isCancelled =
+      jni$_.ProtectedJniExtensions.lookup<
+            jni$_.NativeFunction<
+              jni$_.JniResult Function(
+                jni$_.Pointer<jni$_.Void>,
+                jni$_.JMethodIDPtr,
+              )
+            >
+          >('globalEnv_CallBooleanMethod')
+          .asFunction<
+            jni$_.JniResult Function(
+              jni$_.Pointer<jni$_.Void>,
+              jni$_.JMethodIDPtr,
+            )
+          >();
+
+  /// from: `public final boolean isCancelled()`
+  core$_.bool get isCancelled {
+    return _get$isCancelled(
+      reference.pointer,
+      _id_get$isCancelled.pointer,
+    ).boolean;
+  }
+
+  static final _id_cancel = EntriesStream._class.instanceMethodId(
+    r'cancel',
+    r'()V',
+  );
+
+  static final _cancel =
+      jni$_.ProtectedJniExtensions.lookup<
+            jni$_.NativeFunction<
+              jni$_.JThrowablePtr Function(
+                jni$_.Pointer<jni$_.Void>,
+                jni$_.JMethodIDPtr,
+              )
+            >
+          >('globalEnv_CallVoidMethod')
+          .asFunction<
+            jni$_.JThrowablePtr Function(
+              jni$_.Pointer<jni$_.Void>,
+              jni$_.JMethodIDPtr,
+            )
+          >();
+
+  /// from: `public fun cancel(): kotlin.Unit`
+  void cancel() {
+    _cancel(reference.pointer, _id_cancel.pointer).check();
+  }
+}
+
+final class $EntriesStream$Type$ extends jni$_.JType<EntriesStream> {
+  @jni$_.internal
+  const $EntriesStream$Type$();
+
+  @jni$_.internal
+  @core$_.override
+  String get signature => r'Lcom/iamv4g/dir_picker/EntriesStream;';
+}
+
+/// from: `com.iamv4g.dir_picker.EntriesStreamCallback`
+extension type EntriesStreamCallback._(jni$_.JObject _$this)
+    implements jni$_.JObject {
+  static final _class = jni$_.JClass.forName(
+    r'com/iamv4g/dir_picker/EntriesStreamCallback',
+  );
+
+  /// The type which includes information such as the signature of this class.
+  static const jni$_.JType<EntriesStreamCallback> type =
+      $EntriesStreamCallback$Type$();
 
   /// Maps a specific port to the implemented interface.
-  static final core$_.Map<core$_.int, $ListEntriesCallback> _$impls = {};
+  static final core$_.Map<core$_.int, $EntriesStreamCallback> _$impls = {};
   static jni$_.JObjectPtr _$invoke(
     core$_.int port,
     jni$_.JObjectPtr descriptor,
@@ -704,8 +808,12 @@ extension type ListEntriesCallback._(jni$_.JObject _$this)
     try {
       final $d = $i.methodDescriptor.toDartString(releaseOriginal: true);
       final $a = $i.args;
-      if ($d == r'onSuccess(Ljava/lang/String;)V') {
-        _$impls[$p]!.onSuccess(($a![0] as jni$_.JString));
+      if ($d == r'onBatch(Ljava/lang/String;)V') {
+        _$impls[$p]!.onBatch(($a![0] as jni$_.JString));
+        return jni$_.nullptr;
+      }
+      if ($d == r'onDone()V') {
+        _$impls[$p]!.onDone();
         return jni$_.nullptr;
       }
       if ($d == r'onError(Ljava/lang/String;Ljava/lang/String;)V') {
@@ -723,7 +831,7 @@ extension type ListEntriesCallback._(jni$_.JObject _$this)
 
   static void implementIn(
     jni$_.JImplementer implementer,
-    $ListEntriesCallback $impl,
+    $EntriesStreamCallback $impl,
   ) {
     late final jni$_.RawReceivePort $p;
     $p = jni$_.RawReceivePort(($m) {
@@ -737,11 +845,12 @@ extension type ListEntriesCallback._(jni$_.JObject _$this)
       jni$_.ProtectedJniExtensions.returnResult($i.result, $r);
     });
     implementer.add(
-      r'com.iamv4g.dir_picker.ListEntriesCallback',
+      r'com.iamv4g.dir_picker.EntriesStreamCallback',
       $p,
       _$invokePointer,
       [
-        if ($impl.onSuccess$async) r'onSuccess(Ljava/lang/String;)V',
+        if ($impl.onBatch$async) r'onBatch(Ljava/lang/String;)V',
+        if ($impl.onDone$async) r'onDone()V',
         if ($impl.onError$async)
           r'onError(Ljava/lang/String;Ljava/lang/String;)V',
       ],
@@ -750,20 +859,20 @@ extension type ListEntriesCallback._(jni$_.JObject _$this)
     _$impls[$a] = $impl;
   }
 
-  factory ListEntriesCallback.implement($ListEntriesCallback $impl) {
+  factory EntriesStreamCallback.implement($EntriesStreamCallback $impl) {
     final $i = jni$_.JImplementer();
     implementIn($i, $impl);
-    return $i.implement<ListEntriesCallback>();
+    return $i.implement<EntriesStreamCallback>();
   }
 }
 
-extension ListEntriesCallback$$Methods on ListEntriesCallback {
-  static final _id_onSuccess = ListEntriesCallback._class.instanceMethodId(
-    r'onSuccess',
+extension EntriesStreamCallback$$Methods on EntriesStreamCallback {
+  static final _id_onBatch = EntriesStreamCallback._class.instanceMethodId(
+    r'onBatch',
     r'(Ljava/lang/String;)V',
   );
 
-  static final _onSuccess =
+  static final _onBatch =
       jni$_.ProtectedJniExtensions.lookup<
             jni$_.NativeFunction<
               jni$_.JThrowablePtr Function(
@@ -781,17 +890,39 @@ extension ListEntriesCallback$$Methods on ListEntriesCallback {
             )
           >();
 
-  /// from: `public fun onSuccess(json: kotlin.String): kotlin.Unit`
-  void onSuccess(jni$_.JString string) {
+  /// from: `public fun onBatch(json: kotlin.String): kotlin.Unit`
+  void onBatch(jni$_.JString string) {
     final _$string = string.reference;
-    _onSuccess(
-      reference.pointer,
-      _id_onSuccess.pointer,
-      _$string.pointer,
-    ).check();
+    _onBatch(reference.pointer, _id_onBatch.pointer, _$string.pointer).check();
   }
 
-  static final _id_onError = ListEntriesCallback._class.instanceMethodId(
+  static final _id_onDone = EntriesStreamCallback._class.instanceMethodId(
+    r'onDone',
+    r'()V',
+  );
+
+  static final _onDone =
+      jni$_.ProtectedJniExtensions.lookup<
+            jni$_.NativeFunction<
+              jni$_.JThrowablePtr Function(
+                jni$_.Pointer<jni$_.Void>,
+                jni$_.JMethodIDPtr,
+              )
+            >
+          >('globalEnv_CallVoidMethod')
+          .asFunction<
+            jni$_.JThrowablePtr Function(
+              jni$_.Pointer<jni$_.Void>,
+              jni$_.JMethodIDPtr,
+            )
+          >();
+
+  /// from: `public fun onDone(): kotlin.Unit`
+  void onDone() {
+    _onDone(reference.pointer, _id_onDone.pointer).check();
+  }
+
+  static final _id_onError = EntriesStreamCallback._class.instanceMethodId(
     r'onError',
     r'(Ljava/lang/String;Ljava/lang/String;)V',
   );
@@ -830,36 +961,49 @@ extension ListEntriesCallback$$Methods on ListEntriesCallback {
   }
 }
 
-abstract base mixin class $ListEntriesCallback {
-  factory $ListEntriesCallback({
-    required void Function(jni$_.JString string) onSuccess,
-    core$_.bool onSuccess$async,
+abstract base mixin class $EntriesStreamCallback {
+  factory $EntriesStreamCallback({
+    required void Function(jni$_.JString string) onBatch,
+    core$_.bool onBatch$async,
+    required void Function() onDone,
+    core$_.bool onDone$async,
     required void Function(jni$_.JString string, jni$_.JString string1) onError,
     core$_.bool onError$async,
-  }) = _$ListEntriesCallback;
+  }) = _$EntriesStreamCallback;
 
-  void onSuccess(jni$_.JString string);
-  core$_.bool get onSuccess$async => false;
+  void onBatch(jni$_.JString string);
+  core$_.bool get onBatch$async => false;
+  void onDone();
+  core$_.bool get onDone$async => false;
   void onError(jni$_.JString string, jni$_.JString string1);
   core$_.bool get onError$async => false;
 }
 
-final class _$ListEntriesCallback with $ListEntriesCallback {
-  _$ListEntriesCallback({
-    required void Function(jni$_.JString string) onSuccess,
-    this.onSuccess$async = false,
+final class _$EntriesStreamCallback with $EntriesStreamCallback {
+  _$EntriesStreamCallback({
+    required void Function(jni$_.JString string) onBatch,
+    this.onBatch$async = false,
+    required void Function() onDone,
+    this.onDone$async = false,
     required void Function(jni$_.JString string, jni$_.JString string1) onError,
     this.onError$async = false,
-  }) : _onSuccess = onSuccess,
+  }) : _onBatch = onBatch,
+       _onDone = onDone,
        _onError = onError;
 
-  final void Function(jni$_.JString string) _onSuccess;
-  final core$_.bool onSuccess$async;
+  final void Function(jni$_.JString string) _onBatch;
+  final core$_.bool onBatch$async;
+  final void Function() _onDone;
+  final core$_.bool onDone$async;
   final void Function(jni$_.JString string, jni$_.JString string1) _onError;
   final core$_.bool onError$async;
 
-  void onSuccess(jni$_.JString string) {
-    return _onSuccess(string);
+  void onBatch(jni$_.JString string) {
+    return _onBatch(string);
+  }
+
+  void onDone() {
+    return _onDone();
   }
 
   void onError(jni$_.JString string, jni$_.JString string1) {
@@ -867,14 +1011,14 @@ final class _$ListEntriesCallback with $ListEntriesCallback {
   }
 }
 
-final class $ListEntriesCallback$Type$
-    extends jni$_.JType<ListEntriesCallback> {
+final class $EntriesStreamCallback$Type$
+    extends jni$_.JType<EntriesStreamCallback> {
   @jni$_.internal
-  const $ListEntriesCallback$Type$();
+  const $EntriesStreamCallback$Type$();
 
   @jni$_.internal
   @core$_.override
-  String get signature => r'Lcom/iamv4g/dir_picker/ListEntriesCallback;';
+  String get signature => r'Lcom/iamv4g/dir_picker/EntriesStreamCallback;';
 }
 
 /// from: `com.iamv4g.dir_picker.PickerCallback`

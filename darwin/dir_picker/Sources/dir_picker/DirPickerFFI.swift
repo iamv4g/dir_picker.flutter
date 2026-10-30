@@ -127,8 +127,13 @@ public func dirPickerPick(
 }
 #endif
 
-@_cdecl("dir_picker_list_entries")
-public func dirPickerListEntries(
+// MARK: - Entries
+
+/// Entries sent per batch message.
+private let entriesBatchSize = 200
+
+@_cdecl("dir_picker_stream_entries")
+public func dirPickerStreamEntries(
     _ nativePort: Int64,
     _ uriPtr: UnsafePointer<CChar>?,
     _ recursive: Bool
@@ -141,7 +146,12 @@ public func dirPickerListEntries(
         return
     }
 
+    // Registered before returning, so a cancel that follows always finds it.
+    EntryStreams.start(nativePort)
+
     DispatchQueue.global(qos: .userInitiated).async {
+        defer { EntryStreams.finish(nativePort) }
+
         let isAccessing = rootUrl.startAccessingSecurityScopedResource()
         defer {
             if isAccessing {
@@ -149,7 +159,6 @@ public func dirPickerListEntries(
             }
         }
 
-        let fileManager = FileManager.default
         let keys: [URLResourceKey] = [
             .nameKey,
             .isDirectoryKey,
@@ -160,38 +169,90 @@ public func dirPickerListEntries(
 
         do {
             // The enumerator returns nil instead of throwing for a missing
-            // root, so check it up front to fail like contentsOfDirectory.
+            // root, so check it up front.
             guard try rootUrl.resourceValues(forKeys: [.isDirectoryKey]).isDirectory == true else {
                 reporter.sendError(code: "LIST_ERROR", message: "Not a directory: \(rootUrl.path)")
                 return
             }
 
-            let urls: [URL]
-            if recursive {
-                urls = fileManager.enumerator(
-                    at: rootUrl,
-                    includingPropertiesForKeys: keys,
-                    options: [],
-                    errorHandler: nil
-                )?.compactMap { $0 as? URL } ?? []
-            } else {
-                urls = try fileManager.contentsOfDirectory(
-                    at: rootUrl,
-                    includingPropertiesForKeys: keys,
-                    options: []
-                )
+            // An unreadable subdirectory is skipped; only the root fails.
+            let rootPath = rootUrl.standardizedFileURL.path
+            var rootError: Error?
+            let enumerator = FileManager.default.enumerator(
+                at: rootUrl,
+                includingPropertiesForKeys: keys,
+                options: recursive ? [] : [.skipsSubdirectoryDescendants],
+                errorHandler: { url, error in
+                    if url.standardizedFileURL.path == rootPath {
+                        rootError = error
+                    }
+                    return true
+                }
+            )
+
+            var batch: [[String: Any]] = []
+            while !EntryStreams.isCancelled(nativePort) {
+                let entry = try autoreleasepool { () -> [String: Any]? in
+                    guard let fileUrl = enumerator?.nextObject() as? URL else { return nil }
+                    return try makeEntryDictionary(fileUrl: fileUrl, rootUrl: rootUrl, keys: keys)
+                }
+                guard let entry = entry else { break }
+                batch.append(entry)
+                if batch.count == entriesBatchSize {
+                    try reporter.sendBatch(batch)
+                    batch.removeAll(keepingCapacity: true)
+                }
             }
 
-            let entries = try urls.map { fileUrl in
-                try makeEntryDictionary(fileUrl: fileUrl, rootUrl: rootUrl, keys: keys)
+            if let rootError = rootError {
+                reporter.sendError(code: "LIST_ERROR", message: rootError.localizedDescription)
+                return
             }
-
-            let jsonData = try JSONSerialization.data(withJSONObject: entries)
-            let jsonString = String(data: jsonData, encoding: .utf8) ?? "[]"
-            reporter.sendJsonSuccess(jsonString)
+            if !batch.isEmpty {
+                try reporter.sendBatch(batch)
+            }
+            reporter.sendDone()
         } catch {
             reporter.sendError(code: "LIST_ERROR", message: error.localizedDescription)
         }
+    }
+}
+
+@_cdecl("dir_picker_cancel_entries")
+public func dirPickerCancelEntries(_ nativePort: Int64) {
+    EntryStreams.cancel(nativePort)
+}
+
+/// The entry streams that are running, by port, and whether Dart cancelled
+/// them.
+private enum EntryStreams {
+    private static var cancelled: [Int64: Bool] = [:]
+    private static let lock = NSLock()
+
+    static func start(_ port: Int64) {
+        lock.lock()
+        defer { lock.unlock() }
+        cancelled[port] = false
+    }
+
+    static func cancel(_ port: Int64) {
+        lock.lock()
+        defer { lock.unlock() }
+        if cancelled[port] != nil {
+            cancelled[port] = true
+        }
+    }
+
+    static func isCancelled(_ port: Int64) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return cancelled[port] ?? true
+    }
+
+    static func finish(_ port: Int64) {
+        lock.lock()
+        defer { lock.unlock() }
+        cancelled[port] = nil
     }
 }
 

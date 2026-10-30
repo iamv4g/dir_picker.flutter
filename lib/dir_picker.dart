@@ -108,6 +108,28 @@ class DirPicker {
     bool recursive = false,
   }) => DirPickerPlatform.instance.listEntries(location, recursive: recursive);
 
+  /// Lists the same entries as [listEntries], as a stream that emits them
+  /// while the directory is still being read.
+  ///
+  /// Use it for large trees: the app can show progress, and cancelling the
+  /// subscription (for example `break` in an `await for`) stops the walk, so
+  /// it never holds every entry at once.
+  ///
+  /// ```dart
+  /// await for (final entry in DirPicker.streamEntries(location, recursive: true)) {
+  ///   if (entry.name == 'pubspec.yaml') break;
+  /// }
+  /// ```
+  ///
+  /// Entries arrive in batches on Android, iOS and macOS. A failure to read
+  /// [location] itself is emitted as an error and closes the stream. Pausing
+  /// the subscription buffers entries but doesn't pause the walk.
+  static Stream<FileSystemEntry> streamEntries(
+    PickedLocation location, {
+    bool recursive = false,
+  }) =>
+      DirPickerPlatform.instance.streamEntries(location, recursive: recursive);
+
   /// Keeps access to [location] after the app restarts, and returns a token
   /// to save, for example in shared preferences. Pass the token to [restore]
   /// on a later launch to use the folder again without asking the user.

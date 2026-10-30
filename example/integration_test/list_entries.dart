@@ -194,6 +194,55 @@ void main() {
       );
     }
   });
+
+  group('streamEntries', () {
+    /// Adds [count] files to `many/`, more than one native batch (200).
+    Future<void> addFiles(int count) async {
+      final many = await Directory(p.join(root.path, 'many')).create();
+      for (var i = 0; i < count; i++) {
+        await File(p.join(many.path, 'f$i.txt')).writeAsString('$i');
+      }
+    }
+
+    test(
+      'streams the same entries as listEntries, over several batches',
+      () async {
+        await addFiles(450);
+
+        final listed = await DirPicker.listEntries(location(), recursive: true);
+        final streamed = await DirPicker.streamEntries(
+          location(),
+          recursive: true,
+        ).toList();
+
+        expect(listed, hasLength(6 + 1 + 450));
+        expect(streamed, unorderedEquals(listed));
+      },
+    );
+
+    test('stops early, and the next walk still works', () async {
+      await addFiles(450);
+
+      final firstFive = await DirPicker.streamEntries(
+        location(),
+        recursive: true,
+      ).take(5).toList();
+      expect(firstFive, hasLength(5));
+
+      final all = await DirPicker.streamEntries(
+        location(),
+        recursive: true,
+      ).toList();
+      expect(all, hasLength(6 + 1 + 450));
+    });
+
+    test('emits an error for a directory that does not exist', () async {
+      await expectLater(
+        DirPicker.streamEntries(location('missing')),
+        emitsError(isA<Exception>()),
+      );
+    });
+  });
 }
 
 Future<bool> _isReadable(Directory directory) async {

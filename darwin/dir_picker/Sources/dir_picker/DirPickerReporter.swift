@@ -5,8 +5,9 @@ import DartApiDl
 ///
 /// Message protocol:
 /// - Success:    [0, directoryUri]
-/// - Cancelled:  [1]
+/// - Cancelled:  [1] (also: no result, done)
 /// - Error:      [2, errorCode, errorMessage]
+/// - Batch:      [3, jsonArray], any number before the closing message
 final class DirPickerReporter {
     private let port: Int64
     private var isClosed = false
@@ -19,10 +20,6 @@ final class DirPickerReporter {
         sendStringSuccess(uri)
     }
 
-    func sendJsonSuccess(_ json: String) {
-        sendStringSuccess(json)
-    }
-
     func sendTokenSuccess(_ token: String) {
         sendStringSuccess(token)
     }
@@ -31,6 +28,19 @@ final class DirPickerReporter {
         guard !isClosed else { return }
         sendArray([createInt(0), createString(value)])
         isClosed = true
+    }
+
+    /// Sends a batch of entries. Unlike the other messages, it doesn't close
+    /// the reporter.
+    func sendBatch(_ entries: [[String: Any]]) throws {
+        guard !isClosed else { return }
+        let json = try JSONSerialization.data(withJSONObject: entries)
+        sendArray([createInt(3), createString(String(decoding: json, as: UTF8.self))])
+    }
+
+    /// Ends a stream of batches.
+    func sendDone() {
+        sendCancelled()
     }
 
     func sendCancelled() {

@@ -84,6 +84,28 @@ void main() {
     expect(platform.released, [token]);
   });
 
+  test('DirPicker.streamEntries forwards to the platform', () async {
+    final platform = _FakePlatform();
+    DirPickerPlatform.instance = platform;
+    final location = IOPickedLocation(Uri.directory('/tmp/example'));
+
+    final entries = await DirPicker.streamEntries(
+      location,
+      recursive: true,
+    ).toList();
+
+    expect(platform.location, same(location));
+    expect(platform.recursive, isTrue);
+    expect(entries.single.relativePath, 'child.txt');
+  });
+
+  test('streamEntries defaults to the result of listEntries', () async {
+    final platform = _PlatformWithoutPersistence();
+    final location = IOPickedLocation(Uri.directory('/tmp/example'));
+
+    expect(await platform.streamEntries(location).toList(), isEmpty);
+  });
+
   test('a platform without persistence throws UnimplementedError', () {
     final platform = _PlatformWithoutPersistence();
     final location = IOPickedLocation(Uri.directory('/tmp/example'));

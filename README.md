@@ -133,6 +133,14 @@ for (final entry in entries) {
 }
 ```
 
+For large trees, `streamEntries` emits the same entries while the folder is still being read, so the app can show progress or stop early. Cancelling the subscription stops the walk:
+
+```dart
+await for (final entry in DirPicker.streamEntries(location, recursive: true)) {
+  if (entry.name == 'pubspec.yaml') break; // stops reading the folder
+}
+```
+
 ### Open the picker where the user was last time
 
 ```dart
@@ -360,6 +368,17 @@ Behavior:
 - Lists only immediate children when `recursive` is `false`.
 - Lists all nested descendants when `recursive` is `true`.
 - Does not guarantee output ordering.
+
+### `DirPicker.streamEntries`
+
+```dart
+static Stream<FileSystemEntry> streamEntries(
+  PickedLocation location, {
+  bool recursive = false,
+})
+```
+
+Emits the same entries as `listEntries` while the directory is being read: in batches of 200 on Android, iOS and macOS, one directory at a time on web, and one by one on Windows and Linux. Cancelling the subscription stops the walk. A failure to read `location` itself is emitted as an error.
 
 ### `DirPicker.persist`, `DirPicker.restore`, `DirPicker.release`
 

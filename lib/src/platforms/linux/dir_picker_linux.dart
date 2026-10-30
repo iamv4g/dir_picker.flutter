@@ -237,17 +237,25 @@ class DirPickerLinux extends DirPickerPlatform {
   Future<List<FileSystemEntry>> listEntries(
     PickedLocation location, {
     bool recursive = false,
-  }) async {
+  }) => streamEntries(location, recursive: recursive).toList();
+
+  @override
+  Stream<FileSystemEntry> streamEntries(
+    PickedLocation location, {
+    bool recursive = false,
+  }) {
     final uri = location.uri;
     if (uri == null) {
-      throw ArgumentError.value(
-        location,
-        'location',
-        'listEntries requires a native picked location with a URI.',
+      return Stream.error(
+        ArgumentError.value(
+          location,
+          'location',
+          'listEntries requires a native picked location with a URI.',
+        ),
       );
     }
 
-    return listIoEntries(Directory.fromUri(uri), recursive: recursive);
+    return streamIoEntries(Directory.fromUri(uri), recursive: recursive);
   }
 
   @override

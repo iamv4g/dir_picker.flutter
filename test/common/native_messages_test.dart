@@ -56,8 +56,8 @@ void main() {
     }
   });
 
-  group('decodeListEntriesMessage', () {
-    test('decodes the entries JSON', () {
+  group('decodeEntriesStreamMessage', () {
+    test('decodes a batch of entries', () {
       final json = jsonEncode([
         {
           'name': 'a.txt',
@@ -69,7 +69,7 @@ void main() {
         },
       ]);
 
-      final entries = decodeListEntriesMessage([0, json]);
+      final entries = decodeEntriesStreamMessage([3, json])!;
 
       expect(entries.single.relativePath, 'a.txt');
       expect(entries.single.size, 2);
@@ -77,14 +77,26 @@ void main() {
 
     test('turns an error message into an exception', () {
       expect(
-        () => decodeListEntriesMessage([2, 'LIST_ERROR', 'Permission denied']),
+        () =>
+            decodeEntriesStreamMessage([2, 'LIST_ERROR', 'Permission denied']),
         _throwsExceptionWith('LIST_ERROR: Permission denied'),
       );
     });
 
-    test('rejects a cancellation, which listEntries never sends', () {
+    test('decodes the end of the stream as null', () {
+      expect(decodeEntriesStreamMessage([1]), isNull);
+    });
+
+    test('rejects a malformed batch', () {
       expect(
-        () => decodeListEntriesMessage([1]),
+        () => decodeEntriesStreamMessage([3]),
+        _throwsStateError('Invalid message format'),
+      );
+    });
+
+    test('rejects a pick result, which the stream never sends', () {
+      expect(
+        () => decodeEntriesStreamMessage([0, '[]']),
         _throwsStateError('Invalid message format'),
       );
     });
