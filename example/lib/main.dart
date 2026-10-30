@@ -41,8 +41,24 @@ class _DirPickerHomePageState extends State<DirPickerHomePage> {
     if (!kIsWeb) _restoreSavedFolder();
   }
 
-  /// Reopens the folder picked in an earlier run, without asking again.
+  /// Takes the folder from a pick that finished after Android destroyed the
+  /// Activity, or else reopens the folder remembered in an earlier run.
   Future<void> _restoreSavedFolder() async {
+    final lost = await DirPicker.retrieveLostPick();
+    if (lost != null) {
+      await _rememberFolder(lost);
+      if (!mounted) return;
+      setState(() {
+        _pickedLocation = lost;
+        _result = 'Recovered: $lost';
+      });
+      return;
+    }
+    await _reopenRememberedFolder();
+  }
+
+  /// Reopens the folder picked in an earlier run, without asking again.
+  Future<void> _reopenRememberedFolder() async {
     final prefs = SharedPreferencesAsync();
     final token = await prefs.getString(_tokenKey);
     if (token == null) return;
@@ -69,7 +85,8 @@ class _DirPickerHomePageState extends State<DirPickerHomePage> {
   Future<void> _rememberFolder(PickedLocation location) async {
     final prefs = SharedPreferencesAsync();
     final token = await DirPicker.persist(location);
-    if (_token case final previous? when previous != token) {
+    final previous = await prefs.getString(_tokenKey);
+    if (previous != null && previous != token) {
       await DirPicker.release(previous);
     }
     await prefs.setString(_tokenKey, token);

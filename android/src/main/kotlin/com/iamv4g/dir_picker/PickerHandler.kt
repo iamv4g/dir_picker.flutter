@@ -8,7 +8,7 @@ import android.net.Uri
  * Connects [DirPicker] (called from Dart via JNI) to [DirPickerPlugin]
  * which has Activity access via ActivityAware.
  */
-fun interface PickerHandler {
+interface PickerHandler {
     /**
      * Shows the system directory picker and returns the selected URI string,
      * or null if the user cancelled.
@@ -21,4 +21,10 @@ fun interface PickerHandler {
      * @return Selected directory URI string, or null if cancelled
      */
     suspend fun pick(shouldPersist: Boolean, initialUri: Uri?): String?
+
+    /**
+     * Returns once the Activity is resumed. Android delivers the result of a
+     * picker that outlived the previous Activity just before `onResume`.
+     */
+    suspend fun awaitResumed()
 }

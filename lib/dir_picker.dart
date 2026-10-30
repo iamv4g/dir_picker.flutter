@@ -90,6 +90,27 @@ class DirPicker {
     }
   }
 
+  /// Returns the folder from a [pick] whose result came back after Android
+  /// destroyed the app's Activity, or `null` when there is none.
+  ///
+  /// Android can destroy the Activity while the system picker is open: under
+  /// memory pressure, with "Don't keep activities" on, or on a configuration
+  /// change the Activity doesn't handle. With the default `FlutterActivity`
+  /// the engine goes with it, so the [pick] that opened the picker never
+  /// completes and the app restarts. Call this at startup, for example in
+  /// `initState` of the first screen, to get the folder the user picked:
+  ///
+  /// ```dart
+  /// final lost = await DirPicker.retrieveLostPick();
+  /// if (lost != null) openWorkspace(lost);
+  /// ```
+  ///
+  /// Each lost pick is returned once. [AndroidOptions.shouldPersist] isn't
+  /// applied to it, so call [persist] if the app needs to keep access. Other
+  /// platforms always return `null`.
+  static Future<PickedLocation?> retrieveLostPick() =>
+      DirPickerPlatform.instance.retrieveLostPick();
+
   /// Lists entries inside a previously picked directory.
   ///
   /// Returns a flat list of descendants under [location]. The picked root
