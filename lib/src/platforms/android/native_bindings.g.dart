@@ -263,6 +263,40 @@ extension DirPicker$Companion$$Methods on DirPicker$Companion {
     ).check();
   }
 
+  static final _id_retrieveLostPick = DirPicker$Companion._class
+      .instanceMethodId(
+        r'retrieveLostPick',
+        r'(Lcom/iamv4g/dir_picker/PickerCallback;)V',
+      );
+
+  static final _retrieveLostPick =
+      jni$_.ProtectedJniExtensions.lookup<
+            jni$_.NativeFunction<
+              jni$_.JThrowablePtr Function(
+                jni$_.Pointer<jni$_.Void>,
+                jni$_.JMethodIDPtr,
+                jni$_.VarArgs<(jni$_.Pointer<jni$_.Void>,)>,
+              )
+            >
+          >('globalEnv_CallVoidMethod')
+          .asFunction<
+            jni$_.JThrowablePtr Function(
+              jni$_.Pointer<jni$_.Void>,
+              jni$_.JMethodIDPtr,
+              jni$_.Pointer<jni$_.Void>,
+            )
+          >();
+
+  /// from: `public fun retrieveLostPick(callback: com.iamv4g.dir_picker.PickerCallback): kotlin.Unit`
+  void retrieveLostPick(PickerCallback pickerCallback) {
+    final _$pickerCallback = pickerCallback.reference;
+    _retrieveLostPick(
+      reference.pointer,
+      _id_retrieveLostPick.pointer,
+      _$pickerCallback.pointer,
+    ).check();
+  }
+
   static final _id_streamEntries = DirPicker$Companion._class.instanceMethodId(
     r'streamEntries',
     r'(Ljava/lang/String;ZLcom/iamv4g/dir_picker/EntriesStreamCallback;)Lcom/iamv4g/dir_picker/EntriesStream;',
@@ -506,6 +540,39 @@ extension type DirPicker._(jni$_.JObject _$this) implements jni$_.JObject {
       _id_pick.pointer,
       z ? 1 : 0,
       _$string.pointer,
+      _$pickerCallback.pointer,
+    ).check();
+  }
+
+  static final _id_retrieveLostPick = _class.staticMethodId(
+    r'retrieveLostPick',
+    r'(Lcom/iamv4g/dir_picker/PickerCallback;)V',
+  );
+
+  static final _retrieveLostPick =
+      jni$_.ProtectedJniExtensions.lookup<
+            jni$_.NativeFunction<
+              jni$_.JThrowablePtr Function(
+                jni$_.Pointer<jni$_.Void>,
+                jni$_.JMethodIDPtr,
+                jni$_.VarArgs<(jni$_.Pointer<jni$_.Void>,)>,
+              )
+            >
+          >('globalEnv_CallStaticVoidMethod')
+          .asFunction<
+            jni$_.JThrowablePtr Function(
+              jni$_.Pointer<jni$_.Void>,
+              jni$_.JMethodIDPtr,
+              jni$_.Pointer<jni$_.Void>,
+            )
+          >();
+
+  /// from: `static public final void retrieveLostPick(com.iamv4g.dir_picker.PickerCallback pickerCallback)`
+  static void retrieveLostPick(PickerCallback pickerCallback) {
+    final _$pickerCallback = pickerCallback.reference;
+    _retrieveLostPick(
+      _class.reference.pointer,
+      _id_retrieveLostPick.pointer,
       _$pickerCallback.pointer,
     ).check();
   }

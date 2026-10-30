@@ -99,6 +99,19 @@ void main() {
     expect(entries.single.relativePath, 'child.txt');
   });
 
+  test(
+    'retrieveLostPick forwards to the platform, which defaults to null',
+    () async {
+      final platform = _FakePlatform();
+      DirPickerPlatform.instance = platform;
+      final lost = IOPickedLocation(Uri.parse('content://com.example/tree/1'));
+      platform.lostPick = lost;
+
+      expect(await DirPicker.retrieveLostPick(), lost);
+      expect(await _PlatformWithoutPersistence().retrieveLostPick(), isNull);
+    },
+  );
+
   test('streamEntries defaults to the result of listEntries', () async {
     final platform = _PlatformWithoutPersistence();
     final location = IOPickedLocation(Uri.directory('/tmp/example'));
@@ -213,6 +226,10 @@ class _FakePlatform extends DirPickerPlatform {
   }
 
   final released = <String>[];
+  PickedLocation? lostPick;
+
+  @override
+  Future<PickedLocation?> retrieveLostPick() async => lostPick;
 
   @override
   Future<String> persist(PickedLocation location) async =>

@@ -28,23 +28,7 @@ class DirPickerAndroid extends DirPickerPlatform {
         : AndroidOptions();
     final completer = Completer<PickedLocation?>();
 
-    final callback = native.PickerCallback.implement(
-      native.$PickerCallback(
-        onSuccess: (jUri) {
-          final uri = Uri.parse(jUri.toDartString());
-          jUri.release();
-          completer.complete(IOPickedLocation(uri));
-        },
-        onCancelled: () => completer.complete(null),
-        onError: (jCode, jMessage) {
-          final code = jCode.toDartString();
-          final msg = jMessage.toDartString();
-          jCode.release();
-          jMessage.release();
-          completer.completeError(Exception('$code: $msg'));
-        },
-      ),
-    );
+    final callback = _pickerCallback(completer);
 
     // Only a content:// location from an earlier pick can be opened.
     final initialUri = switch (initialDirectory?.uri) {
@@ -60,6 +44,37 @@ class DirPickerAndroid extends DirPickerPlatform {
     }
 
     return completer.future.whenComplete(() => callback.release());
+  }
+
+  /// A callback that completes [completer] with the picked location, `null`
+  /// for a cancel, or an `Exception('$code: $message')`.
+  static native.PickerCallback _pickerCallback(
+    Completer<PickedLocation?> completer,
+  ) => native.PickerCallback.implement(
+    native.$PickerCallback(
+      onSuccess: (jUri) {
+        final uri = Uri.parse(jUri.toDartString());
+        jUri.release();
+        completer.complete(IOPickedLocation(uri));
+      },
+      onCancelled: () => completer.complete(null),
+      onError: (jCode, jMessage) {
+        final code = jCode.toDartString();
+        final msg = jMessage.toDartString();
+        jCode.release();
+        jMessage.release();
+        completer.completeError(Exception('$code: $msg'));
+      },
+    ),
+  );
+
+  @override
+  Future<PickedLocation?> retrieveLostPick() {
+    final completer = Completer<PickedLocation?>();
+    final callback = _pickerCallback(completer);
+
+    native.DirPicker.retrieveLostPick(callback);
+    return completer.future.whenComplete(callback.release);
   }
 
   @override

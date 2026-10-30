@@ -46,6 +46,11 @@ abstract class DirPickerPlatform {
     listEntries(location, recursive: recursive),
   ).expand((entries) => entries);
 
+  /// Returns a pick that finished after the app's Activity was destroyed.
+  /// See `DirPicker.retrieveLostPick`. Defaults to `null`, which is right for
+  /// every platform but Android.
+  Future<PickedLocation?> retrieveLostPick() async => null;
+
   /// Keeps access to [location] across app restarts. See `DirPicker.persist`.
   ///
   /// Not abstract, so implementations written before it was added still
