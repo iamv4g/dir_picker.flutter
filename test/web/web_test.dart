@@ -136,12 +136,19 @@ void main() {
       expect(await DirPickerWeb().pick(), isNull);
     });
 
-    test('rethrows other errors', () async {
+    test('reports other errors as PICKER_ERROR', () async {
       stubPicker(
         "Promise.reject(new DOMException('Not allowed.', 'SecurityError'))",
       );
 
-      await expectLater(DirPickerWeb().pick(), throwsA(anything));
+      await expectLater(
+        DirPickerWeb().pick(),
+        throwsA(
+          isA<DirPickerException>()
+              .having((e) => e.code, 'code', DirPickerException.pickerError)
+              .having((e) => e.message, 'message', contains('SecurityError')),
+        ),
+      );
     });
 
     test('throws UnsupportedError without the File System Access API', () {
@@ -198,6 +205,15 @@ void main() {
         throwsA(isA<ArgumentError>()),
       );
     });
+
+    test('reports a deleted directory as LIST_ERROR', () async {
+      final gone = await _deletedDirectory(root);
+
+      await expectLater(
+        DirPickerWeb().listEntries(WebPickedLocation(gone)),
+        throwsA(_listError),
+      );
+    });
   });
 
   group('DirPickerWeb.streamEntries', () {
@@ -241,7 +257,36 @@ void main() {
         emitsError(isA<ArgumentError>()),
       );
     });
+
+    test('reports a deleted directory as LIST_ERROR', () async {
+      final gone = await _deletedDirectory(root);
+
+      await expectLater(
+        DirPickerWeb().streamEntries(WebPickedLocation(gone)),
+        emitsError(_listError),
+      );
+    });
   });
+}
+
+final _listError = isA<DirPickerException>().having(
+  (e) => e.code,
+  'code',
+  DirPickerException.listError,
+);
+
+/// Returns the handle of a subdirectory of [parent] that was deleted.
+Future<web.FileSystemDirectoryHandle> _deletedDirectory(
+  web.FileSystemDirectoryHandle parent,
+) async {
+  final gone = await parent
+      .getDirectoryHandle(
+        'gone',
+        web.FileSystemGetDirectoryOptions(create: true),
+      )
+      .toDart;
+  await parent.removeEntry('gone').toDart;
+  return gone;
 }
 
 Future<void> _writeFile(

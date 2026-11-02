@@ -185,11 +185,11 @@ void main() {
     );
   });
 
-  test('throws for a directory that does not exist', () async {
+  test('throws LIST_ERROR for a directory that does not exist', () async {
     for (final recursive in [false, true]) {
       await expectLater(
         DirPicker.listEntries(location('missing'), recursive: recursive),
-        throwsA(isA<Exception>()),
+        throwsA(_listError),
         reason: 'recursive: $recursive',
       );
     }
@@ -236,14 +236,20 @@ void main() {
       expect(all, hasLength(6 + 1 + 450));
     });
 
-    test('emits an error for a directory that does not exist', () async {
+    test('emits LIST_ERROR for a directory that does not exist', () async {
       await expectLater(
         DirPicker.streamEntries(location('missing')),
-        emitsError(isA<Exception>()),
+        emitsError(_listError),
       );
     });
   });
 }
+
+final _listError = isA<DirPickerException>().having(
+  (e) => e.code,
+  'code',
+  DirPickerException.listError,
+);
 
 Future<bool> _isReadable(Directory directory) async {
   try {

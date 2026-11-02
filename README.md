@@ -297,7 +297,34 @@ Passed to `window.showDirectoryPicker()`.
 | `WebPickedLocation`    | Web — use `.handle` (`FileSystemDirectoryHandle`) to access directory contents. `.uri` is `null`. |
 | `null`                 | The user cancelled.                                                                               |
 
-Only one picker can be open at a time. Calling `pick()` again before the previous call completes throws an `Exception` whose message starts with `ALREADY_ACTIVE`.
+Only one picker can be open at a time. Calling `pick()` again before the previous call completes throws a `DirPickerException` with code `ALREADY_ACTIVE`.
+
+### Errors
+
+Failures from the platform throw a `DirPickerException`. Check its `code` against the constants on the class; `message` is for logs and its wording may change:
+
+```dart
+try {
+  final location = await DirPicker.pick();
+} on DirPickerException catch (e) {
+  if (e.code == DirPickerException.alreadyActive) return;
+  print('Picker failed: $e'); // DirPickerException(PICKER_ERROR): …
+}
+```
+
+| Code | Constant | When |
+|------|----------|------|
+| `ALREADY_ACTIVE` | `alreadyActive` | `pick()` while another pick is open. |
+| `PICKER_ERROR` | `pickerError` | The picker couldn't be shown or failed: Android launch, zenity/kdialog exiting with an error, a web error other than cancelling. |
+| `PLATFORM_ERROR` | `platformError` | A platform call failed: a Windows COM call (with its `HRESULT`), no view controller on iOS. |
+| `NO_ACTIVITY` | `noActivity` | Android: no Activity attached to show the picker from. |
+| `NO_CONTEXT` | `noContext` | Android: no application context yet. |
+| `INVALID_URI` | `invalidUri` | The location's URI can't be opened as a directory. |
+| `LIST_ERROR` | `listError` | `listEntries`/`streamEntries` couldn't read the picked directory itself (deleted, not a directory, access lost). |
+| `PERSIST_ERROR` | `persistError` | `persist` couldn't keep access. |
+| `RESTORE_ERROR`, `RELEASE_ERROR`, `PERSISTED_TOKENS_ERROR` | `restoreError`, `releaseError`, `persistedTokensError` | Android: reading or changing the persisted permissions failed. |
+
+Calling the API wrongly, such as passing a web location on Android or calling `persist` on web, throws `ArgumentError` or `UnsupportedError` instead.
 
 ### Native Mechanisms
 
@@ -426,6 +453,17 @@ static Future<PickedLocation?> retrieveLostPick()
 ```
 
 Returns the folder from a `pick()` whose result came back after Android destroyed the app's Activity, once, or `null`. Always `null` on other platforms. See [Android: get back a pick lost to a destroyed Activity](#android-get-back-a-pick-lost-to-a-destroyed-activity).
+
+### `DirPickerException`
+
+```dart
+class DirPickerException implements Exception {
+  final String code;
+  final String? message;
+}
+```
+
+Thrown for platform failures. See [Errors](#errors) for the codes.
 
 ### `PickedLocation`
 

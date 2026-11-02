@@ -1,3 +1,4 @@
+import '../../dir_picker_exception.dart';
 import '../../location/file_system_entry.dart';
 import '../../location/picked_location.dart';
 import '../entries_json.dart';
@@ -35,7 +36,7 @@ List<FileSystemEntry>? decodeEntriesStreamMessage(Object? message) {
 }
 
 Object _decodeFailure(Object? message) => switch (message) {
-  [2, final String code, final String msg] => Exception('$code: $msg'),
+  [2, final String code, final String msg] => DirPickerException(code, msg),
   [0 || 1 || 2 || 3, ...] => StateError('Invalid message format'),
   [final int type, ...] => StateError('Unknown message type: $type'),
   _ => StateError('Invalid message format'),

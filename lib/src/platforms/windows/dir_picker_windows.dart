@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 
+import '../../dir_picker_exception.dart';
 import '../../location/file_system_entry.dart';
 import '../../location/picked_location.dart';
 import '../../options/pick_options.dart';
@@ -473,7 +474,10 @@ class DirPickerWindows extends DirPickerPlatform {
   static void _check(int hr, String step) {
     if (hr >= 0) return;
     final code = hr.toUnsigned(32).toRadixString(16).toUpperCase();
-    throw Exception('PLATFORM_ERROR: $step failed with HRESULT 0x$code');
+    throw DirPickerException(
+      DirPickerException.platformError,
+      '$step failed with HRESULT 0x$code',
+    );
   }
 
   static void _release(Pointer<Void> comObj) {

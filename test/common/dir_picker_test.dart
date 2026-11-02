@@ -29,10 +29,10 @@ void main() {
       await expectLater(
         DirPicker.pick(),
         throwsA(
-          isA<Exception>().having(
-            (e) => e.toString(),
-            'message',
-            contains('ALREADY_ACTIVE'),
+          isA<DirPickerException>().having(
+            (e) => e.code,
+            'code',
+            DirPickerException.alreadyActive,
           ),
         ),
       );

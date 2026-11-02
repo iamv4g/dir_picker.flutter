@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:dbus/dbus.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 
+import '../../dir_picker_exception.dart';
 import '../../location/file_system_entry.dart';
 import '../../location/picked_location.dart';
 import '../../options/pick_options.dart';
@@ -28,7 +29,7 @@ class _PickerUnavailableException implements Exception {}
 /// Each method throws [_PickerUnavailableException] if the tool is not present,
 /// allowing the next fallback to be tried. A null return always means the user
 /// cancelled — the fallback chain stops immediately. zenity or kdialog
-/// failing with an exit code other than 1 throws `Exception('PICKER_ERROR: …')`. If no method is available,
+/// failing with an exit code other than 1 throws a [DirPickerException] with [DirPickerException.pickerError]. If no method is available,
 /// [pick] throws an [UnsupportedError].
 class DirPickerLinux extends DirPickerPlatform {
   DirPickerLinux() : this.withBackends();
@@ -224,8 +225,9 @@ class DirPickerLinux extends DirPickerPlatform {
     if (result.exitCode == 1) return null;
     if (result.exitCode != 0) {
       final stderr = (result.stderr as String).trim();
-      throw Exception(
-        'PICKER_ERROR: $tool exited with code ${result.exitCode}'
+      throw DirPickerException(
+        DirPickerException.pickerError,
+        '$tool exited with code ${result.exitCode}'
         '${stderr.isEmpty ? '' : ': $stderr'}',
       );
     }
