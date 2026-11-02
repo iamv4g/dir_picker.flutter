@@ -172,7 +172,7 @@ if (lost != null) {
 }
 ```
 
-Each lost pick is returned once. `shouldPersist` isn't applied to it, so call `DirPicker.persist` if you need to keep access.
+Each lost pick is returned once. Call `DirPicker.persist` on it if you need to keep access.
 
 ### Keep access to a folder after the app restarts
 
@@ -216,17 +216,13 @@ for (final token in await DirPicker.persistedTokens()) {
 
 It lists every folder permission the app holds, including ones taken by other code in the app, so only release what you know is yours. Other platforms keep nothing for the app (a bookmark is just the token you saved), so they return an empty list.
 
-`PickOptions.android(shouldPersist: true)` still takes the permission during `pick`. `persist` does the same afterwards, and works on every platform except web.
+`PickOptions.android(shouldPersist: true)` is deprecated and will be removed in 1.0.0. It takes the same permission during `pick`, but gives no token; call `persist` on the result instead.
 
 ## Platform Options
 
 Pass a `PickOptions` to `DirPicker.pick()` to customize the dialog for the current platform:
 
 ```dart
-final location = await DirPicker.pick(
-  options: PickOptions.android(shouldPersist: true),
-);
-
 final location = await DirPicker.pick(
   options: PickOptions.macos(acceptLabel: 'Choose', message: 'Select a project folder'),
 );
@@ -250,11 +246,22 @@ final location = await DirPicker.pick(
 
 Options for other platforms are silently ignored — only the one matching the current platform is applied.
 
-### AndroidOptions
+### AndroidOptions (deprecated)
 
-| Parameter       | Type   | Default | Description                                                                                                    |
-|-----------------|--------|---------|----------------------------------------------------------------------------------------------------------------|
-| `shouldPersist` | `bool` | `false` | Take persistable URI permission so the app retains access across reboots (SAF `takePersistableUriPermission`). |
+`PickOptions.android()` and `AndroidOptions` are deprecated and will be removed in 1.0.0. Their only option, `shouldPersist`, takes the same permission as [`DirPicker.persist`](#keep-access-to-a-folder-after-the-app-restarts), which also returns the token to restore it:
+
+```dart
+// Before
+final location = await DirPicker.pick(
+  options: PickOptions.android(shouldPersist: true),
+);
+
+// After
+final location = await DirPicker.pick();
+if (location != null) {
+  final token = await DirPicker.persist(location); // save it for restore()
+}
+```
 
 ### MacosOptions
 
@@ -380,15 +387,17 @@ final location = await DirPicker.pick(
 );
 ```
 
-### Android — enable persistent permission
+### Keep access after a restart
 
 ```dart
-final location = await DirPicker.pick(
-  options: PickOptions.android(shouldPersist: true),
-);
+final location = await DirPicker.pick();
+if (location != null) {
+  final token = await DirPicker.persist(location);
+  // Save the token; DirPicker.restore(token) gives the folder back later.
+}
 ```
 
-To keep access on every platform, use [`DirPicker.persist`](#keep-access-to-a-folder-after-the-app-restarts) instead.
+See [Keep access to a folder after the app restarts](#keep-access-to-a-folder-after-the-app-restarts).
 
 ## API Reference
 
@@ -493,7 +502,7 @@ Platform-specific options passed to `DirPicker.pick()`.
 
 | Factory                 | Platform | Purpose                                                        |
 |-------------------------|----------|----------------------------------------------------------------|
-| `PickOptions.android()` | Android  | Controls whether SAF URI permission should be persisted.       |
+| `PickOptions.android()` | Android  | Deprecated, removed in 1.0.0. Use `DirPicker.persist` instead.  |
 | `PickOptions.macos()`   | macOS    | Customizes the open panel accept label and message.            |
 | `PickOptions.linux()`   | Linux    | Customizes dialog title and accept label.                      |
 | `PickOptions.windows()` | Windows  | Customizes dialog title and accept label.                      |

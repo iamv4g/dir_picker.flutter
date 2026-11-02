@@ -48,8 +48,8 @@ class DirPicker {
   /// ## Platform behavior
   ///
   /// - **Android**: Uses the Storage Access Framework (`ACTION_OPEN_DOCUMENT_TREE`).
-  ///   No manifest permissions required. Set [AndroidOptions.shouldPersist] to
-  ///   retain access across reboots via persistable URI permission.
+  ///   No manifest permissions required. Call [persist] on the result to
+  ///   keep access across restarts.
   ///
   /// - **iOS**: Uses `UIDocumentPickerViewController` to let the user pick a folder.
   ///
@@ -111,9 +111,8 @@ class DirPicker {
   /// if (lost != null) openWorkspace(lost);
   /// ```
   ///
-  /// Each lost pick is returned once. [AndroidOptions.shouldPersist] isn't
-  /// applied to it, so call [persist] if the app needs to keep access. Other
-  /// platforms always return `null`.
+  /// Each lost pick is returned once. Call [persist] on it if the app needs
+  /// to keep access. Other platforms always return `null`.
   static Future<PickedLocation?> retrieveLostPick() =>
       DirPickerPlatform.instance.retrieveLostPick();
 
