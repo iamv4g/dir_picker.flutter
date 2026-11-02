@@ -120,9 +120,6 @@ class _DirPickerHomePageState extends State<DirPickerHomePage> {
       // Reopen where the user picked last time, where the platform allows.
       initialDirectory: _pickedLocation,
       options: switch (defaultTargetPlatform) {
-        TargetPlatform.android => const PickOptions.android(
-          shouldPersist: false,
-        ),
         TargetPlatform.macOS => const PickOptions.macos(
           acceptLabel: 'Select Directory',
           message: 'Please choose a directory to continue',

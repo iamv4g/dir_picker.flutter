@@ -24,9 +24,8 @@ class DirPickerAndroid extends DirPickerPlatform {
     PickOptions? options,
     PickedLocation? initialDirectory,
   }) {
-    final androidOptions = options is AndroidOptions
-        ? options
-        : AndroidOptions();
+    // Still honored while deprecated; removed in 1.0.0 (#61).
+    final shouldPersist = options is AndroidOptions && options.shouldPersist;
     final completer = Completer<PickedLocation?>();
 
     final callback = _pickerCallback(completer);
@@ -39,7 +38,7 @@ class DirPickerAndroid extends DirPickerPlatform {
 
     // Non-blocking: Kotlin launches coroutine internally
     try {
-      native.DirPicker.pick(androidOptions.shouldPersist, initialUri, callback);
+      native.DirPicker.pick(shouldPersist, initialUri, callback);
     } finally {
       initialUri?.release();
     }
