@@ -1,3 +1,8 @@
+## 0.7.0
+
+* Android: add `DirPicker.persistedTokens()`, which lists the folder permissions the system keeps for the app, so it can `release` the ones it no longer has a token for and stay under Android's per-app limit. Other platforms keep no such permissions and return an empty list (#32)
+* `DirPickerPlatform` gains `persistedTokens`, which defaults to an empty list
+
 ## 0.6.0
 
 * **Breaking:** for custom `DirPickerPlatform` implementations only, `pick()` takes a new `initialDirectory` parameter. Apps that call `DirPicker` are not affected
