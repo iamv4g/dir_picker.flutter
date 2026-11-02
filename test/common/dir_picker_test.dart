@@ -112,6 +112,20 @@ void main() {
     },
   );
 
+  test(
+    'persistedTokens forwards to the platform, which defaults to empty',
+    () async {
+      final platform = _FakePlatform();
+      DirPickerPlatform.instance = platform;
+      platform.persisted = ['content://com.example/tree/1'];
+
+      expect(await DirPicker.persistedTokens(), [
+        'content://com.example/tree/1',
+      ]);
+      expect(await _PlatformWithoutPersistence().persistedTokens(), isEmpty);
+    },
+  );
+
   test('streamEntries defaults to the result of listEntries', () async {
     final platform = _PlatformWithoutPersistence();
     final location = IOPickedLocation(Uri.directory('/tmp/example'));
@@ -241,6 +255,11 @@ class _FakePlatform extends DirPickerPlatform {
 
   @override
   Future<void> release(String token) async => released.add(token);
+
+  List<String> persisted = [];
+
+  @override
+  Future<List<String>> persistedTokens() async => persisted;
 }
 
 /// A platform written before persistence was added.

@@ -197,13 +197,24 @@ await prefs.remove('workspace');
 
 | Platform | Token | What `persist` keeps |
 |----------|-------|----------------------|
-| Android  | The `content://` URI | A persistable URI permission. Android keeps at most 128 per app (512 from Android 11) and drops the oldest, so `release` folders you no longer need. |
+| Android  | The `content://` URI | A persistable URI permission. Android keeps at most 128 per app (512 from Android 11) and drops the oldest, so `release` folders you no longer need (see below). |
 | iOS      | Bookmark data (base64) | A bookmark. `restore` opens access again until `release` or the app exits. |
 | macOS    | Security-scoped bookmark data (base64) | A security-scoped bookmark. Needs the same `com.apple.security.files.user-selected.read-write` entitlement as `pick`. |
 | Windows, Linux | The `file://` URI | Nothing: the path stays usable. `restore` returns `null` once the folder is gone. |
 | Web      | – | Not supported (`UnsupportedError`). Store `WebPickedLocation.handle` in IndexedDB instead. |
 
 A bookmark follows the folder when it's moved or renamed, but the token goes stale. Call `persist` on the restored location and save the new token, as the example app does.
+
+On Android the system keeps the permissions, so one whose token the app never saved (say the app was killed right after `persist`) still counts toward the limit. `persistedTokens` lists them, so the app can release the ones it doesn't know:
+
+```dart
+final saved = await prefs.getString('workspace');
+for (final token in await DirPicker.persistedTokens()) {
+  if (token != saved) await DirPicker.release(token);
+}
+```
+
+It lists every folder permission the app holds, including ones taken by other code in the app, so only release what you know is yours. Other platforms keep nothing for the app (a bookmark is just the token you saved), so they return an empty list.
 
 `PickOptions.android(shouldPersist: true)` still takes the permission during `pick`. `persist` does the same afterwards, and works on every platform except web.
 
@@ -397,15 +408,16 @@ static Stream<FileSystemEntry> streamEntries(
 
 Emits the same entries as `listEntries` while the directory is being read: in batches of 200 on Android, iOS and macOS, one directory at a time on web, and one by one on Windows and Linux. Cancelling the subscription stops the walk. A failure to read `location` itself is emitted as an error.
 
-### `DirPicker.persist`, `DirPicker.restore`, `DirPicker.release`
+### `DirPicker.persist`, `DirPicker.restore`, `DirPicker.release`, `DirPicker.persistedTokens`
 
 ```dart
 static Future<String> persist(PickedLocation location)
 static Future<PickedLocation?> restore(String token)
 static Future<void> release(String token)
+static Future<List<String>> persistedTokens()
 ```
 
-`persist` keeps access to a picked or restored location and returns a token to save. `restore` returns the location with access restored, or `null` when the token no longer gives access. `release` gives up that access. See [Keep access to a folder after the app restarts](#keep-access-to-a-folder-after-the-app-restarts). All three throw `UnsupportedError` on web.
+`persist` keeps access to a picked or restored location and returns a token to save. `restore` returns the location with access restored, or `null` when the token no longer gives access. `release` gives up that access. `persistedTokens` returns the tokens of the folder permissions Android keeps for the app, and an empty list on other platforms. See [Keep access to a folder after the app restarts](#keep-access-to-a-folder-after-the-app-restarts). `persist`, `restore` and `release` throw `UnsupportedError` on web.
 
 ### `DirPicker.retrieveLostPick`
 

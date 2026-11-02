@@ -44,6 +44,7 @@ class _DirPickerHomePageState extends State<DirPickerHomePage> {
   /// Takes the folder from a pick that finished after Android destroyed the
   /// Activity, or else reopens the folder remembered in an earlier run.
   Future<void> _restoreSavedFolder() async {
+    await _releaseUnsavedFolders();
     final lost = await DirPicker.retrieveLostPick();
     if (lost != null) {
       await _rememberFolder(lost);
@@ -55,6 +56,16 @@ class _DirPickerHomePageState extends State<DirPickerHomePage> {
       return;
     }
     await _reopenRememberedFolder();
+  }
+
+  /// Releases the folder permissions the system still holds for tokens this
+  /// app hasn't saved, such as one persisted right before the app was killed.
+  /// Only Android keeps such permissions; elsewhere the list is empty.
+  Future<void> _releaseUnsavedFolders() async {
+    final saved = await SharedPreferencesAsync().getString(_tokenKey);
+    for (final token in await DirPicker.persistedTokens()) {
+      if (token != saved) await DirPicker.release(token);
+    }
   }
 
   /// Reopens the folder picked in an earlier run, without asking again.

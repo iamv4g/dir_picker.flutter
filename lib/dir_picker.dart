@@ -202,4 +202,30 @@ class DirPicker {
   /// Throws [UnsupportedError] on web.
   static Future<void> release(String token) =>
       DirPickerPlatform.instance.release(token);
+
+  /// Returns the tokens of the folders the system keeps access to for the
+  /// app, as [persist] returns them, so the app can [release] the ones it no
+  /// longer has saved.
+  ///
+  /// Only Android keeps such a list: it holds the persisted permissions, at
+  /// most 128 per app (512 from Android 11), and drops the oldest when the
+  /// app takes more. A token the app didn't save, for example because the
+  /// app was killed right after [persist], still takes a place until it is
+  /// released:
+  ///
+  /// ```dart
+  /// final saved = await prefs.getString('workspace');
+  /// for (final token in await DirPicker.persistedTokens()) {
+  ///   if (token != saved) await DirPicker.release(token);
+  /// }
+  /// ```
+  ///
+  /// The list has every folder (SAF tree) permission the app holds, including
+  /// ones taken by other code in the app, so release only tokens you know are
+  /// yours. Permissions for single documents aren't listed.
+  ///
+  /// Other platforms keep nothing for the app (a bookmark on iOS and macOS is
+  /// only the token the app saved), so they return an empty list.
+  static Future<List<String>> persistedTokens() =>
+      DirPickerPlatform.instance.persistedTokens();
 }
