@@ -194,6 +194,26 @@ class DirPickerAndroid extends DirPickerPlatform {
     );
   }
 
+  @override
+  Future<List<String>> persistedTokens() async {
+    final JArray<JString?> uris;
+    try {
+      uris = native.DirPicker.persistedTreeUris();
+    } on JThrowable catch (e) {
+      final message = e.message;
+      e.release();
+      throw Exception('PERSISTED_TOKENS_ERROR: $message');
+    }
+    try {
+      return [
+        for (var i = 0; i < uris.length; i++)
+          uris[i]!.toDartString(releaseOriginal: true),
+      ];
+    } finally {
+      uris.release();
+    }
+  }
+
   /// Calls [method] with [uri] as a Java string, and turns a Java exception
   /// into an `Exception('$errorCode: …')`.
   static T _callWithUri<T>(

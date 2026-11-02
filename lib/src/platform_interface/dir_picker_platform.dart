@@ -67,4 +67,9 @@ abstract class DirPickerPlatform {
   /// `DirPicker.release`.
   Future<void> release(String token) async =>
       throw UnimplementedError('release() has not been implemented.');
+
+  /// The tokens of the folders the system keeps access to for the app. See
+  /// `DirPicker.persistedTokens`. Defaults to an empty list, which is right
+  /// for every platform but Android.
+  Future<List<String>> persistedTokens() async => const [];
 }

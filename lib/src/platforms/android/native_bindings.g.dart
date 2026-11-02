@@ -438,6 +438,34 @@ extension DirPicker$Companion$$Methods on DirPicker$Companion {
       _$string.pointer,
     ).check();
   }
+
+  static final _id_persistedTreeUris = DirPicker$Companion._class
+      .instanceMethodId(r'persistedTreeUris', r'()[Ljava/lang/String;');
+
+  static final _persistedTreeUris =
+      jni$_.ProtectedJniExtensions.lookup<
+            jni$_.NativeFunction<
+              jni$_.JniResult Function(
+                jni$_.Pointer<jni$_.Void>,
+                jni$_.JMethodIDPtr,
+              )
+            >
+          >('globalEnv_CallObjectMethod')
+          .asFunction<
+            jni$_.JniResult Function(
+              jni$_.Pointer<jni$_.Void>,
+              jni$_.JMethodIDPtr,
+            )
+          >();
+
+  /// from: `public fun persistedTreeUris(): kotlin.Array<kotlin.String>`
+  /// The returned object must be released after use, by calling the [release] method.
+  jni$_.JArray<jni$_.JString> persistedTreeUris() {
+    return _persistedTreeUris(
+      reference.pointer,
+      _id_persistedTreeUris.pointer,
+    ).object<jni$_.JArray<jni$_.JString>>();
+  }
 }
 
 final class $DirPicker$Companion$Type$
@@ -723,6 +751,36 @@ extension type DirPicker._(jni$_.JObject _$this) implements jni$_.JObject {
       _id_releasePersisted.pointer,
       _$string.pointer,
     ).check();
+  }
+
+  static final _id_persistedTreeUris = _class.staticMethodId(
+    r'persistedTreeUris',
+    r'()[Ljava/lang/String;',
+  );
+
+  static final _persistedTreeUris =
+      jni$_.ProtectedJniExtensions.lookup<
+            jni$_.NativeFunction<
+              jni$_.JniResult Function(
+                jni$_.Pointer<jni$_.Void>,
+                jni$_.JMethodIDPtr,
+              )
+            >
+          >('globalEnv_CallStaticObjectMethod')
+          .asFunction<
+            jni$_.JniResult Function(
+              jni$_.Pointer<jni$_.Void>,
+              jni$_.JMethodIDPtr,
+            )
+          >();
+
+  /// from: `static public final java.lang.String[] persistedTreeUris()`
+  /// The returned object must be released after use, by calling the [release] method.
+  static jni$_.JArray<jni$_.JString?> persistedTreeUris() {
+    return _persistedTreeUris(
+      _class.reference.pointer,
+      _id_persistedTreeUris.pointer,
+    ).object<jni$_.JArray<jni$_.JString?>>();
   }
 }
 

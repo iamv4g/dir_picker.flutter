@@ -182,6 +182,15 @@ class DirPicker {
             resolver.releasePersistableUriPermission(parsed, flags)
         }
 
+        /** The tree URIs the app holds a persisted permission for. */
+        @JvmStatic
+        fun persistedTreeUris(): Array<String> =
+            requireContext().contentResolver.persistedUriPermissions
+                .map { it.uri }
+                .filter { DocumentsContract.isTreeUri(it) }
+                .map { it.toString() }
+                .toTypedArray()
+
         private fun requireContext(): Context =
             applicationContext ?: throw IllegalStateException("No application context available")
     }
