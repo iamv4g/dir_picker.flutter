@@ -158,12 +158,69 @@ void main() {
     });
   });
 
-  test('persist, restore and release are unsupported', () {
+  group('DirPickerWeb persistence', () {
     final picker = DirPickerWeb();
 
-    expect(picker.persist(WebPickedLocation(root)), throwsUnsupportedError);
-    expect(picker.restore('token'), throwsUnsupportedError);
-    expect(picker.release('token'), throwsUnsupportedError);
+    // The store is shared by every test in the browser, so start empty.
+    Future<void> releaseAll() async {
+      for (final token in await picker.persistedTokens()) {
+        await picker.release(token);
+      }
+    }
+
+    setUp(releaseAll);
+    tearDown(releaseAll);
+
+    test('restores the persisted directory', () async {
+      final token = await picker.persist(WebPickedLocation(root));
+      final restored = await picker.restore(token);
+
+      expect(restored, isA<WebPickedLocation>());
+      restored as WebPickedLocation;
+      expect((await restored.handle.isSameEntry(root).toDart).toDart, isTrue);
+      expect(
+        (await picker.listEntries(restored)).map((e) => e.name),
+        unorderedEquals(['a.txt', 'sub']),
+      );
+    });
+
+    test('returns the same token for the same directory', () async {
+      final token = await picker.persist(WebPickedLocation(root));
+      final sub = await root.getDirectoryHandle('sub').toDart;
+
+      expect(await picker.persist(WebPickedLocation(root)), token);
+      expect(await picker.persist(WebPickedLocation(sub)), isNot(token));
+    });
+
+    test('lists persisted tokens until they are released', () async {
+      final token = await picker.persist(WebPickedLocation(root));
+      expect(await picker.persistedTokens(), [token]);
+
+      await picker.release(token);
+
+      expect(await picker.persistedTokens(), isEmpty);
+      expect(await picker.restore(token), isNull);
+    });
+
+    test('restores null for an unknown token', () async {
+      expect(await picker.restore('unknown'), isNull);
+      await picker.release('unknown');
+    });
+
+    test('rejects a non-web location', () {
+      expect(
+        picker.persist(IOPickedLocation(Uri.parse('file:///tmp'))),
+        throwsArgumentError,
+      );
+    });
+  });
+
+  test('hasAccess and requestAccess are true for a granted handle', () async {
+    final location = WebPickedLocation(root);
+
+    expect(await location.hasAccess(), isTrue);
+    expect(await location.hasAccess(mode: WebPermissionMode.readwrite), isTrue);
+    expect(await location.requestAccess(), isTrue);
   });
 
   group('DirPickerWeb.listEntries', () {

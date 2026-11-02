@@ -13,7 +13,7 @@ A Flutter plugin for picking a directory across all platforms using native syste
 - ⚡ **Native Performance** – Powered by FFI (iOS/macOS/Windows) and JNI (Android) for near-zero overhead
 - 🎨 **Customizable Dialogs** – Platform-specific options for title, button labels, and more, and an initial folder to open in
 - 📜 **Directory Listing** – list a picked folder at once, or stream large trees in batches and stop early
-- 🔗 **Persistent Access** – keep using a picked folder after the app restarts: persisted URI permissions on Android, bookmarks on iOS and macOS
+- 🔗 **Persistent Access** – keep using a picked folder after the app restarts: persisted URI permissions on Android, bookmarks on iOS and macOS, directory handles in IndexedDB on web
 - 🐧 **Linux Portals** – XDG Desktop Portal with zenity/kdialog fallback
 
 If you want to say thank you, star us on GitHub or like us on pub.dev.
@@ -201,7 +201,7 @@ await prefs.remove('workspace');
 | iOS      | Bookmark data (base64) | A bookmark. `restore` opens access again until `release` or the app exits. |
 | macOS    | Security-scoped bookmark data (base64) | A security-scoped bookmark. Needs the same `com.apple.security.files.user-selected.read-write` entitlement as `pick`. |
 | Windows, Linux | The `file://` URI | Nothing: the path stays usable. `restore` returns `null` once the folder is gone. |
-| Web      | – | Not supported (`UnsupportedError`). Store `WebPickedLocation.handle` in IndexedDB instead. |
+| Web      | A random key | The `FileSystemDirectoryHandle`, in the plugin's IndexedDB database `dir_picker`. Persisting the same folder again returns the same token. The browser may still ask the user before the page can read it again, see [below](#on-web-the-browser-decides-when-to-ask-again). |
 
 A bookmark follows the folder when it's moved or renamed, but the token goes stale. Call `persist` on the restored location and save the new token, as the example app does.
 
@@ -214,7 +214,37 @@ for (final token in await DirPicker.persistedTokens()) {
 }
 ```
 
-It lists every folder permission the app holds, including ones taken by other code in the app, so only release what you know is yours. Other platforms keep nothing for the app (a bookmark is just the token you saved), so they return an empty list.
+It lists every folder permission the app holds, including ones taken by other code in the app, so only release what you know is yours. On web it lists the handles `persist` stored, which only `dir_picker` writes. Other platforms keep nothing for the app (a bookmark is just the token you saved), so they return an empty list.
+
+#### On web, the browser decides when to ask again
+
+`restore` gives back the folder's handle, but reading it needs the user's permission, and the browser may want to ask again. A page can't show that prompt by itself on load: it only appears in response to a click. So `restore` doesn't check the permission. It returns a `WebPickedLocation` as long as the token is stored, and the app checks access before reading:
+
+| Situation (Chrome) | `hasAccess()` | Reading the folder |
+|--------------------|---------------|--------------------|
+| Right after `pick` | `true` | Works |
+| Page reloaded while a tab of the site is open | `true` | Works |
+| All tabs of the site were closed, then the site opened again | `false` | Throws `LIST_ERROR` until `requestAccess()` from a click |
+| The user chose **Allow on every visit** when asked | `true`, even after closing tabs or restarting the browser | Works |
+
+`requestAccess()` shows Chrome's prompt, which offers **Allow this time**, **Allow on every visit** and **Don't allow**. It returns `true` when access is allowed. Call it from a button, not on startup: without a click it throws a `DirPickerException` with `PLATFORM_ERROR`.
+
+```dart
+final restored = saved == null ? null : await DirPicker.restore(saved);
+if (restored is WebPickedLocation && !await restored.hasAccess()) {
+  // Show a button; its onPressed runs:
+  //   if (await restored.requestAccess()) listFolder(restored);
+} else if (restored != null) {
+  listFolder(restored);
+}
+```
+
+Things to know on web:
+
+- **Only Chromium browsers** (Chrome, Edge) can pick a folder, so only they can persist one. Firefox and Safari have no `showDirectoryPicker()`, and `hasAccess()`/`requestAccess()` return `true` there for an origin private file system handle, which needs no permission.
+- **A deleted or moved folder still restores.** The browser can't tell until the page reads it, so `listEntries` throws `LIST_ERROR` then. Ask the user to pick again, and `release` the old token.
+- **Tokens belong to the site's storage.** Clearing site data, a private window, or another origin (such as a different port on `localhost`) starts with no stored handles, and `restore` returns `null`.
+- **Write access is separate.** Pass `mode: WebPermissionMode.readwrite` to `hasAccess` and `requestAccess` if the app writes to the folder.
 
 `PickOptions.android(shouldPersist: true)` is deprecated and will be removed in 1.0.0. It takes the same permission during `pick`, but gives no token; call `persist` on the result instead.
 
@@ -301,7 +331,7 @@ Passed to `window.showDirectoryPicker()`.
 | Result                 | Meaning                                                                                           |
 |------------------------|---------------------------------------------------------------------------------------------------|
 | `IOPickedLocation`     | Native platforms — use `.uri` to get the selected directory URI.                                  |
-| `WebPickedLocation`    | Web — use `.handle` (`FileSystemDirectoryHandle`) to access directory contents. `.uri` is `null`. |
+| `WebPickedLocation`    | Web — use `.handle` (`FileSystemDirectoryHandle`) to access directory contents. `.uri` is `null`. `hasAccess()`/`requestAccess()` check and ask for permission. |
 | `null`                 | The user cancelled.                                                                               |
 
 Only one picker can be open at a time. Calling `pick()` again before the previous call completes throws a `DirPickerException` with code `ALREADY_ACTIVE`.
@@ -323,15 +353,15 @@ try {
 |------|----------|------|
 | `ALREADY_ACTIVE` | `alreadyActive` | `pick()` while another pick is open. |
 | `PICKER_ERROR` | `pickerError` | The picker couldn't be shown or failed: Android launch, zenity/kdialog exiting with an error, a web error other than cancelling. |
-| `PLATFORM_ERROR` | `platformError` | A platform call failed: a Windows COM call (with its `HRESULT`), no view controller on iOS. |
+| `PLATFORM_ERROR` | `platformError` | A platform call failed: a Windows COM call (with its `HRESULT`), no view controller on iOS, `WebPickedLocation.requestAccess()` without a click on web. |
 | `NO_ACTIVITY` | `noActivity` | Android: no Activity attached to show the picker from. |
 | `NO_CONTEXT` | `noContext` | Android: no application context yet. |
 | `INVALID_URI` | `invalidUri` | The location's URI can't be opened as a directory. |
 | `LIST_ERROR` | `listError` | `listEntries`/`streamEntries` couldn't read the picked directory itself (deleted, not a directory, access lost). |
 | `PERSIST_ERROR` | `persistError` | `persist` couldn't keep access. |
-| `RESTORE_ERROR`, `RELEASE_ERROR`, `PERSISTED_TOKENS_ERROR` | `restoreError`, `releaseError`, `persistedTokensError` | Android: reading or changing the persisted permissions failed. |
+| `RESTORE_ERROR`, `RELEASE_ERROR`, `PERSISTED_TOKENS_ERROR` | `restoreError`, `releaseError`, `persistedTokensError` | Reading or changing the persisted permissions (Android) or the stored handles in IndexedDB (web) failed. |
 
-Calling the API wrongly, such as passing a web location on Android or calling `persist` on web, throws `ArgumentError` or `UnsupportedError` instead.
+Calling the API wrongly, such as passing a web location on Android or a native one on web, throws `ArgumentError` or `UnsupportedError` instead.
 
 ### Native Mechanisms
 
@@ -453,7 +483,7 @@ static Future<void> release(String token)
 static Future<List<String>> persistedTokens()
 ```
 
-`persist` keeps access to a picked or restored location and returns a token to save. `restore` returns the location with access restored, or `null` when the token no longer gives access. `release` gives up that access. `persistedTokens` returns the tokens of the folder permissions Android keeps for the app, and an empty list on other platforms. See [Keep access to a folder after the app restarts](#keep-access-to-a-folder-after-the-app-restarts). `persist`, `restore` and `release` throw `UnsupportedError` on web.
+`persist` keeps access to a picked or restored location and returns a token to save. `restore` returns the location with access restored, or `null` when the token no longer gives access. `release` gives up that access. `persistedTokens` returns the tokens of the folder permissions Android keeps for the app, or of the handles stored on web, and an empty list on other platforms. On web, a restored location may need `WebPickedLocation.requestAccess()` from a click before it can be read. See [Keep access to a folder after the app restarts](#keep-access-to-a-folder-after-the-app-restarts).
 
 ### `DirPicker.retrieveLostPick`
 
@@ -481,7 +511,7 @@ Base type returned by `DirPicker.pick()`.
 | Type                | Platform                       | Notes                                                                 |
 |---------------------|--------------------------------|-----------------------------------------------------------------------|
 | `IOPickedLocation`  | Android, iOS, macOS, Windows, Linux | Provides a non-null `uri`.                                            |
-| `WebPickedLocation` | Web                            | Provides a `FileSystemDirectoryHandle`; `uri` is always `null`.       |
+| `WebPickedLocation` | Web                            | Provides a `FileSystemDirectoryHandle`; `uri` is always `null`. `hasAccess()` and `requestAccess()` check and ask for permission to it, see [On web](#on-web-the-browser-decides-when-to-ask-again). |
 
 ### `FileSystemEntry`
 

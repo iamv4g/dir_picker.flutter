@@ -10,6 +10,7 @@ import '../../location/picked_location.dart';
 import '../../location/web_picked_location.dart';
 import '../../options/pick_options.dart';
 import '../../platform_interface/dir_picker_platform.dart';
+import 'web_tokens.dart';
 
 extension on web.Window {
   external JSPromise<web.FileSystemDirectoryHandle> showDirectoryPicker([
@@ -61,6 +62,9 @@ extension type _IteratorResult._(JSObject _) implements JSObject {
 /// Note: [PickedLocation.uri] is always `null` on web — browsers do not
 /// expose full filesystem paths. Use [WebPickedLocation.handle] to access
 /// directory contents via the File System Access API.
+///
+/// [persist] keeps the handle in the plugin's IndexedDB database
+/// (`dir_picker`) and returns the record's key as the token.
 class DirPickerWeb extends DirPickerPlatform {
   static void registerWith(dynamic registrar) {
     DirPickerPlatform.instance = DirPickerWeb();
@@ -147,16 +151,60 @@ class DirPickerWeb extends DirPickerPlatform {
   }
 
   @override
-  Future<String> persist(PickedLocation location) async =>
-      throw UnsupportedError(_persistUnsupported);
+  Future<String> persist(PickedLocation location) async {
+    if (location is! WebPickedLocation) {
+      throw ArgumentError.value(
+        location,
+        'location',
+        'persist requires a WebPickedLocation on web.',
+      );
+    }
+    try {
+      return await storeHandle(location.handle);
+    } catch (e, stackTrace) {
+      Error.throwWithStackTrace(
+        _wrapError(e, DirPickerException.persistError),
+        stackTrace,
+      );
+    }
+  }
 
   @override
-  Future<PickedLocation?> restore(String token) async =>
-      throw UnsupportedError(_persistUnsupported);
+  Future<PickedLocation?> restore(String token) async {
+    try {
+      final handle = await loadHandle(token);
+      return handle == null ? null : WebPickedLocation(handle);
+    } catch (e, stackTrace) {
+      Error.throwWithStackTrace(
+        _wrapError(e, DirPickerException.restoreError),
+        stackTrace,
+      );
+    }
+  }
 
   @override
-  Future<void> release(String token) async =>
-      throw UnsupportedError(_persistUnsupported);
+  Future<void> release(String token) async {
+    try {
+      await deleteHandle(token);
+    } catch (e, stackTrace) {
+      Error.throwWithStackTrace(
+        _wrapError(e, DirPickerException.releaseError),
+        stackTrace,
+      );
+    }
+  }
+
+  @override
+  Future<List<String>> persistedTokens() async {
+    try {
+      return await storedKeys();
+    } catch (e, stackTrace) {
+      Error.throwWithStackTrace(
+        _wrapError(e, DirPickerException.persistedTokensError),
+        stackTrace,
+      );
+    }
+  }
 }
 
 /// Turns an error from the browser, such as a `DOMException` (`NotFoundError`
@@ -167,12 +215,6 @@ Object _wrapError(Object error, String code) =>
     error is Error || error is DirPickerException
     ? error
     : DirPickerException(code, error.toString());
-
-// A FileSystemDirectoryHandle can't be turned into a string token. Apps can
-// store the handle itself in IndexedDB.
-const _persistUnsupported =
-    'persist(), restore() and release() are not supported on web. Store '
-    'WebPickedLocation.handle in IndexedDB to keep a directory.';
 
 /// Lists [handle], reading the files of each directory and the
 /// subdirectories in parallel. Entries keep the browser's iteration order.

@@ -35,7 +35,8 @@ class DirPickerException implements Exception {
   static const pickerError = 'PICKER_ERROR';
 
   /// A platform call failed: on Windows, a COM call (the message has the
-  /// `HRESULT`); on iOS, no view controller to present the picker from.
+  /// `HRESULT`); on iOS, no view controller to present the picker from; on
+  /// web, `WebPickedLocation.requestAccess` called without a user gesture.
   static const platformError = 'PLATFORM_ERROR';
 
   /// Android: no Activity is attached to the engine, so the picker can't be
@@ -53,16 +54,20 @@ class DirPickerException implements Exception {
   static const listError = 'LIST_ERROR';
 
   /// `DirPicker.persist` couldn't keep access: on Android, no grant to
-  /// persist; on iOS and macOS, the bookmark couldn't be created.
+  /// persist; on iOS and macOS, the bookmark couldn't be created; on web,
+  /// IndexedDB couldn't store the handle.
   static const persistError = 'PERSIST_ERROR';
 
-  /// Android: `DirPicker.restore` couldn't check the persisted permissions.
+  /// `DirPicker.restore` couldn't check the persisted permissions (Android)
+  /// or read IndexedDB (web).
   static const restoreError = 'RESTORE_ERROR';
 
-  /// Android: `DirPicker.release` couldn't release the permission.
+  /// `DirPicker.release` couldn't release the permission (Android) or
+  /// delete the record (web).
   static const releaseError = 'RELEASE_ERROR';
 
-  /// Android: `DirPicker.persistedTokens` couldn't read the permissions.
+  /// `DirPicker.persistedTokens` couldn't read the permissions (Android) or
+  /// IndexedDB (web).
   static const persistedTokensError = 'PERSISTED_TOKENS_ERROR';
 
   @override
