@@ -95,11 +95,13 @@ void main() {
           },
         ).pick(),
         throwsA(
-          isA<Exception>().having(
-            (e) => '$e',
-            'message',
-            contains('PICKER_ERROR: zenity exited with code 5: Timed out'),
-          ),
+          isA<DirPickerException>()
+              .having((e) => e.code, 'code', DirPickerException.pickerError)
+              .having(
+                (e) => e.message,
+                'message',
+                'zenity exited with code 5: Timed out',
+              ),
         ),
       );
       expect(runs.map((run) => run.first), ['zenity']);
@@ -109,11 +111,13 @@ void main() {
       await expectLater(
         picker(tools: {'kdialog': ProcessResult(0, 254, '', '')}).pick(),
         throwsA(
-          isA<Exception>().having(
-            (e) => '$e',
-            'message',
-            contains('PICKER_ERROR: kdialog exited with code 254'),
-          ),
+          isA<DirPickerException>()
+              .having((e) => e.code, 'code', DirPickerException.pickerError)
+              .having(
+                (e) => e.message,
+                'message',
+                'kdialog exited with code 254',
+              ),
         ),
       );
     });

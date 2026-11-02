@@ -4,6 +4,7 @@ import 'dart:js_interop_unsafe';
 
 import 'package:web/web.dart' as web;
 
+import '../../dir_picker_exception.dart';
 import '../../location/file_system_entry.dart';
 import '../../location/picked_location.dart';
 import '../../location/web_picked_location.dart';
@@ -86,10 +87,13 @@ class DirPickerWeb extends DirPickerPlatform {
           )
           .toDart;
       return WebPickedLocation(handle);
-    } catch (e) {
+    } catch (e, stackTrace) {
       // AbortError → user cancelled
       if (e.toString().contains('AbortError')) return null;
-      rethrow;
+      Error.throwWithStackTrace(
+        _wrapError(e, DirPickerException.pickerError),
+        stackTrace,
+      );
     }
   }
 
@@ -109,7 +113,14 @@ class DirPickerWeb extends DirPickerPlatform {
       );
     }
 
-    return _listHandle(location.handle, recursive: recursive);
+    try {
+      return await _listHandle(location.handle, recursive: recursive);
+    } catch (e, stackTrace) {
+      Error.throwWithStackTrace(
+        _wrapError(e, DirPickerException.listError),
+        stackTrace,
+      );
+    }
   }
 
   @override
@@ -127,7 +138,12 @@ class DirPickerWeb extends DirPickerPlatform {
       );
     }
 
-    return _streamHandle(location.handle, recursive: recursive);
+    return _streamHandle(location.handle, recursive: recursive).handleError(
+      (Object e, StackTrace stackTrace) => Error.throwWithStackTrace(
+        _wrapError(e, DirPickerException.listError),
+        stackTrace,
+      ),
+    );
   }
 
   @override
@@ -142,6 +158,15 @@ class DirPickerWeb extends DirPickerPlatform {
   Future<void> release(String token) async =>
       throw UnsupportedError(_persistUnsupported);
 }
+
+/// Turns an error from the browser, such as a `DOMException` (`NotFoundError`
+/// when the folder was deleted, `NotAllowedError` when permission is gone),
+/// into a [DirPickerException] with [code]. Dart errors are bugs, so they're
+/// returned as they are.
+Object _wrapError(Object error, String code) =>
+    error is Error || error is DirPickerException
+    ? error
+    : DirPickerException(code, error.toString());
 
 // A FileSystemDirectoryHandle can't be turned into a string token. Apps can
 // store the handle itself in IndexedDB.

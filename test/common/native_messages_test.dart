@@ -5,8 +5,10 @@ import 'package:dir_picker/src/platforms/darwin/port_message.dart';
 import 'package:dir_picker/src/platforms/entries_json.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-Matcher _throwsExceptionWith(String text) => throwsA(
-  isA<Exception>().having((e) => e.toString(), 'toString()', contains(text)),
+Matcher _throwsDirPickerException(String code, String message) => throwsA(
+  isA<DirPickerException>()
+      .having((e) => e.code, 'code', code)
+      .having((e) => e.message, 'message', message),
 );
 
 Matcher _throwsStateError(String message) =>
@@ -28,7 +30,7 @@ void main() {
     test('turns an error message into an exception', () {
       expect(
         () => decodePickMessage([2, 'PLATFORM_ERROR', 'No root view']),
-        _throwsExceptionWith('PLATFORM_ERROR: No root view'),
+        _throwsDirPickerException('PLATFORM_ERROR', 'No root view'),
       );
     });
 
@@ -79,7 +81,7 @@ void main() {
       expect(
         () =>
             decodeEntriesStreamMessage([2, 'LIST_ERROR', 'Permission denied']),
-        _throwsExceptionWith('LIST_ERROR: Permission denied'),
+        _throwsDirPickerException('LIST_ERROR', 'Permission denied'),
       );
     });
 
@@ -110,7 +112,7 @@ void main() {
     test('turns an error message into an exception', () {
       expect(
         () => decodePersistMessage([2, 'PERSIST_ERROR', 'No access']),
-        _throwsExceptionWith('PERSIST_ERROR: No access'),
+        _throwsDirPickerException('PERSIST_ERROR', 'No access'),
       );
     });
   });

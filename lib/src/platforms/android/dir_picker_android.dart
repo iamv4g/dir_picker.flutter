@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:jni/jni.dart';
 
+import '../../dir_picker_exception.dart';
 import '../../location/file_system_entry.dart';
 import '../../location/picked_location.dart';
 import '../../options/pick_options.dart';
@@ -47,7 +48,7 @@ class DirPickerAndroid extends DirPickerPlatform {
   }
 
   /// A callback that completes [completer] with the picked location, `null`
-  /// for a cancel, or an `Exception('$code: $message')`.
+  /// for a cancel, or a [DirPickerException].
   static native.PickerCallback _pickerCallback(
     Completer<PickedLocation?> completer,
   ) => native.PickerCallback.implement(
@@ -63,7 +64,7 @@ class DirPickerAndroid extends DirPickerPlatform {
         final msg = jMessage.toDartString();
         jCode.release();
         jMessage.release();
-        completer.completeError(Exception('$code: $msg'));
+        completer.completeError(DirPickerException(code, msg));
       },
     ),
   );
@@ -134,7 +135,7 @@ class DirPickerAndroid extends DirPickerPlatform {
               final message = jMessage.toDartString();
               jCode.release();
               jMessage.release();
-              finish(Exception('$code: $message'));
+              finish(DirPickerException(code, message));
             },
           ),
         );
@@ -169,7 +170,11 @@ class DirPickerAndroid extends DirPickerPlatform {
       );
     }
     final token = uri.toString();
-    _callWithUri(token, native.DirPicker.persist, errorCode: 'PERSIST_ERROR');
+    _callWithUri(
+      token,
+      native.DirPicker.persist,
+      errorCode: DirPickerException.persistError,
+    );
     return token;
   }
 
@@ -180,7 +185,7 @@ class DirPickerAndroid extends DirPickerPlatform {
     final isPersisted = _callWithUri(
       token,
       native.DirPicker.isPersisted,
-      errorCode: 'RESTORE_ERROR',
+      errorCode: DirPickerException.restoreError,
     );
     return isPersisted ? IOPickedLocation(uri) : null;
   }
@@ -190,7 +195,7 @@ class DirPickerAndroid extends DirPickerPlatform {
     _callWithUri(
       token,
       native.DirPicker.releasePersisted,
-      errorCode: 'RELEASE_ERROR',
+      errorCode: DirPickerException.releaseError,
     );
   }
 
@@ -202,7 +207,10 @@ class DirPickerAndroid extends DirPickerPlatform {
     } on JThrowable catch (e) {
       final message = e.message;
       e.release();
-      throw Exception('PERSISTED_TOKENS_ERROR: $message');
+      throw DirPickerException(
+        DirPickerException.persistedTokensError,
+        message,
+      );
     }
     try {
       return [
@@ -215,7 +223,7 @@ class DirPickerAndroid extends DirPickerPlatform {
   }
 
   /// Calls [method] with [uri] as a Java string, and turns a Java exception
-  /// into an `Exception('$errorCode: …')`.
+  /// into a [DirPickerException] with [errorCode].
   static T _callWithUri<T>(
     String uri,
     T Function(JString uri) method, {
@@ -227,7 +235,7 @@ class DirPickerAndroid extends DirPickerPlatform {
     } on JThrowable catch (e) {
       final message = e.message;
       e.release();
-      throw Exception('$errorCode: $message');
+      throw DirPickerException(errorCode, message);
     } finally {
       jUri.release();
     }

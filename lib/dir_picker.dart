@@ -1,8 +1,10 @@
+import 'src/dir_picker_exception.dart';
 import 'src/location/file_system_entry.dart';
 import 'src/location/picked_location.dart';
 import 'src/options/pick_options.dart';
 import 'src/platform_interface/dir_picker_platform.dart';
 
+export 'src/dir_picker_exception.dart';
 export 'src/location/file_system_entry.dart';
 export 'src/location/picked_location.dart';
 // WebPickedLocation — web only, stub on native.
@@ -39,8 +41,9 @@ class DirPicker {
   /// | Web      | A [WebPickedLocation] (`startIn`). It takes precedence over [WebOptions.startIn]. |
   ///
   /// Only one picker can be open at a time. Calling [pick] again before the
-  /// previous call completes throws an [Exception] starting with
-  /// `ALREADY_ACTIVE`, and the open picker is left as it is.
+  /// previous call completes throws a [DirPickerException] with
+  /// [DirPickerException.alreadyActive], and the open picker is left as it
+  /// is. Other picker failures throw a [DirPickerException] too.
   ///
   /// ## Platform behavior
   ///
@@ -77,7 +80,10 @@ class DirPicker {
     PickedLocation? initialDirectory,
   }) async {
     if (_isPicking) {
-      throw Exception('ALREADY_ACTIVE: A directory picker is already open');
+      throw const DirPickerException(
+        DirPickerException.alreadyActive,
+        'A directory picker is already open',
+      );
     }
     _isPicking = true;
     try {
@@ -128,6 +134,8 @@ class DirPicker {
   /// non-directory without a size. Links are never followed, so a recursive
   /// listing doesn't include what is inside a linked directory. A
   /// subdirectory that can't be read is listed, but its contents are skipped.
+  /// A failure to read [location] itself throws a [DirPickerException] with
+  /// [DirPickerException.listError].
   static Future<List<FileSystemEntry>> listEntries(
     PickedLocation location, {
     bool recursive = false,
@@ -147,7 +155,8 @@ class DirPicker {
   /// ```
   ///
   /// Entries arrive in batches on Android, iOS and macOS. A failure to read
-  /// [location] itself is emitted as an error and closes the stream. Pausing
+  /// [location] itself is emitted as a [DirPickerException] and closes the
+  /// stream. Pausing
   /// the subscription buffers entries but doesn't pause the walk.
   static Stream<FileSystemEntry> streamEntries(
     PickedLocation location, {
@@ -170,8 +179,8 @@ class DirPicker {
   /// | Windows, Linux | The `file://` URI | Nothing: these apps aren't sandboxed, so the path stays usable. |
   /// | Web      | – | Not supported, throws [UnsupportedError]. |
   ///
-  /// Throws an [Exception] starting with `PERSIST_ERROR` when the platform
-  /// refuses, for example on Android when the app no longer has access to
+  /// Throws a [DirPickerException] with [DirPickerException.persistError]
+  /// when the platform refuses, for example on Android when the app no longer has access to
   /// the folder.
   static Future<String> persist(PickedLocation location) =>
       DirPickerPlatform.instance.persist(location);

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../dir_picker_exception.dart';
 import '../location/file_system_entry.dart';
 
 /// Lists [root] with `dart:io`, for the Linux and Windows implementations.
@@ -9,7 +10,8 @@ import '../location/file_system_entry.dart';
 /// A symbolic link is reported as what it points to, but never followed, so a
 /// link to a directory is a directory entry whose contents aren't listed. A
 /// subdirectory that can't be read is skipped, as `FileManager` does on iOS
-/// and macOS. Only a failure to list [root] itself is emitted as an error.
+/// and macOS. Only a failure to list [root] itself is emitted as an error, a
+/// [DirPickerException] with [DirPickerException.listError].
 ///
 /// The walk runs only while the stream is listened to: cancelling the
 /// subscription stops it.
@@ -48,5 +50,12 @@ Stream<FileSystemEntry> streamIoEntries(
     }
   }
 
-  yield* list(root, '');
+  try {
+    // `await for`, not `yield*`, so a failure to list root can be caught.
+    await for (final entry in list(root, '')) {
+      yield entry;
+    }
+  } on FileSystemException catch (e) {
+    throw DirPickerException(DirPickerException.listError, e.toString());
+  }
 }

@@ -161,7 +161,13 @@ void listEntriesContract(
       platform.streamEntries(
         IOPickedLocation(Uri.directory(p.join(root.path, 'missing'))),
       ),
-      emitsError(isA<FileSystemException>()),
+      emitsError(
+        isA<DirPickerException>().having(
+          (e) => e.code,
+          'code',
+          DirPickerException.listError,
+        ),
+      ),
     );
   });
 }
