@@ -35,9 +35,19 @@ class WebPickedLocation extends PickedLocation {
   /// A location from `DirPicker.pick` has access. One from `DirPicker.restore`
   /// keeps it only while another tab of the site still has it, or when the
   /// user chose "Allow on every visit" in Chrome. Otherwise call
-  /// [requestAccess] from a button. Browsers without permissions for handles,
-  /// such as Firefox and Safari for the origin private file system, always
-  /// return `true`.
+  /// [requestAccess] from a button.
+  ///
+  /// It is about permission only: a folder that was deleted still returns
+  /// `true`, and reading it throws a [DirPickerException] with
+  /// [DirPickerException.listError].
+  ///
+  /// Browsers without `queryPermission()`, such as Firefox and Safari,
+  /// always return `true`. They have no `showDirectoryPicker()`, so their
+  /// only directory handles come from the origin private file system, which
+  /// is the site's own storage and is always readable and writable, with no
+  /// permission to ask for. `false` there would make an app show an "allow
+  /// access" button that can never succeed, and throwing would make every
+  /// app check the browser first.
   Future<bool> hasAccess({
     WebPermissionMode mode = WebPermissionMode.read,
   }) async {
@@ -54,6 +64,9 @@ class WebPickedLocation extends PickedLocation {
   /// one, it throws a [DirPickerException] with
   /// [DirPickerException.platformError]. Returns `false` when the user
   /// denies access.
+  ///
+  /// Browsers without `requestPermission()`, such as Firefox and Safari,
+  /// return `true` without a prompt, for the same reason as [hasAccess].
   Future<bool> requestAccess({
     WebPermissionMode mode = WebPermissionMode.read,
   }) async {

@@ -241,8 +241,8 @@ if (restored is WebPickedLocation && !await restored.hasAccess()) {
 
 Things to know on web:
 
-- **Only Chromium browsers** (Chrome, Edge) can pick a folder, so only they can persist one. Firefox and Safari have no `showDirectoryPicker()`, and `hasAccess()`/`requestAccess()` return `true` there for an origin private file system handle, which needs no permission.
-- **A deleted or moved folder still restores.** The browser can't tell until the page reads it, so `listEntries` throws `LIST_ERROR` then. Ask the user to pick again, and `release` the old token.
+- **Only Chromium browsers** (Chrome, Edge) can pick a folder, so only they can persist one. Firefox and Safari have no `showDirectoryPicker()`, so their only directory handles come from the origin private file system: the site's own storage, always readable and writable, with no permission to ask for. That's why `hasAccess()` and `requestAccess()` return `true` there. `false` would leave an "Allow access" button that can never succeed, and throwing would make every app check the browser first.
+- **A deleted or moved folder still restores**, and `hasAccess()` can still be `true`, since it's about permission only. The browser can't tell until the page reads it, so `listEntries` throws `LIST_ERROR` then. Ask the user to pick again, and `release` the old token.
 - **Tokens belong to the site's storage.** Clearing site data, a private window, or another origin (such as a different port on `localhost`) starts with no stored handles, and `restore` returns `null`.
 - **Write access is separate.** Pass `mode: WebPermissionMode.readwrite` to `hasAccess` and `requestAccess` if the app writes to the folder.
 
