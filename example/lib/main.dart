@@ -32,13 +32,16 @@ class _DirPickerHomePageState extends State<DirPickerHomePage> {
   String _result = 'Press the button to pick a directory';
   PickedLocation? _pickedLocation;
 
-  /// The saved token of the folder the app remembers. Web can't persist.
+  /// The saved token of the folder the app remembers.
   String? _token;
+
+  /// On web, a restored folder the page has to ask access for again.
+  WebPickedLocation? _needsAccess;
 
   @override
   void initState() {
     super.initState();
-    if (!kIsWeb) _restoreSavedFolder();
+    _restoreSavedFolder();
   }
 
   /// Takes the folder from a pick that finished after Android destroyed the
@@ -84,10 +87,31 @@ class _DirPickerHomePageState extends State<DirPickerHomePage> {
     // On iOS and macOS a moved folder gives a stale bookmark: save a new one.
     final freshToken = await DirPicker.persist(location);
     await prefs.setString(_tokenKey, freshToken);
+    // On web the folder comes back without access unless the user chose
+    // "Allow on every visit"; reading it then needs a click.
+    final needsAccess =
+        location is WebPickedLocation && !await location.hasAccess();
+    if (!mounted) return;
     setState(() {
       _pickedLocation = location;
       _token = freshToken;
-      _result = 'Restored: $location';
+      _needsAccess = needsAccess ? location : null;
+      _result = needsAccess
+          ? 'Restored: $location. Allow access to read it.'
+          : 'Restored: $location';
+    });
+  }
+
+  /// Asks the browser for access to the restored folder. Has to run from a
+  /// click.
+  Future<void> _allowAccess() async {
+    final location = _needsAccess;
+    if (location == null) return;
+    final granted = await location.requestAccess();
+    if (!mounted) return;
+    setState(() {
+      if (granted) _needsAccess = null;
+      _result = granted ? 'Access allowed: $location' : 'Access denied';
     });
   }
 
@@ -111,6 +135,7 @@ class _DirPickerHomePageState extends State<DirPickerHomePage> {
     await SharedPreferencesAsync().remove(_tokenKey);
     setState(() {
       _token = null;
+      _needsAccess = null;
       _result = 'Forgot the remembered folder';
     });
   }
@@ -148,9 +173,10 @@ class _DirPickerHomePageState extends State<DirPickerHomePage> {
         return;
       }
 
-      if (!kIsWeb) await _rememberFolder(location);
+      await _rememberFolder(location);
       setState(() {
         _pickedLocation = location;
+        _needsAccess = null;
         _result = 'Picked: $location';
       });
     } catch (e) {
@@ -186,7 +212,13 @@ class _DirPickerHomePageState extends State<DirPickerHomePage> {
               onPressed: _pickDirectory,
               child: const Text('Pick Directory'),
             ),
-            if (_pickedLocation != null) ...[
+            if (_needsAccess != null) ...[
+              const SizedBox(height: 12),
+              FilledButton(
+                onPressed: _allowAccess,
+                child: const Text('Allow Access'),
+              ),
+            ] else if (_pickedLocation != null) ...[
               const SizedBox(height: 12),
               FilledButton(
                 onPressed: _openEntriesScreen,

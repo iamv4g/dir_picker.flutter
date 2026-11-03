@@ -176,8 +176,10 @@ class DirPicker {
   /// | iOS      | Bookmark data (base64) | A bookmark of the folder. Access is restored when the bookmark is resolved. |
   /// | macOS    | Security-scoped bookmark data (base64) | A security-scoped bookmark. A sandboxed app needs the `com.apple.security.files.user-selected.read-write` entitlement, as for [pick]. |
   /// | Windows, Linux | The `file://` URI | Nothing: these apps aren't sandboxed, so the path stays usable. |
-  /// | Web      | – | Not supported, throws [UnsupportedError]. |
+  /// | Web      | A random key | The `FileSystemDirectoryHandle`, in the plugin's IndexedDB database. Persisting the same folder again returns the same token. |
   ///
+  /// On web the browser decides whether the restored folder can be read
+  /// without asking again; see [restore].
   /// Throws a [DirPickerException] with [DirPickerException.persistError]
   /// when the platform refuses, for example on Android when the app no longer has access to
   /// the folder.
@@ -193,7 +195,14 @@ class DirPicker {
   /// renamed. It still resolves, so call [persist] on the restored location
   /// and save the new token.
   ///
-  /// Throws [UnsupportedError] on web.
+  /// On web the handle comes back, but the browser may not let the page use
+  /// it yet: Chrome keeps access while another tab of the site has it, or
+  /// for good when the user chose "Allow on every visit". Check
+  /// [WebPickedLocation.hasAccess], and if it's `false`, call
+  /// [WebPickedLocation.requestAccess] from a button before reading the
+  /// folder; until then [listEntries] throws a [DirPickerException] with
+  /// [DirPickerException.listError]. A folder that was deleted still restores
+  /// on web and fails the same way.
   static Future<PickedLocation?> restore(String token) =>
       DirPickerPlatform.instance.restore(token);
 
@@ -206,8 +215,8 @@ class DirPicker {
   ///   saved. This ends the access that [restore] (and on iOS, [pick])
   ///   started for the folder, which otherwise lasts until the app exits.
   /// - **Windows, Linux**: does nothing.
-  ///
-  /// Throws [UnsupportedError] on web.
+  /// - **Web**: deletes the stored handle. [restore] then returns `null` for
+  ///   the token.
   static Future<void> release(String token) =>
       DirPickerPlatform.instance.release(token);
 
@@ -215,7 +224,8 @@ class DirPicker {
   /// app, as [persist] returns them, so the app can [release] the ones it no
   /// longer has saved.
   ///
-  /// Only Android keeps such a list: it holds the persisted permissions, at
+  /// Android and web keep such a list. On Android it holds the persisted
+  /// permissions, at
   /// most 128 per app (512 from Android 11), and drops the oldest when the
   /// app takes more. A token the app didn't save, for example because the
   /// app was killed right after [persist], still takes a place until it is
@@ -232,8 +242,9 @@ class DirPicker {
   /// ones taken by other code in the app, so release only tokens you know are
   /// yours. Permissions for single documents aren't listed.
   ///
-  /// Other platforms keep nothing for the app (a bookmark on iOS and macOS is
-  /// only the token the app saved), so they return an empty list.
+  /// On web it holds the handles [persist] stored, which only `dir_picker`
+  /// writes. Other platforms keep nothing for the app (a bookmark on iOS and
+  /// macOS is only the token the app saved), so they return an empty list.
   static Future<List<String>> persistedTokens() =>
       DirPickerPlatform.instance.persistedTokens();
 }
