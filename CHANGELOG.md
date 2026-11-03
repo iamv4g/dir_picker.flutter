@@ -1,3 +1,12 @@
+## 0.8.0
+
+* **Breaking:** platform failures now throw `DirPickerException`, with the code in `code` and the platform's text in `message`, instead of `Exception('CODE: message')`. Compare `e.code` with the constants on the class, such as `DirPickerException.alreadyActive`. It implements `Exception`, so `on Exception` handlers still catch it, and its `toString()` is now `DirPickerException(CODE): message` (#60)
+* **Breaking:** Linux/Windows: `listEntries`/`streamEntries` throw `DirPickerException` with `LIST_ERROR` when the picked directory can't be read, instead of a `FileSystemException`, as the other platforms do (#60)
+* **Breaking:** Web: errors from the browser are reported as `DirPickerException`: `PICKER_ERROR` from `pick()` (other than cancelling, which still returns `null`) and `LIST_ERROR` from `listEntries`/`streamEntries`. Before, the `DOMException` was rethrown (#60)
+* Android: deprecate `PickOptions.android(shouldPersist:)` and `AndroidOptions`. Call `DirPicker.persist(location)` after `pick()` instead: it takes the same permission and returns the token for `restore`. Both will be removed in 1.0.0 (#61)
+* Web: `DirPicker.persist`, `restore`, `release` and `persistedTokens` now work, keeping the folder's handle in IndexedDB. They used to throw `UnsupportedError` (`persistedTokens` returned an empty list) (#62)
+* Web: `WebPickedLocation.hasAccess()` and `requestAccess()` check and ask for permission to a restored folder; call `requestAccess()` from a click (#62)
+
 ## 0.7.0
 
 * Android: add `DirPicker.persistedTokens()`, which lists the folder permissions the system keeps for the app, so it can `release` the ones it no longer has a token for and stay under Android's per-app limit. Other platforms keep no such permissions and return an empty list (#32)
