@@ -246,8 +246,6 @@ Things to know on web:
 - **Tokens belong to the site's storage.** Clearing site data, a private window, or another origin (such as a different port on `localhost`) starts with no stored handles, and `restore` returns `null`.
 - **Write access is separate.** Pass `mode: WebPermissionMode.readwrite` to `hasAccess` and `requestAccess` if the app writes to the folder.
 
-`PickOptions.android(shouldPersist: true)` is deprecated and will be removed in 1.0.0. It takes the same permission during `pick`, but gives no token; call `persist` on the result instead.
-
 ## Platform Options
 
 Pass a `PickOptions` to `DirPicker.pick()` to customize the dialog for the current platform:
@@ -274,24 +272,7 @@ final location = await DirPicker.pick(
 );
 ```
 
-Options for other platforms are silently ignored — only the one matching the current platform is applied.
-
-### AndroidOptions (deprecated)
-
-`PickOptions.android()` and `AndroidOptions` are deprecated and will be removed in 1.0.0. Their only option, `shouldPersist`, takes the same permission as [`DirPicker.persist`](#keep-access-to-a-folder-after-the-app-restarts), which also returns the token to restore it:
-
-```dart
-// Before
-final location = await DirPicker.pick(
-  options: PickOptions.android(shouldPersist: true),
-);
-
-// After
-final location = await DirPicker.pick();
-if (location != null) {
-  final token = await DirPicker.persist(location); // save it for restore()
-}
-```
+Options for other platforms are silently ignored — only the one matching the current platform is applied. Android and iOS have no options.
 
 ### MacosOptions
 
@@ -441,7 +422,7 @@ Returns a `PickedLocation` (either `IOPickedLocation` or `WebPickedLocation`), o
 
 `initialDirectory` opens the picker in that folder where the platform supports it (see [Open the picker where the user was last time](#open-the-picker-where-the-user-was-last-time)).
 
-`options` is a `PickOptions` sealed class — pass the platform-specific subclass using its factory constructor (e.g. `PickOptions.android(...)`, `PickOptions.macos(...)`). Options for other platforms are ignored.
+`options` is a `PickOptions` sealed class — pass the platform-specific subclass using its factory constructor (e.g. `PickOptions.macos(...)`, `PickOptions.web(...)`). Options for other platforms are ignored.
 
 ### `DirPicker.listEntries`
 
@@ -532,7 +513,6 @@ Platform-specific options passed to `DirPicker.pick()`.
 
 | Factory                 | Platform | Purpose                                                        |
 |-------------------------|----------|----------------------------------------------------------------|
-| `PickOptions.android()` | Android  | Deprecated, removed in 1.0.0. Use `DirPicker.persist` instead.  |
 | `PickOptions.macos()`   | macOS    | Customizes the open panel accept label and message.            |
 | `PickOptions.linux()`   | Linux    | Customizes dialog title and accept label.                      |
 | `PickOptions.windows()` | Windows  | Customizes dialog title and accept label.                      |

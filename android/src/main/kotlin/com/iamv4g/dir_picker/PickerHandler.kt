@@ -16,11 +16,10 @@ interface PickerHandler {
      * Implementation must run the picker on the main thread and suspend
      * until the user responds.
      *
-     * @param shouldPersist Whether to take persistable URI permission
      * @param initialUri The folder to open in, or null
      * @return Selected directory URI string, or null if cancelled
      */
-    suspend fun pick(shouldPersist: Boolean, initialUri: Uri?): String?
+    suspend fun pick(initialUri: Uri?): String?
 
     /**
      * Returns once the Activity is resumed. Android delivers the result of a
