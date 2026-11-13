@@ -34,9 +34,8 @@ void main() {
     await Directory(p.join(root.path, 'sub', 'nested')).create(recursive: true);
     await File(p.join(root.path, 'sub', 'b.txt')).writeAsString('hello');
     await Directory(p.join(root.path, 'tài liệu')).create();
-    await File(
-      p.join(root.path, 'tài liệu', 'ghi chú 1.txt'),
-    ).writeAsString('abc');
+    await File(p.join(root.path, 'tài liệu', 'ghi chú 1.txt'))
+        .writeAsString('abc');
   });
 
   tearDown(() => root.delete(recursive: true));
@@ -129,15 +128,12 @@ void main() {
     'reports a link as what it points to, without listing its contents',
     () async {
       try {
-        await Link(
-          p.join(root.path, 'dir_link'),
-        ).create(p.join(root.path, 'sub'));
-        await Link(
-          p.join(root.path, 'file_link'),
-        ).create(p.join(root.path, 'a.txt'));
-        await Link(
-          p.join(root.path, 'broken_link'),
-        ).create(p.join(root.path, 'gone'));
+        await Link(p.join(root.path, 'dir_link'))
+            .create(p.join(root.path, 'sub'));
+        await Link(p.join(root.path, 'file_link'))
+            .create(p.join(root.path, 'a.txt'));
+        await Link(p.join(root.path, 'broken_link'))
+            .create(p.join(root.path, 'gone'));
       } on FileSystemException catch (e) {
         markTestSkipped('Cannot create links here: $e');
         return;

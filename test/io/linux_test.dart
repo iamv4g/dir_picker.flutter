@@ -125,15 +125,13 @@ void main() {
     test('opens zenity and kdialog in the initial directory', () async {
       final initial = IOPickedLocation(Uri.directory('/home/user/Projects'));
 
-      await picker(
-        tools: {'zenity': cancelled()},
-      ).pick(initialDirectory: initial);
+      await picker(tools: {'zenity': cancelled()})
+          .pick(initialDirectory: initial);
       expect(runs.single, contains('--filename=/home/user/Projects/'));
 
       runs.clear();
-      await picker(
-        tools: {'kdialog': cancelled()},
-      ).pick(initialDirectory: initial);
+      await picker(tools: {'kdialog': cancelled()})
+          .pick(initialDirectory: initial);
       expect(runs.last.last, '/home/user/Projects/');
     });
 
@@ -166,9 +164,8 @@ void main() {
     });
 
     test('ignores options meant for other platforms', () async {
-      await picker(
-        tools: {'zenity': cancelled()},
-      ).pick(options: const PickOptions.windows(title: 'Windows only'));
+      await picker(tools: {'zenity': cancelled()})
+          .pick(options: const PickOptions.windows(title: 'Windows only'));
 
       expect(runs.single, contains('--title=Select Directory'));
     });

@@ -35,14 +35,8 @@ void main(List<String> args) async {
   final bindingsUri = packageRoot.resolve(
     'lib/src/platforms/android/native_bindings.g.dart',
   );
-  await generateJniBindings(
-    Config(
-      outputConfig: OutputConfig(
-        dartConfig: DartCodeOutputConfig(
-          path: bindingsUri,
-          structure: OutputStructure.singleFile,
-        ),
-      ),
+  await JniGenerator(
+    input: Input(
       sourcePath: [
         packageRoot.resolve('android/src/main/kotlin/com/iamv4g/dir_picker/'),
       ],
@@ -59,7 +53,13 @@ void main(List<String> args) async {
         'com.iamv4g.dir_picker.PickerCallback',
       ],
     ),
-  );
+    output: Output(
+      dart: DartOutput(
+        path: bindingsUri,
+        structure: OutputStructure.singleFile,
+      ),
+    ),
+  ).generate();
 
   // Step 3 — Silence lints that JNIgen's own ignore list misses, so the
   // generated file doesn't cost pub.dev static analysis points.

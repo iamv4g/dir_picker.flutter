@@ -42,9 +42,9 @@ abstract class DirPickerPlatform {
   Stream<FileSystemEntry> streamEntries(
     PickedLocation location, {
     bool recursive = false,
-  }) => Stream.fromFuture(
-    listEntries(location, recursive: recursive),
-  ).expand((entries) => entries);
+  }) =>
+      Stream.fromFuture(listEntries(location, recursive: recursive))
+          .expand((entries) => entries);
 
   /// Returns a pick that finished after the app's Activity was destroyed.
   /// See `DirPicker.retrieveLostPick`. Defaults to `null`, which is right for
