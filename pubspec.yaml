@@ -21,14 +21,14 @@ dependencies:
   flutter_web_plugins:
     sdk: flutter
   ffi: ^2.2.0
-  jni: ^1.0.0
+  jni: ^1.1.2
   dbus: ">=0.7.12 <0.9.0"
   path: ^1.9.1
   web: ^1.1.1
 
 dev_dependencies:
-  ffigen: ^20.1.1
-  jnigen: ^0.16.0
+  ffigen: ^23.0.0
+  jnigen: ^1.0.1
 
   flutter_test:
     sdk: flutter
