@@ -88,15 +88,12 @@ void listEntriesContract(
 
   if (testSymlinks) {
     test('reports a link as what it points to', () async {
-      await Link(
-        p.join(root.path, 'dir_link'),
-      ).create(p.join(root.path, 'sub'));
-      await Link(
-        p.join(root.path, 'file_link'),
-      ).create(p.join(root.path, 'a.txt'));
-      await Link(
-        p.join(root.path, 'broken_link'),
-      ).create(p.join(root.path, 'gone'));
+      await Link(p.join(root.path, 'dir_link'))
+          .create(p.join(root.path, 'sub'));
+      await Link(p.join(root.path, 'file_link'))
+          .create(p.join(root.path, 'a.txt'));
+      await Link(p.join(root.path, 'broken_link'))
+          .create(p.join(root.path, 'gone'));
 
       final entries = await platform.listEntries(location());
       final byPath = {for (final entry in entries) entry.relativePath: entry};

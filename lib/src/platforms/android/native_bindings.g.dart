@@ -1242,13 +1242,17 @@ extension type PickerCallback._(jni$_.JObject _$this) implements jni$_.JObject {
       $i.args?.release();
       jni$_.ProtectedJniExtensions.returnResult($i.result, $r);
     });
-    implementer
-        .add(r'com.iamv4g.dir_picker.PickerCallback', $p, _$invokePointer, [
-          if ($impl.onSuccess$async) r'onSuccess(Ljava/lang/String;)V',
-          if ($impl.onCancelled$async) r'onCancelled()V',
-          if ($impl.onError$async)
-            r'onError(Ljava/lang/String;Ljava/lang/String;)V',
-        ]);
+    implementer.add(
+      r'com.iamv4g.dir_picker.PickerCallback',
+      $p,
+      _$invokePointer,
+      [
+        if ($impl.onSuccess$async) r'onSuccess(Ljava/lang/String;)V',
+        if ($impl.onCancelled$async) r'onCancelled()V',
+        if ($impl.onError$async)
+          r'onError(Ljava/lang/String;Ljava/lang/String;)V',
+      ],
+    );
     final $a = $p.sendPort.nativePort;
     _$impls[$a] = $impl;
   }

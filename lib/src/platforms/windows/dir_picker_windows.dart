@@ -196,15 +196,23 @@ typedef _ShowNative = HRESULT Function(Pointer<Void>, IntPtr);
 typedef _ShowDart = int Function(Pointer<Void>, int);
 
 // IFileDialog::GetResult (vtable index 20)
-typedef _GetResultNative =
-    HRESULT Function(Pointer<Void>, Pointer<Pointer<Void>>);
+typedef _GetResultNative = HRESULT Function(
+  Pointer<Void>,
+  Pointer<Pointer<Void>>,
+);
 typedef _GetResultDart = int Function(Pointer<Void>, Pointer<Pointer<Void>>);
 
 // IShellItem::GetDisplayName (vtable index 5)
-typedef _GetDisplayNameNative =
-    HRESULT Function(Pointer<Void>, Uint32, Pointer<Pointer<Utf16>>);
-typedef _GetDisplayNameDart =
-    int Function(Pointer<Void>, int, Pointer<Pointer<Utf16>>);
+typedef _GetDisplayNameNative = HRESULT Function(
+  Pointer<Void>,
+  Uint32,
+  Pointer<Pointer<Utf16>>,
+);
+typedef _GetDisplayNameDart = int Function(
+  Pointer<Void>,
+  int,
+  Pointer<Pointer<Utf16>>,
+);
 
 // IFileDialog::SetTitle (vtable index 17), SetOkButtonLabel (vtable index 18)
 typedef _SetStringNative = HRESULT Function(Pointer<Void>, Pointer<Utf16>);
