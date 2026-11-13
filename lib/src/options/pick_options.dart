@@ -1,8 +1,5 @@
 /// Options for directory picking.
 sealed class PickOptions {
-  @Deprecated(_androidOptionsDeprecation)
-  const factory PickOptions.android({bool shouldPersist}) = AndroidOptions;
-
   const factory PickOptions.macos({String acceptLabel, String message}) =
       MacosOptions;
 
@@ -17,28 +14,6 @@ sealed class PickOptions {
     String? id,
     WebStartIn? startIn,
   }) = WebOptions;
-}
-
-const _androidOptionsDeprecation =
-    'Call DirPicker.persist(location) after pick() instead of '
-    'shouldPersist: true; it works on every platform but web and returns a '
-    'token for restore(). PickOptions.android() and AndroidOptions will be '
-    'removed in 1.0.0.';
-
-/// Options for directory picking on Android.
-///
-/// Its only option, [shouldPersist], does what `DirPicker.persist` does
-/// after the pick, so both are deprecated and will be removed in 1.0.0.
-@Deprecated(_androidOptionsDeprecation)
-class AndroidOptions implements PickOptions {
-  const AndroidOptions({this.shouldPersist = false});
-
-  /// Whether to take persistable URI permission so the app can access
-  /// the directory across reboots without re-prompting the user.
-  ///
-  /// Defaults to `false`. Same as calling `DirPicker.persist` on the result,
-  /// which also gives the token `DirPicker.restore` needs.
-  final bool shouldPersist;
 }
 
 /// Options for directory picking on macOS.
