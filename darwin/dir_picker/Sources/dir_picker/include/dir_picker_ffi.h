@@ -74,4 +74,17 @@ void dir_picker_restore(int64_t native_port, const char* token);
 /// @param token         Token from dir_picker_persist
 void dir_picker_release(int64_t native_port, const char* token);
 
+/// Every function above, as `X(name)`. DirPickerFFISymbols
+/// (Sources/DartApiDl/dir_picker_symbols.m) gives Dart their addresses from
+/// it, as Dart can't look them up by name in a stripped app. Add a new
+/// function here too; test/io/darwin_header_test.dart fails otherwise.
+#define DIR_PICKER_FUNCTIONS(X)        \
+    X(dir_picker_init_dart_api_dl)     \
+    X(dir_picker_pick)                 \
+    X(dir_picker_stream_entries)       \
+    X(dir_picker_cancel_entries)       \
+    X(dir_picker_persist)              \
+    X(dir_picker_restore)              \
+    X(dir_picker_release)
+
 #endif /* dir_picker_ffi_h */
