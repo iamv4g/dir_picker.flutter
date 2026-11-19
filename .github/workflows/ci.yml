@@ -230,6 +230,49 @@ jobs:
       - if: matrix.target == 'Windows'
         run: flutter test integration_test -d windows
 
+  # Archiving an app strips its symbols (STRIP_STYLE = all, Xcode's default
+  # for apps), which neither `flutter test` nor the builds above do. Runs
+  # example/integration_test in a macOS profile build stripped the same way,
+  # so the Darwin bridge has to find its functions without their names (see
+  # lib/src/platforms/darwin/darwin_symbols.dart).
+  darwin-stripped:
+    name: Darwin bridge in a stripped app (macOS)
+    needs: changes
+    if: needs.changes.outputs.darwin == 'true'
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      # The Objective-C runtime calls of darwin_symbols.dart, which Analyze &
+      # test skips on Ubuntu.
+      - name: Test darwin_symbols.dart
+        run: flutter test test/io/darwin_symbols_test.dart
+      # flutter drive can end with exit code 0 when the tests fail before the
+      # driver gets their result, so also look for the driver's line.
+      - name: Run integration_test in a stripped profile build
+        working-directory: example
+        env:
+          FLUTTER_XCODE_DEPLOYMENT_POSTPROCESSING: 'YES'
+          FLUTTER_XCODE_STRIP_STYLE: all
+        run: |
+          set -o pipefail
+          flutter drive --profile -d macos \
+            --driver=test_driver/integration_test.dart \
+            --target=integration_test/plugin_test.dart | tee drive.log
+          grep -q '^All tests passed\.$' drive.log
+      - name: Check that the app was stripped
+        working-directory: example
+        run: |
+          app=build/macos/Build/Products/Profile/dir_picker_example.app/Contents/MacOS/dir_picker_example
+          if xcrun dyld_info -exports "$app" | grep -q '_dir_picker_'; then
+            echo "::error::The app still exports dir_picker_* functions, so the test didn't run on a stripped app."
+            exit 1
+          fi
+
   # The only check the main branch ruleset requires. Skipped jobs don't fail
   # it, so a pull request isn't blocked waiting for jobs it didn't need.
   # pana is left out on purpose: it can fail without a code change (a new
@@ -246,6 +289,7 @@ jobs:
       - build-darwin
       - build-windows
       - integration-test
+      - darwin-stripped
     runs-on: ubuntu-latest
     steps:
       - name: Fail if a job failed or was cancelled

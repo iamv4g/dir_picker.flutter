@@ -17,7 +17,7 @@ A Flutter plugin for picking directories on iOS and macOS using FFI and DartApiD
   s.author           = { 'iamv4g' => 'iamv4g.dev@gmail.com' }
 
   s.source           = { :path => '.' }
-  s.source_files = 'dir_picker/Sources/**/*.{h,c,swift}'
+  s.source_files = 'dir_picker/Sources/**/*.{h,c,m,swift}'
   s.public_header_files = [
     'dir_picker/Sources/DartApiDl/include/dart_api_dl.h',
     'dir_picker/Sources/dir_picker/include/dir_picker_ffi.h'

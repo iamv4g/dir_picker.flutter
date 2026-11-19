@@ -8,6 +8,7 @@ import '../../location/file_system_entry.dart';
 import '../../location/picked_location.dart';
 import '../../options/pick_options.dart';
 import '../../platform_interface/dir_picker_platform.dart';
+import 'darwin_symbols.dart';
 import 'native_bindings.g.dart' as native;
 import 'port_message.dart';
 
@@ -16,8 +17,9 @@ import 'port_message.dart';
 /// Uses FFI with DartApiDl NativePort for async directory picking.
 class DirPickerDarwin extends DirPickerPlatform {
   DirPickerDarwin() {
-    final dylib = DynamicLibrary.process();
-    _bindings = native.DirPickerBindings(dylib);
+    // Not DynamicLibrary.process(): an archived app strips the functions'
+    // names (see darwin_symbols.dart).
+    _bindings = native.DirPickerBindings.fromLookup(lookupDarwinSymbol);
 
     final result = _bindings.initDartApiDl(NativeApi.initializeApiDLData);
     if (result != 0) {
