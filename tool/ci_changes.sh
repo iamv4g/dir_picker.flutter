@@ -21,6 +21,7 @@ if ! $all; then
       # Covered by the analyze & test and pub.dev score jobs, which always run.
       *.md | LICENSE | .gitignore | .github/ISSUE_TEMPLATE/* | .github/pull_request_template.md) ;;
       test/io/windows_test.dart | test/io/src/*) windows=true ;;
+      test/io/darwin_*) darwin=true ;;
       test/*) ;;
       android/* | lib/src/platforms/android/* | example/android/* | tool/jnigen.dart | tool/check_jni_keeps.dart) android=true ;;
       darwin/* | lib/src/platforms/darwin/* | example/ios/* | example/macos/* | tool/ffigen.dart) darwin=true ;;
