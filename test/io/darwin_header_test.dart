@@ -6,9 +6,10 @@ import 'package:flutter_test/flutter_test.dart';
 /// Objective-C class DirPickerFFISymbols, which only knows the functions in
 /// the header's DIR_PICKER_FUNCTIONS list (see darwin_symbols.dart).
 void main() {
+  // Git checks it out with CRLF line endings on Windows.
   final header = File(
     'darwin/dir_picker/Sources/dir_picker/include/dir_picker_ffi.h',
-  ).readAsStringSync();
+  ).readAsStringSync().replaceAll('\r\n', '\n');
 
   test('DIR_PICKER_FUNCTIONS lists every function the header declares', () {
     final declared = RegExp(
