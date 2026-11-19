@@ -43,13 +43,16 @@ jobs:
           fi | tee -a "$GITHUB_OUTPUT"
 
   analyze-test:
-    name: Analyze & test (Flutter ${{ matrix.flutter-version || 'stable' }})
+    name: Analyze & test (Flutter ${{ matrix.flutter-version }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        # Minimum supported Flutter (pubspec environment) and latest stable.
-        flutter-version: ['3.44.0', '']
+        # Minimum supported Flutter (pubspec environment), and the latest
+        # stable when 0.8.0 shipped. 0.8.x's example doesn't pass flutter
+        # analyze on Flutter 3.50, which deprecates material.dart, so this
+        # branch stays on 3.47.
+        flutter-version: ['3.44.0', '3.47.9']
     steps:
       - uses: actions/checkout@v7
       - uses: subosito/flutter-action@v2
@@ -61,19 +64,19 @@ jobs:
       # The formatter's output differs between SDK versions, so only check it
       # on latest stable, which is what pub.dev scores against.
       - name: Check formatting
-        if: matrix.flutter-version == ''
+        if: matrix.flutter-version == '3.47.9'
         run: dart format --output=none --set-exit-if-changed .
       - run: flutter analyze
       - run: flutter test
       # Web runs compile all given files into one bundle, so they only get
       # the folders that build for the browser (test/io needs dart:io).
       - name: Test on Chrome (JS and Wasm)
-        if: matrix.flutter-version == ''
+        if: matrix.flutter-version == '3.47.9'
         run: |
           flutter test --platform chrome test/common test/web
           flutter test --platform chrome --wasm test/common test/web
       - name: Publish dry run
-        if: matrix.flutter-version == ''
+        if: matrix.flutter-version == '3.47.9'
         run: flutter pub publish --dry-run
 
   pana:
@@ -84,6 +87,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: 3.47.9
           cache: true
       - run: dart pub global activate pana
       # Fails if any pub point is lost. A new major release of a dependency
@@ -103,6 +107,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: 3.47.9
           cache: true
       - run: flutter build web
       - run: flutter build web --wasm
@@ -124,6 +129,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: 3.47.9
           cache: true
       # A release build, so R8 shrinks and renames the plugin with its consumer
       # rules, as it does in apps that use it.
@@ -150,6 +156,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: 3.47.9
           cache: true
       - run: flutter build linux --debug
 
@@ -166,6 +173,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: 3.47.9
           cache: true
       - run: flutter build ios --debug --no-codesign
       - run: flutter build macos --debug
@@ -183,6 +191,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: 3.47.9
           cache: true
       # Runs the Windows-only tests in test/io/windows_test.dart.
       - name: Test
@@ -222,6 +231,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: 3.47.9
           cache: true
       - if: matrix.target == 'macOS'
         run: flutter test integration_test -d macos
@@ -246,6 +256,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: 3.47.9
           cache: true
       # The Objective-C runtime calls of darwin_symbols.dart, which Analyze &
       # test skips on Ubuntu.

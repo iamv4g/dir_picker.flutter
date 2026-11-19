@@ -82,11 +82,8 @@ final class ObjCPointerFunction {
 
 /// The implementation of such a method: `IMP` with the class, the selector
 /// and the C string.
-typedef _NativeObjCPointerMethod = Pointer<Void> Function(
-  Pointer<Void>,
-  Pointer<Void>,
-  Pointer<Utf8>,
-);
+typedef _NativeObjCPointerMethod =
+    Pointer<Void> Function(Pointer<Void>, Pointer<Void>, Pointer<Utf8>);
 typedef _ObjCPointerMethod = _NativeObjCPointerMethod;
 
 final _objc = DynamicLibrary.process();
