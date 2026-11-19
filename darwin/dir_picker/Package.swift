@@ -11,7 +11,9 @@ let package = Package(
         .library(name: "dir-picker", targets: ["dir_picker"]),
     ],
     targets: [
-        // Internal C target — exposes DartApiDl module to Swift
+        // Internal C target — exposes DartApiDl module to Swift, and has the
+        // Objective-C class DirPickerFFISymbols, which gives Dart the addresses
+        // of the functions of dir_picker_ffi.h.
         .target(
             name: "DartApiDl",
             path: "Sources/DartApiDl",
