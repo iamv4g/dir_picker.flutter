@@ -1,3 +1,7 @@
+## 0.8.1
+
+* iOS/macOS: fix the plugin failing in an archived app (App Store or TestFlight build, `flutter build ipa`) that links it statically, with Swift Package Manager or with CocoaPods and `use_frameworks! :linkage => :static`. Archiving strips the app's symbols (`STRIP_STYLE = all`, Xcode's default for apps), and the plugin looked its native functions up by name, so it registered no platform. It now gets their addresses through the Objective-C runtime. Apps that set Strip Style to Non-Global Symbols as a workaround can set it back (#73)
+
 ## 0.8.0
 
 * **Breaking:** platform failures now throw `DirPickerException`, with the code in `code` and the platform's text in `message`, instead of `Exception('CODE: message')`. Compare `e.code` with the constants on the class, such as `DirPickerException.alreadyActive`. It implements `Exception`, so `on Exception` handlers still catch it, and its `toString()` is now `DirPickerException(CODE): message` (#60)
