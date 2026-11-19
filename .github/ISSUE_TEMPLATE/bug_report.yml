@@ -62,7 +62,7 @@ body:
     attributes:
       label: Pick options
       description: The `PickOptions` you passed to `pick`, if any.
-      placeholder: "PickOptions.android(shouldPersist: true)"
+      placeholder: "PickOptions.macos(acceptLabel: 'Choose')"
 
   - type: textarea
     id: description

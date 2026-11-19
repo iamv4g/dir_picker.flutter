@@ -224,7 +224,7 @@ extension DirPicker$Companion$$Methods on DirPicker$Companion {
 
   static final _id_pick = DirPicker$Companion._class.instanceMethodId(
     r'pick',
-    r'(ZLjava/lang/String;Lcom/iamv4g/dir_picker/PickerCallback;)V',
+    r'(Ljava/lang/String;Lcom/iamv4g/dir_picker/PickerCallback;)V',
   );
 
   static final _pick =
@@ -234,11 +234,7 @@ extension DirPicker$Companion$$Methods on DirPicker$Companion {
                 jni$_.Pointer<jni$_.Void>,
                 jni$_.JMethodIDPtr,
                 jni$_.VarArgs<
-                  (
-                    jni$_.Int32,
-                    jni$_.Pointer<jni$_.Void>,
-                    jni$_.Pointer<jni$_.Void>,
-                  )
+                  (jni$_.Pointer<jni$_.Void>, jni$_.Pointer<jni$_.Void>)
                 >,
               )
             >
@@ -247,25 +243,19 @@ extension DirPicker$Companion$$Methods on DirPicker$Companion {
             jni$_.JThrowablePtr Function(
               jni$_.Pointer<jni$_.Void>,
               jni$_.JMethodIDPtr,
-              core$_.int,
               jni$_.Pointer<jni$_.Void>,
               jni$_.Pointer<jni$_.Void>,
             )
           >();
 
-  /// from: `public fun pick(shouldPersist: kotlin.Boolean, initialUri: kotlin.String?, callback: com.iamv4g.dir_picker.PickerCallback): kotlin.Unit`
-  void pick(
-    core$_.bool z,
-    jni$_.JString? string,
-    PickerCallback pickerCallback,
-  ) {
+  /// from: `public fun pick(initialUri: kotlin.String?, callback: com.iamv4g.dir_picker.PickerCallback): kotlin.Unit`
+  void pick(jni$_.JString? string, PickerCallback pickerCallback) {
     final _$$selfRef = reference;
     final _$string = string?.reference ?? jni$_.jNullReference;
     final _$pickerCallback = pickerCallback.reference;
     _pick(
       _$$selfRef.pointer,
       _id_pick.pointer,
-      z ? 1 : 0,
       _$string.pointer,
       _$pickerCallback.pointer,
     ).check();
@@ -538,7 +528,7 @@ extension type DirPicker._(jni$_.JObject _$this) implements jni$_.JObject {
 
   static final _id_pick = _class.staticMethodId(
     r'pick',
-    r'(ZLjava/lang/String;Lcom/iamv4g/dir_picker/PickerCallback;)V',
+    r'(Ljava/lang/String;Lcom/iamv4g/dir_picker/PickerCallback;)V',
   );
 
   static final _pick =
@@ -548,11 +538,7 @@ extension type DirPicker._(jni$_.JObject _$this) implements jni$_.JObject {
                 jni$_.Pointer<jni$_.Void>,
                 jni$_.JMethodIDPtr,
                 jni$_.VarArgs<
-                  (
-                    jni$_.Int32,
-                    jni$_.Pointer<jni$_.Void>,
-                    jni$_.Pointer<jni$_.Void>,
-                  )
+                  (jni$_.Pointer<jni$_.Void>, jni$_.Pointer<jni$_.Void>)
                 >,
               )
             >
@@ -561,25 +547,19 @@ extension type DirPicker._(jni$_.JObject _$this) implements jni$_.JObject {
             jni$_.JThrowablePtr Function(
               jni$_.Pointer<jni$_.Void>,
               jni$_.JMethodIDPtr,
-              core$_.int,
               jni$_.Pointer<jni$_.Void>,
               jni$_.Pointer<jni$_.Void>,
             )
           >();
 
-  /// from: `static public final void pick(boolean z, java.lang.String string, com.iamv4g.dir_picker.PickerCallback pickerCallback)`
-  static void pick(
-    core$_.bool z,
-    jni$_.JString? string,
-    PickerCallback pickerCallback,
-  ) {
+  /// from: `static public final void pick(java.lang.String string, com.iamv4g.dir_picker.PickerCallback pickerCallback)`
+  static void pick(jni$_.JString? string, PickerCallback pickerCallback) {
     final _$$classRef = _class.reference;
     final _$string = string?.reference ?? jni$_.jNullReference;
     final _$pickerCallback = pickerCallback.reference;
     _pick(
       _$$classRef.pointer,
       _id_pick.pointer,
-      z ? 1 : 0,
       _$string.pointer,
       _$pickerCallback.pointer,
     ).check();

@@ -48,12 +48,11 @@ class DirPicker {
          * Non-blocking: launches a coroutine internally so Dart can return
          * immediately and await the callback.
          *
-         * @param shouldPersist Whether to take persistable URI permission (Android only)
          * @param initialUri A content URI to open the picker in (API 26+), or null
          * @param callback Receives onSuccess, onCancelled, or onError
          */
         @JvmStatic
-        fun pick(shouldPersist: Boolean, initialUri: String?, callback: PickerCallback) {
+        fun pick(initialUri: String?, callback: PickerCallback) {
             CoroutineScope(Dispatchers.IO).launch {
                 val handler = pickerHandler
                 if (handler == null) {
@@ -62,7 +61,7 @@ class DirPicker {
                 }
 
                 try {
-                    val uri = handler.pick(shouldPersist, initialUri?.let(Uri::parse))
+                    val uri = handler.pick(initialUri?.let(Uri::parse))
                     if (uri != null) {
                         callback.onSuccess(uri)
                     } else {

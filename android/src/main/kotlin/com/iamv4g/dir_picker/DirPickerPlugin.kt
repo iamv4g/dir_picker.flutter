@@ -49,7 +49,6 @@ class DirPickerPlugin : FlutterPlugin, ActivityAware, ActivityResultListener {
 
     // Pending coroutine continuation. Only read and written on the main thread.
     private var pendingContinuation: CancellableContinuation<String?>? = null
-    private var shouldPersistPermission: Boolean = true
 
     // ─────────────────────────────────────────────────────────────────────────
     // FlutterPlugin
@@ -120,8 +119,8 @@ class DirPickerPlugin : FlutterPlugin, ActivityAware, ActivityResultListener {
     private fun setupPickerHandler() {
         DirPicker.pickerHandler = object : PickerHandler {
             // Activity APIs must be called on the main thread.
-            override suspend fun pick(shouldPersist: Boolean, initialUri: Uri?): String? =
-                withContext(Dispatchers.Main) { launchPicker(shouldPersist, initialUri) }
+            override suspend fun pick(initialUri: Uri?): String? =
+                withContext(Dispatchers.Main) { launchPicker(initialUri) }
 
             override suspend fun awaitResumed() {
                 withContext(Dispatchers.Main) {
@@ -134,7 +133,7 @@ class DirPickerPlugin : FlutterPlugin, ActivityAware, ActivityResultListener {
         }
     }
 
-    private suspend fun launchPicker(shouldPersist: Boolean, initialUri: Uri?): String? =
+    private suspend fun launchPicker(initialUri: Uri?): String? =
         suspendCancellableCoroutine { continuation ->
             if (pendingContinuation != null) {
                 continuation.resumeWithException(
@@ -152,7 +151,6 @@ class DirPickerPlugin : FlutterPlugin, ActivityAware, ActivityResultListener {
             }
 
             pendingContinuation = continuation
-            shouldPersistPermission = shouldPersist
 
             continuation.invokeOnCancellation {
                 if (pendingContinuation === continuation) pendingContinuation = null
@@ -205,22 +203,7 @@ class DirPickerPlugin : FlutterPlugin, ActivityAware, ActivityResultListener {
         }
         pendingContinuation = null
 
-        if (uri == null) {
-            continuation.resume(null)
-            return
-        }
-
-        if (shouldPersistPermission) {
-            try {
-                val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                        Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                activity?.contentResolver?.takePersistableUriPermission(uri, flags)
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to persist permission: ${e.message}")
-            }
-        }
-
-        continuation.resume(uri.toString())
+        continuation.resume(uri?.toString())
     }
 
     // ─────────────────────────────────────────────────────────────────────────
